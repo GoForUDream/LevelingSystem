@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: leveling_db
+    environment:
+      POSTGRES_USER: leveling
+      POSTGRES_PASSWORD: leveling123
+      POSTGRES_DB: leveling_system
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

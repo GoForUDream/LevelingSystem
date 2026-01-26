@@ -1,0 +1,91 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+
+interface User {
+  id: number
+  email: string
+  name: string
+  avatar_url: string | null
+  total_exp: number
+  level: number
+}
+
+interface AuthContextType {
+  user: User | null
+  token: string | null
+  isLoading: boolean
+  login: () => void
+  logout: () => void
+  setToken: (token: string) => void
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+const API_URL = 'http://localhost:8000'
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [token, setTokenState] = useState<string | null>(() =>
+    localStorage.getItem('token')
+  )
+  const [isLoading, setIsLoading] = useState(true)
+
+  const setToken = (newToken: string) => {
+    localStorage.setItem('token', newToken)
+    setTokenState(newToken)
+  }
+
+  const logout = () => {
+    localStorage.removeItem('token')
+    setTokenState(null)
+    setUser(null)
+  }
+
+  const login = () => {
+    window.location.href = `${API_URL}/api/auth/login`
+  }
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!token) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          const userData = await response.json()
+          setUser(userData)
+        } else {
+          logout()
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error)
+        logout()
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchUser()
+  }, [token])
+
+  return (
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout, setToken }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}

@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+sqlalchemy
+asyncpg
+python-dotenv
+greenlet
+email-validator
+python-jose[cryptography]
+httpx
