@@ -15,6 +15,16 @@ class UserUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class LevelProgress(BaseModel):
+    level: int
+    total_exp: int
+    current_level_exp: int
+    exp_to_next_level: int
+    progress_percent: float
+    rank_title: str
+    rank_theme: str
+
+
 class UserResponse(BaseModel):
     id: int
     email: str
@@ -29,3 +39,7 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UserWithProgress(UserResponse):
+    level_progress: LevelProgress

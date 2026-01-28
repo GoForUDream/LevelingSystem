@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db
 from services.auth_service import AuthService
 from repositories.user_repository import UserRepository
 from services.user_service import UserService
-from schemas.user import UserResponse
+from schemas.user import UserWithProgress, LevelProgress
 from middleware.auth_middleware import get_current_user
 from models.user import User
 from config import FRONTEND_URL
@@ -54,10 +54,29 @@ async def callback(code: str, db: AsyncSession = Depends(get_db)):
         return RedirectResponse(url=f"{FRONTEND_URL}/login?error={str(e)}")
 
 
-@router.get("/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(get_current_user)):
-    """Get current authenticated user"""
-    return current_user
+@router.get("/me", response_model=UserWithProgress)
+async def get_me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get current authenticated user with level progress"""
+    repository = UserRepository(db)
+    service = UserService(repository)
+    progress = service.get_user_progress(current_user)
+
+    return UserWithProgress(
+        id=current_user.id,
+        email=current_user.email,
+        name=current_user.name,
+        avatar_url=current_user.avatar_url,
+        google_id=current_user.google_id,
+        total_exp=current_user.total_exp,
+        level=current_user.level,
+        is_active=current_user.is_active,
+        created_at=current_user.created_at,
+        updated_at=current_user.updated_at,
+        level_progress=LevelProgress(**progress),
+    )
 
 
 @router.post("/logout")

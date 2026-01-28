@@ -1,34 +1,34 @@
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
   const { login } = useAuth()
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-sl-black flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo/Title */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-zinc-100 tracking-tight mb-2">
+          <h1 className="text-4xl font-bold text-sl-blue tracking-tight mb-2 text-glow-blue">
             Leveling System
           </h1>
-          <p className="text-zinc-500">
+          <p className="text-sl-silver-muted">
             Level up your productivity
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
-          <h2 className="text-xl font-semibold text-zinc-200 text-center mb-2">
+        <div className="bg-sl-gray border border-sl-gray-light rounded-2xl p-8">
+          <h2 className="text-xl font-semibold text-sl-silver text-center mb-2">
             Welcome back
           </h2>
-          <p className="text-zinc-500 text-center text-sm mb-8">
+          <p className="text-sl-silver-muted text-center text-sm mb-8">
             Sign in to continue to your dashboard
           </p>
 
           {/* Google Login Button */}
           <button
             onClick={login}
-            className="w-full flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-600 text-zinc-200 font-medium py-3 px-4 rounded-xl transition-all duration-200"
+            className="w-full flex items-center justify-center gap-3 bg-sl-blue hover:bg-sl-blue-dark border border-sl-blue text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 glow-blue"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -51,13 +51,13 @@ export default function LoginPage() {
             Continue with Google
           </button>
 
-          <p className="text-zinc-600 text-xs text-center mt-6">
+          <p className="text-sl-silver-dark text-xs text-center mt-6">
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p>
         </div>
 
         {/* Footer */}
-        <p className="text-zinc-600 text-sm text-center mt-8">
+        <p className="text-sl-silver-dark text-sm text-center mt-8">
           New here? Sign in to create your account automatically.
         </p>
       </div>

@@ -1,39 +1,43 @@
 from repositories.task_repository import TaskRepository
 from models.task import Task, TaskStatus, TaskImportance
 from schemas.task import TaskCreate, TaskUpdate
+from constants.levels import IMPORTANCE_EXP
 from datetime import datetime, timezone
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    """Return current UTC time as naive datetime (no timezone info)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def to_naive_utc(dt: datetime | None) -> datetime | None:
+    """Convert timezone-aware datetime to naive UTC datetime."""
+    if dt is None:
+        return None
+    if dt.tzinfo is not None:
+        # Convert to UTC and strip timezone
+        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
 
 
 class TaskService:
-    # EXP values based on importance
-    EXP_VALUES = {
-        TaskImportance.TRIVIAL: 10,
-        TaskImportance.LOW: 25,
-        TaskImportance.MEDIUM: 50,
-        TaskImportance.HIGH: 100,
-        TaskImportance.CRITICAL: 200,
-    }
-
     def __init__(self, repository: TaskRepository):
         self.repository = repository
 
     def _calculate_exp_value(self, importance: TaskImportance) -> int:
-        return self.EXP_VALUES.get(importance, 50)
+        return IMPORTANCE_EXP.get(importance.value, 50)
 
-    async def create_task(self, data: TaskCreate) -> Task:
+    async def create_task(self, data: TaskCreate, user_id: int) -> Task:
+        due_date = to_naive_utc(data.due_date)
         task = Task(
-            user_id=data.user_id,
+            user_id=user_id,
             title=data.title,
             description=data.description,
             status=data.status,
             importance=data.importance,
             exp_value=self._calculate_exp_value(data.importance),
-            due_date=data.due_date,
-            original_due_date=data.due_date,
+            due_date=due_date,
+            original_due_date=due_date,
             category_id=data.category_id,
             project_id=data.project_id,
         )
@@ -56,6 +60,10 @@ class TaskService:
         # Recalculate exp_value if importance changes
         if "importance" in update_data:
             update_data["exp_value"] = self._calculate_exp_value(update_data["importance"])
+
+        # Convert timezone-aware datetime to naive UTC
+        if "due_date" in update_data:
+            update_data["due_date"] = to_naive_utc(update_data["due_date"])
 
         return await self.repository.update(task_id, update_data)
 
@@ -109,7 +117,7 @@ class TaskService:
             task_id,
             {
                 "status": TaskStatus.RESCHEDULED,
-                "due_date": new_due_date,
+                "due_date": to_naive_utc(new_due_date),
                 "reschedule_count": task.reschedule_count + 1,
                 "last_rescheduled_at": utc_now(),
             },

@@ -4,7 +4,6 @@ from models.task import TaskStatus, TaskImportance
 
 
 class TaskCreate(BaseModel):
-    user_id: int
     title: str
     description: str | None = None
     status: TaskStatus = TaskStatus.TODO

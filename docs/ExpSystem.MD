@@ -23,11 +23,11 @@ Goal: Build confidence through consistency
 IMPORTANCE ENUM:
 ────────────────
 
-TRIVIAL      →   5 EXP     (Quick tasks, small wins)
-LOW          →  15 EXP     (Simple daily tasks)
-MEDIUM       →  30 EXP     (Standard tasks)
-HIGH         →  50 EXP     (Important tasks)
-CRITICAL     →  100 EXP    (Major milestones, life-changing tasks)
+TRIVIAL      →  10 EXP     (Quick tasks, small wins)
+LOW          →  25 EXP     (Simple daily tasks)
+MEDIUM       →  50 EXP     (Standard tasks)
+HIGH         → 100 EXP     (Important tasks)
+CRITICAL     → 200 EXP     (Major milestones, life-changing tasks)
 
 
 Example tasks:
@@ -137,16 +137,16 @@ What does 1,570 EXP/day look like?
 ──────────────────────────────────
 
 Option 1: Many small tasks
-• 10 TRIVIAL (50) + 10 LOW (150) + 10 MEDIUM (300) = 500 EXP
-• Need about 3x this → Very active user
+• 10 TRIVIAL (100) + 10 LOW (250) + 10 MEDIUM (500) = 850 EXP
+• Need about 2x this → Very active user
 
 Option 2: Balanced approach
-• 3 TRIVIAL (15) + 5 LOW (75) + 5 MEDIUM (150) + 3 HIGH (150) = 390 EXP
-• About 4x this needed
+• 3 TRIVIAL (30) + 5 LOW (125) + 5 MEDIUM (250) + 3 HIGH (300) = 705 EXP
+• About 2-3x this needed
 
 Option 3: Focus on important tasks
-• 2 TRIVIAL (10) + 3 LOW (45) + 4 MEDIUM (120) + 2 HIGH (100) + 1 CRITICAL (100) = 375 EXP
-• About 4x this needed
+• 2 TRIVIAL (20) + 3 LOW (75) + 4 MEDIUM (200) + 2 HIGH (200) + 1 CRITICAL (200) = 695 EXP
+• About 2-3x this needed
 
 
 Reality check:
@@ -156,81 +156,6 @@ Most users will reach Level 50-70 in 5 years (still great!).
 Level 100 is for the most committed users (top 1%).
 
 This is intentional - makes Level 100 prestigious!
-```
-
----
-
-## Adjusted EXP Values (More Achievable)
-
-```
-If you want Level 100 more achievable with moderate daily use:
-
-IMPORTANCE ENUM (Adjusted):
-───────────────────────────
-
-TRIVIAL      →   10 EXP
-LOW          →   25 EXP
-MEDIUM       →   50 EXP
-HIGH         →   100 EXP
-CRITICAL     →   200 EXP
-
-
-Daily realistic scenario:
-─────────────────────────
-Morning routine:
-• Wake up on time (LOW): 25 EXP
-• Exercise 30 min (MEDIUM): 50 EXP
-• Healthy breakfast (TRIVIAL): 10 EXP
-
-Work/Study:
-• Complete main task (HIGH): 100 EXP
-• 2 smaller tasks (MEDIUM): 100 EXP
-• Respond to emails (LOW): 25 EXP
-
-Evening:
-• Read 30 min (MEDIUM): 50 EXP
-• Plan tomorrow (LOW): 25 EXP
-• Sleep on time (TRIVIAL): 10 EXP
-
-Daily Total: ~395 EXP
-
-This person reaches:
-• Level 10 in ~10 days
-• Level 25 in ~3 months
-• Level 50 in ~2 years
-• Level 100 in ~5+ years (with consistency bonuses later)
-```
-
----
-
-## Recommended Final Values
-
-```
-IMPORTANCE → EXP:
-─────────────────
-
-TRIVIAL      →   10 EXP     (2-5 min tasks)
-LOW          →   25 EXP     (5-15 min tasks)
-MEDIUM       →   50 EXP     (15-60 min tasks)
-HIGH         →   100 EXP    (1-3 hour tasks)
-CRITICAL     →   200 EXP    (Major achievements)
-
-
-LEVEL THRESHOLDS:
-─────────────────
-
-Level 1:         0 EXP      (Starting point)
-Level 5:       720 EXP      (~1 week)
-Level 10:    3,560 EXP      (~1 month)
-Level 20:   20,000 EXP      (~3-4 months)
-Level 30:   62,000 EXP      (~8-10 months)
-Level 40:  145,000 EXP      (~1.5 years)
-Level 50:  295,000 EXP      (~2 years)
-Level 60:  530,000 EXP      (~3 years)
-Level 70:  880,000 EXP      (~3.5 years)
-Level 80: 1,360,000 EXP     (~4 years)
-Level 90: 2,010,000 EXP     (~4.5 years)
-Level 100: 2,870,000 EXP    (~5 years)
 ```
 
 ---
@@ -252,41 +177,6 @@ Or use lookup table for exact values.
 To calculate EXP needed for specific level:
 ───────────────────────────────────────────
 EXP_needed = 100 × (Level ^ 1.8)
-```
-
----
-
-## Quick Reference
-
-```
-USER STORY EXAMPLES:
-────────────────────
-
-Casual user (200 EXP/day):
-• Level 10 in 20 days
-• Level 25 in 6 months
-• Level 50 in 4 years
-• Probably won't reach 100
-
-Regular user (400 EXP/day):
-• Level 10 in 10 days
-• Level 25 in 3 months
-• Level 50 in 2 years
-• Level 100 in 5+ years (possible!)
-
-Power user (800 EXP/day):
-• Level 10 in 5 days
-• Level 25 in 6 weeks
-• Level 50 in 1 year
-• Level 100 in 3-4 years (with bonuses)
-
-
-This feels fair because:
-────────────────────────
-• Quick early wins (Level 1-10 in first month)
-• Steady middle progress (Level 10-50 over 1-2 years)
-• Prestigious high levels (Level 50+ takes dedication)
-• Level 100 is a true 5-year achievement
 ```
 
 ---
@@ -354,3 +244,57 @@ failed_at DateTime No null
 
 created_at DateTime Yes now()
 updated_at DateTime Yes now()
+
+Here's a description for each importance level:
+
+---
+
+## **TRIVIAL** — 10 EXP
+
+**Quick wins, minimal effort**
+
+Tasks that take less than 5 minutes and require almost no mental energy. These are small actions you can do on autopilot.
+
+_Examples: Drink a glass of water, make your bed, reply to a simple message, take your vitamins, stretch for 2 minutes_
+
+---
+
+## **LOW** — 25 EXP
+
+**Simple daily habits**
+
+Routine tasks that are easy but still require some intention. They keep your day running smoothly without much challenge.
+
+_Examples: Check emails, do a 10-minute walk, review your to-do list, prepare a simple meal, tidy your desk_
+
+---
+
+## **MEDIUM** — 50 EXP
+
+**Standard meaningful tasks**
+
+Tasks that require focus, time, or effort. These are the core actions that move your goals forward and make up a productive day.
+
+_Examples: Complete a work assignment, exercise for 30 minutes, study for an hour, attend a meeting, cook a proper meal_
+
+---
+
+## **HIGH** — 100 EXP
+
+**Important and challenging**
+
+Tasks that demand significant effort, skill, or courage. These often involve deadlines, responsibility, or stepping outside your comfort zone.
+
+_Examples: Finish a major project, have a difficult conversation, complete a job application, present to a group, learn a complex skill_
+
+---
+
+## **CRITICAL** — 200 EXP
+
+**Life-changing milestones**
+
+Major achievements that have lasting impact on your life. These are the boss fights — tasks you've been building toward or avoiding.
+
+_Examples: Pass an important exam, launch your project, complete a certification, finish a marathon, make a major life decision_
+
+---

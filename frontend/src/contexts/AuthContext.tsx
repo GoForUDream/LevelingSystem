@@ -1,4 +1,14 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+
+interface LevelProgress {
+  level: number
+  total_exp: number
+  current_level_exp: number
+  exp_to_next_level: number
+  progress_percent: number
+  rank_title: string
+  rank_theme: string
+}
 
 interface User {
   id: number
@@ -7,6 +17,7 @@ interface User {
   avatar_url: string | null
   total_exp: number
   level: number
+  level_progress: LevelProgress
 }
 
 interface AuthContextType {
@@ -16,6 +27,7 @@ interface AuthContextType {
   login: () => void
   logout: () => void
   setToken: (token: string) => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -44,39 +56,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = `${API_URL}/api/auth/login`
   }
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!token) {
-        setIsLoading(false)
-        return
-      }
-
-      try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (response.ok) {
-          const userData = await response.json()
-          setUser(userData)
-        } else {
-          logout()
-        }
-      } catch (error) {
-        console.error('Failed to fetch user:', error)
-        logout()
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchUser = useCallback(async () => {
+    if (!token) {
+      setIsLoading(false)
+      return
     }
 
-    fetchUser()
+    try {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const userData = await response.json()
+        setUser(userData)
+      } else {
+        logout()
+      }
+    } catch (error) {
+      console.error('Failed to fetch user:', error)
+      logout()
+    } finally {
+      setIsLoading(false)
+    }
   }, [token])
 
+  const refreshUser = useCallback(async () => {
+    await fetchUser()
+  }, [fetchUser])
+
+  useEffect(() => {
+    fetchUser()
+  }, [fetchUser])
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, setToken }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout, setToken, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

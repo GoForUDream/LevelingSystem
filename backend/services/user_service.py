@@ -1,14 +1,10 @@
 from repositories.user_repository import UserRepository
 from models.user import User
 from schemas.user import UserCreate, UserUpdate
+from constants.levels import get_level_from_exp, get_level_progress
 
 
 class UserService:
-    # EXP thresholds for leveling up
-    def _exp_for_level(self, level: int) -> int:
-        # Each level requires more EXP: level * 100
-        return level * 100
-
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
@@ -35,6 +31,14 @@ class UserService:
     ) -> User:
         user = await self.repository.get_by_google_id(google_id)
         if user:
+            # Update avatar and name on each login
+            if avatar_url or name:
+                update_data = {}
+                if avatar_url:
+                    update_data["avatar_url"] = avatar_url
+                if name:
+                    update_data["name"] = name
+                user = await self.repository.update(user.id, update_data)
             return user
 
         user = User(
@@ -58,17 +62,16 @@ class UserService:
             return None
 
         new_total_exp = user.total_exp + exp
-        new_level = user.level
-
-        # Check for level ups
-        while new_total_exp >= self._exp_for_level(new_level):
-            new_total_exp -= self._exp_for_level(new_level)
-            new_level += 1
+        new_level = get_level_from_exp(new_total_exp)
 
         return await self.repository.update(
             user_id,
-            {"total_exp": user.total_exp + exp, "level": new_level},
+            {"total_exp": new_total_exp, "level": new_level},
         )
+
+    def get_user_progress(self, user: User) -> dict:
+        """Get detailed level progress for a user."""
+        return get_level_progress(user.total_exp)
 
     async def delete_user(self, user_id: int) -> bool:
         return await self.repository.delete(user_id)
