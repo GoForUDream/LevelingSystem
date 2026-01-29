@@ -1,19 +1,16 @@
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from "@/contexts/AuthContext";
+import AppTitle from "@/components/AppTitle";
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login } = useAuth();
 
   return (
     <div className="min-h-screen bg-sl-black flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo/Title */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-sl-blue tracking-tight mb-2 text-glow-blue">
-            Leveling System
-          </h1>
-          <p className="text-sl-silver-muted">
-            Level up your productivity
-          </p>
+        <div className="text-center mb-12 flex flex-col items-center">
+          <AppTitle className="h-16 mb-4" />
+          <p className="text-sl-silver-muted">Level up your productivity</p>
         </div>
 
         {/* Login Card */}
@@ -62,5 +59,5 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
-  )
+  );
 }

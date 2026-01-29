@@ -1,4 +1,4 @@
-import { Check, Pencil } from 'lucide-react'
+import { Check, Pencil, Repeat } from 'lucide-react'
 
 export interface Task {
   id: number
@@ -9,6 +9,10 @@ export interface Task {
   exp_value: number
   exp_earned: number | null
   due_date: string | null
+  is_recurring: boolean
+  recurrence_type: string | null
+  recurrence_days: string | null
+  recurrence_interval: number | null
 }
 
 interface TaskCardProps {
@@ -37,7 +41,7 @@ const importanceGlow: Record<string, string> = {
 export function TaskCard({ task, onComplete, onEdit, isCompleting }: TaskCardProps) {
   return (
     <div
-      className={`group relative p-3 border transition-all duration-200 overflow-hidden bg-gradient-to-r from-sl-gray-light/80 to-sl-gray/50 ${importanceGlow[task.importance]}`}
+      className={`group relative p-3 border transition-all duration-200 overflow-hidden bg-linear-to-r from-sl-gray-light/80 to-sl-gray/50 ${importanceGlow[task.importance]}`}
     >
       {/* Left accent bar */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${importanceColors[task.importance]}`} />
@@ -56,6 +60,9 @@ export function TaskCard({ task, onComplete, onEdit, isCompleting }: TaskCardPro
             <span className="text-[10px] font-bold tracking-wider text-sl-blue text-glow-blue">
               {task.exp_value} EXP
             </span>
+            {task.is_recurring && (
+              <Repeat size={10} className="text-sl-silver-muted" />
+            )}
           </div>
         </div>
 

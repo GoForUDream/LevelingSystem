@@ -41,7 +41,7 @@ export const PrimaryButton = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </button>
     );
-  }
+  },
 );
 PrimaryButton.displayName = "PrimaryButton";
 
@@ -79,7 +79,7 @@ export const SecondaryButton = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </button>
     );
-  }
+  },
 );
 SecondaryButton.displayName = "SecondaryButton";
 
@@ -111,7 +111,7 @@ export const GhostButton = forwardRef<HTMLButtonElement, ButtonProps>(
         {children}
       </button>
     );
-  }
+  },
 );
 GhostButton.displayName = "GhostButton";
 
@@ -143,7 +143,7 @@ export const IconButton = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </button>
     );
-  }
+  },
 );
 IconButton.displayName = "IconButton";
 
@@ -182,7 +182,7 @@ export const DangerButton = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </button>
     );
-  }
+  },
 );
 DangerButton.displayName = "DangerButton";
 
@@ -198,7 +198,7 @@ export const AddButton = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || isLoading}
         className={`
           w-full py-3
-          bg-transparent text-sl-silver-muted
+          bg-transparent text-sl-silver
           font-bold uppercase tracking-wider text-xs
           border border-dashed border-sl-gray-muted/50
           transition-all duration-200
@@ -214,7 +214,7 @@ export const AddButton = forwardRef<HTMLButtonElement, ButtonProps>(
         {children}
       </button>
     );
-  }
+  },
 );
 AddButton.displayName = "AddButton";
 
@@ -241,6 +241,6 @@ export const DisabledButton = forwardRef<HTMLButtonElement, ButtonProps>(
         {children}
       </button>
     );
-  }
+  },
 );
 DisabledButton.displayName = "DisabledButton";

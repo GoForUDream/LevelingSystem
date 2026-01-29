@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from models.task import TaskStatus, TaskImportance
+from models.task import TaskStatus, TaskImportance, RecurrenceType
 
 
 class TaskCreate(BaseModel):
@@ -11,6 +11,11 @@ class TaskCreate(BaseModel):
     due_date: datetime | None = None
     category_id: int | None = None
     project_id: int | None = None
+    is_recurring: bool = False
+    recurrence_type: RecurrenceType | None = None
+    recurrence_days: list[int] | None = None
+    recurrence_interval: int | None = None
+    recurrence_end_date: datetime | None = None
 
 
 class TaskUpdate(BaseModel):
@@ -21,6 +26,10 @@ class TaskUpdate(BaseModel):
     due_date: datetime | None = None
     category_id: int | None = None
     project_id: int | None = None
+    is_recurring: bool | None = None
+    recurrence_type: RecurrenceType | None = None
+    recurrence_days: list[int] | None = None
+    recurrence_interval: int | None = None
 
 
 class TaskResponse(BaseModel):
@@ -44,6 +53,11 @@ class TaskResponse(BaseModel):
     started_at: datetime | None
     completed_at: datetime | None
     failed_at: datetime | None
+    is_recurring: bool
+    recurrence_type: RecurrenceType | None
+    recurrence_days: str | None
+    recurrence_interval: int | None
+    recurrence_end_date: datetime | None
     created_at: datetime
     updated_at: datetime
 

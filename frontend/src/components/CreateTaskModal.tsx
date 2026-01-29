@@ -86,6 +86,11 @@ export default function TaskModal({
   const [description, setDescription] = useState("");
   const [importance, setImportance] = useState("MEDIUM");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceType, setRecurrenceType] = useState("DAILY");
+  const [weeklyDays, setWeeklyDays] = useState<number[]>([]);
+  const [monthlyDays, setMonthlyDays] = useState<number[]>([]);
+  const [customInterval, setCustomInterval] = useState(2);
 
   const isEditMode = !!editTask;
 
@@ -95,10 +100,29 @@ export default function TaskModal({
       setTitle(editTask.title);
       setDescription(editTask.description || "");
       setImportance(editTask.importance);
+      setIsRecurring(editTask.is_recurring ?? false);
+      setRecurrenceType(editTask.recurrence_type || "DAILY");
+      const days: number[] = editTask.recurrence_days ? JSON.parse(editTask.recurrence_days) : [];
+      if (editTask.recurrence_type === "WEEKLY") {
+        setWeeklyDays(days);
+        setMonthlyDays([]);
+      } else if (editTask.recurrence_type === "MONTHLY") {
+        setMonthlyDays(days);
+        setWeeklyDays([]);
+      } else {
+        setWeeklyDays([]);
+        setMonthlyDays([]);
+      }
+      setCustomInterval(editTask.recurrence_interval ?? 2);
     } else {
       setTitle("");
       setDescription("");
       setImportance("MEDIUM");
+      setIsRecurring(false);
+      setRecurrenceType("DAILY");
+      setWeeklyDays([]);
+      setMonthlyDays([]);
+      setCustomInterval(2);
     }
   }, [editTask, isOpen]);
 
@@ -125,6 +149,24 @@ export default function TaskModal({
             title: title.trim(),
             description: description.trim() || null,
             importance,
+            is_recurring: isRecurring,
+            ...(isRecurring
+              ? {
+                  recurrence_type: recurrenceType,
+                  recurrence_days:
+                    recurrenceType === "WEEKLY"
+                      ? weeklyDays
+                      : recurrenceType === "MONTHLY"
+                        ? monthlyDays
+                        : null,
+                  recurrence_interval:
+                    recurrenceType === "CUSTOM" ? customInterval : null,
+                }
+              : {
+                  recurrence_type: null,
+                  recurrence_days: null,
+                  recurrence_interval: null,
+                }),
           }),
         });
 
@@ -140,18 +182,33 @@ export default function TaskModal({
         const dueDate = new Date(selectedDate);
         dueDate.setHours(23, 59, 59, 999);
 
+        const payload: Record<string, unknown> = {
+            title: title.trim(),
+            description: description.trim() || null,
+            importance,
+            due_date: dueDate.toISOString(),
+        };
+
+        if (isRecurring) {
+            payload.is_recurring = true;
+            payload.recurrence_type = recurrenceType;
+            if (recurrenceType === "WEEKLY") {
+                payload.recurrence_days = weeklyDays;
+            } else if (recurrenceType === "MONTHLY") {
+                payload.recurrence_days = monthlyDays;
+            }
+            if (recurrenceType === "CUSTOM") {
+                payload.recurrence_interval = customInterval;
+            }
+        }
+
         const response = await fetch(`${API_URL}/api/tasks`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            title: title.trim(),
-            description: description.trim() || null,
-            importance,
-            due_date: dueDate.toISOString(),
-          }),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
@@ -282,6 +339,136 @@ export default function TaskModal({
               </div>
             )}
           </div>
+
+          {/* Recurrence */}
+          {(
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={isRecurring}
+                  onChange={(e) => setIsRecurring(e.target.checked)}
+                  className="accent-sl-blue w-4 h-4"
+                />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted">
+                  Repeat this quest
+                </span>
+              </label>
+
+              {isRecurring && (
+                <div className="mt-3 p-3 bg-sl-gray border border-sl-gray-muted space-y-3">
+                  {/* Frequency picker */}
+                  <div className="grid grid-cols-4 gap-1">
+                    {(["DAILY", "WEEKLY", "MONTHLY", "CUSTOM"] as const).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setRecurrenceType(type)}
+                        className={`py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                          recurrenceType === type
+                            ? "bg-sl-blue text-white border-transparent"
+                            : "bg-sl-gray text-sl-silver-muted border-sl-gray-muted hover:border-sl-silver-muted"
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* WEEKLY: day-of-week toggles */}
+                  {recurrenceType === "WEEKLY" && (
+                    <div>
+                      <span className="text-[10px] text-sl-silver-muted block mb-1.5">Repeat on</span>
+                      <div className="flex gap-1">
+                        {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map((label, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() =>
+                              setWeeklyDays((prev) =>
+                                prev.includes(idx)
+                                  ? prev.filter((d) => d !== idx)
+                                  : [...prev, idx].sort()
+                              )
+                            }
+                            className={`flex-1 h-8 text-[10px] font-bold transition-all border ${
+                              weeklyDays.includes(idx)
+                                ? "bg-sl-blue text-white border-transparent"
+                                : "bg-sl-gray-light text-sl-silver-muted border-sl-gray-muted hover:border-sl-silver-muted"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* MONTHLY: calendar day grid */}
+                  {recurrenceType === "MONTHLY" && (
+                    <div>
+                      <span className="text-[10px] text-sl-silver-muted block mb-1.5">Repeat on days</span>
+                      <div className="grid grid-cols-7 gap-1">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() =>
+                              setMonthlyDays((prev) =>
+                                prev.includes(d)
+                                  ? prev.filter((x) => x !== d)
+                                  : [...prev, d].sort((a, b) => a - b)
+                              )
+                            }
+                            className={`h-8 text-[10px] font-bold transition-all border ${
+                              monthlyDays.includes(d)
+                                ? "bg-sl-blue text-white border-transparent"
+                                : "bg-sl-gray-light text-sl-silver-muted border-sl-gray-muted hover:border-sl-silver-muted"
+                            }`}
+                          >
+                            {d}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMonthlyDays((prev) =>
+                            prev.includes(-1)
+                              ? prev.filter((x) => x !== -1)
+                              : [...prev, -1].sort((a, b) => a - b)
+                          )
+                        }
+                        className={`mt-2 w-full h-8 text-[10px] font-bold tracking-wider transition-all border ${
+                          monthlyDays.includes(-1)
+                            ? "bg-sl-blue text-white border-transparent"
+                            : "bg-sl-gray-light text-sl-silver-muted border-sl-gray-muted hover:border-sl-silver-muted"
+                        }`}
+                      >
+                        Last day of month
+                      </button>
+                    </div>
+                  )}
+
+                  {/* CUSTOM: interval input */}
+                  {recurrenceType === "CUSTOM" && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-sl-silver-muted">Every</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={customInterval}
+                        onChange={(e) => setCustomInterval(Number(e.target.value))}
+                        className="w-16 bg-sl-gray-light border border-sl-gray-muted text-sl-silver text-xs px-2 py-1 focus:outline-none focus:border-sl-blue"
+                      />
+                      <span className="text-[10px] text-sl-silver-muted">days</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">

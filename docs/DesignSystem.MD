@@ -390,7 +390,7 @@ src/
 ```
 BACKGROUNDS
   Page:     bg-sl-black
-  Card:     bg-sl-gray or bg-gradient-to-b from-sl-gray to-sl-black
+  Card:     bg-sl-gray or bg-linear-to-b from-sl-gray to-sl-black
   Input:    bg-sl-gray
 
 TEXT

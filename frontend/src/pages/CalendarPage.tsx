@@ -26,8 +26,21 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
   const [editTask, setEditTask] = useState<Task | null>(null);
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
+
+  const toggleExpandedDay = (dateKey: string) => {
+    setExpandedDays((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(dateKey)) {
+        newSet.delete(dateKey);
+      } else {
+        newSet.add(dateKey);
+      }
+      return newSet;
+    });
+  };
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -62,11 +75,29 @@ export default function CalendarPage() {
     return dateOnly < todayOnly;
   };
 
+  const importanceOrder: Record<string, number> = {
+    CRITICAL: 0,
+    HIGH: 1,
+    MEDIUM: 2,
+    LOW: 3,
+    TRIVIAL: 4,
+  };
+
   const getTasksForDay = (date: Date) => {
-    return tasks.filter((task) => {
+    const dayTasks = tasks.filter((task) => {
       if (!task.due_date) return false;
       const taskDate = new Date(task.due_date);
       return taskDate.toDateString() === date.toDateString();
+    });
+
+    // Sort: active tasks by importance (higher first), then completed tasks
+    return dayTasks.sort((a, b) => {
+      // Completed tasks go to the bottom
+      if (a.status === "COMPLETED" && b.status !== "COMPLETED") return 1;
+      if (a.status !== "COMPLETED" && b.status === "COMPLETED") return -1;
+
+      // Sort by importance (lower number = higher importance)
+      return importanceOrder[a.importance] - importanceOrder[b.importance];
     });
   };
 
@@ -194,9 +225,9 @@ export default function CalendarPage() {
             <div
               key={day.toISOString()}
               ref={isToday(day) ? todayRef : null}
-              className={`flex-shrink-0 w-96 h-full flex flex-col transition-all duration-300 relative overflow-hidden ${
+              className={`shrink-0 w-96 h-full flex flex-col transition-all duration-300 relative overflow-hidden ${
                 isToday(day)
-                  ? "bg-gradient-to-b from-sl-gray to-sl-black border-l border-r border-sl-blue/30"
+                  ? "bg-linear-to-b from-sl-gray to-sl-black border-l border-r border-sl-blue/30"
                   : isPast(day)
                     ? "bg-[#0a0a0a] border-r border-[#1a1a1a]"
                     : "bg-sl-black border-r border-sl-gray-light/50 hover:bg-sl-gray/30"
@@ -219,7 +250,7 @@ export default function CalendarPage() {
               )}
               {/* Day Header */}
               <div
-                className={`relative z-10 flex-shrink-0 h-24 px-5 py-4 border-b ${
+                className={`relative z-10 shrink-0 h-24 px-5 py-4 border-b ${
                   isToday(day)
                     ? "border-sl-blue/30 bg-sl-blue/5"
                     : isPast(day)
@@ -239,7 +270,7 @@ export default function CalendarPage() {
                   {dayNames[day.getDay()]}
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-baseline gap-3">
+                  <div className="flex items-center gap-3">
                     <span
                       className={`text-4xl font-bold tracking-tight ${
                         isToday(day)
@@ -251,11 +282,11 @@ export default function CalendarPage() {
                     >
                       {day.getDate()}
                     </span>
-                    {isToday(day) && (
+                    {/* {isToday(day) && (
                       <span className="text-[10px] font-bold uppercase tracking-wider text-sl-black bg-sl-blue px-2 py-1 animate-pulse-glow">
                         Today
                       </span>
-                    )}
+                    )} */}
                   </div>
                   {dayTasks.length > 0 && (
                     <div className="text-right">
@@ -281,30 +312,93 @@ export default function CalendarPage() {
 
               {/* Tasks Area */}
               <div className="relative z-10 flex-1 p-4 overflow-y-auto">
-                <div className="space-y-2">
-                  {dayTasks.map((task) =>
-                    task.status === "COMPLETED" ? (
-                      <CompletedTaskCard key={task.id} task={task} />
-                    ) : (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onComplete={completeTask}
-                        onEdit={handleEditTask}
-                        isCompleting={completingTaskId === task.id}
-                      />
-                    ),
-                  )}
-                </div>
-
-                {/* Add Task Button */}
+                {/* Add Task Button - Always on top */}
                 {isPast(day) ? (
-                  <DisabledButton className="mt-3">+ New Quest</DisabledButton>
+                  <DisabledButton className="mb-3">+ New Quest</DisabledButton>
                 ) : (
-                  <AddButton onClick={() => handleAddTask(day)} className="mt-3">
+                  <AddButton
+                    onClick={() => handleAddTask(day)}
+                    className="mb-3"
+                  >
                     + New Quest
                   </AddButton>
                 )}
+
+                {(() => {
+                  const activeTasks = dayTasks.filter(
+                    (t) => t.status !== "COMPLETED",
+                  );
+                  const completedTasks = dayTasks.filter(
+                    (t) => t.status === "COMPLETED",
+                  );
+                  const dateKey = day.toISOString();
+                  const isExpanded = expandedDays.has(dateKey);
+                  const shouldCollapse = completedTasks.length >= 5;
+
+                  return (
+                    <>
+                      {/* Active Tasks */}
+                      <div className="space-y-2">
+                        {activeTasks.map((task) => (
+                          <TaskCard
+                            key={task.id}
+                            task={task}
+                            onComplete={completeTask}
+                            onEdit={handleEditTask}
+                            isCompleting={completingTaskId === task.id}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Completed Tasks */}
+                      {completedTasks.length > 0 && (
+                        <div className={activeTasks.length > 0 ? "mt-3" : ""}>
+                          {shouldCollapse ? (
+                            <>
+                              <button
+                                onClick={() => toggleExpandedDay(dateKey)}
+                                className="w-full py-2 px-3 mb-2 flex items-center justify-between bg-[#0a0a0a] border border-[#1a1a1a] text-[#444] hover:text-[#666] hover:border-[#333] transition-colors cursor-pointer"
+                              >
+                                <span className="text-xs font-bold uppercase tracking-wider">
+                                  Completed ({completedTasks.length})
+                                </span>
+                                <svg
+                                  className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                  />
+                                </svg>
+                              </button>
+                              {isExpanded && (
+                                <div className="space-y-2">
+                                  {completedTasks.map((task) => (
+                                    <CompletedTaskCard
+                                      key={task.id}
+                                      task={task}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="space-y-2">
+                              {completedTasks.map((task) => (
+                                <CompletedTaskCard key={task.id} task={task} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           );

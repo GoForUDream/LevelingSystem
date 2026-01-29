@@ -25,6 +25,13 @@ class TaskImportance(str, enum.Enum):
     CRITICAL = "CRITICAL"
 
 
+class RecurrenceType(str, enum.Enum):
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"
+    CUSTOM = "CUSTOM"
+
+
 class Task(Base):
     __tablename__ = "tasks"
 
@@ -59,6 +66,14 @@ class Task(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     failed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    is_recurring: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    recurrence_type: Mapped[str | None] = mapped_column(
+        SQLEnum(RecurrenceType), nullable=True
+    )
+    recurrence_days: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    recurrence_interval: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    recurrence_end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()

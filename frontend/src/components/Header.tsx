@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import AppTitle from "@/components/AppTitle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { GhostButton, IconButton, PrimaryButton, DangerButton } from "@/components/ui/buttons";
+import {
+  GhostButton,
+  IconButton,
+  PrimaryButton,
+  DangerButton,
+} from "@/components/ui/buttons";
 
 interface HeaderProps {
   currentDate: Date;
@@ -49,18 +55,50 @@ export default function Header({
   const [showRanksModal, setShowRanksModal] = useState(false);
 
   const rankData = [
-    { range: "1-5", title: "Awakened One", theme: "Just discovered their potential" },
+    {
+      range: "1-5",
+      title: "Awakened One",
+      theme: "Just discovered their potential",
+    },
     { range: "6-10", title: "Beginner Warrior", theme: "Starting the journey" },
-    { range: "11-20", title: "Task Slayer", theme: "Learning to conquer daily challenges" },
-    { range: "21-30", title: "Dungeon Crawler", theme: "Consistently tackling goals" },
-    { range: "31-40", title: "Goal Hunter", theme: "Actively pursuing objectives" },
+    {
+      range: "11-20",
+      title: "Task Slayer",
+      theme: "Learning to conquer daily challenges",
+    },
+    {
+      range: "21-30",
+      title: "Dungeon Crawler",
+      theme: "Consistently tackling goals",
+    },
+    {
+      range: "31-40",
+      title: "Goal Hunter",
+      theme: "Actively pursuing objectives",
+    },
     { range: "41-50", title: "Elite Achiever", theme: "Proven track record" },
-    { range: "51-60", title: "S-Rank Executor", theme: "High-level discipline" },
-    { range: "61-70", title: "Master of Habits", theme: "Habits are now second nature" },
-    { range: "71-80", title: "Sovereign of Will", theme: "Unshakeable determination" },
+    {
+      range: "51-60",
+      title: "S-Rank Executor",
+      theme: "High-level discipline",
+    },
+    {
+      range: "61-70",
+      title: "Master of Habits",
+      theme: "Habits are now second nature",
+    },
+    {
+      range: "71-80",
+      title: "Sovereign of Will",
+      theme: "Unshakeable determination",
+    },
     { range: "81-90", title: "Ruler of Self", theme: "Complete self-mastery" },
     { range: "91-99", title: "Monarch's Equal", theme: "Among the elite few" },
-    { range: "100+", title: "Shadow Monarch", theme: "Absolute discipline, unlimited potential" },
+    {
+      range: "100+",
+      title: "Shadow Monarch",
+      theme: "Absolute discipline, unlimited potential",
+    },
   ];
 
   const getInitials = (name: string) => {
@@ -73,7 +111,7 @@ export default function Header({
   };
 
   return (
-    <header className="shrink-0 px-8 py-4 border-b border-sl-blue/20 bg-gradient-to-r from-sl-black via-sl-gray/50 to-sl-black">
+    <header className="shrink-0 px-8 py-4 border-b border-sl-blue/20 bg-linear-to-r from-sl-black via-sl-gray/50 to-sl-black">
       <div className="flex items-center justify-between">
         {/* Left - Menu & User */}
         <div className="flex items-center gap-4 flex-1">
@@ -98,7 +136,7 @@ export default function Header({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="bg-sl-gray border border-sl-blue/30 shadow-[0_0_20px_rgba(0,163,255,0.2)] min-w-[180px]"
+              className="bg-sl-gray border border-sl-blue/30 shadow-[0_0_20px_rgba(0,163,255,0.2)] min-w-45"
             >
               {user && (
                 <>
@@ -107,7 +145,8 @@ export default function Header({
                       {user.name}
                     </div>
                     <div className="text-[10px] text-sl-silver-muted mt-0.5">
-                      Level {user.level_progress.level} • {user.level_progress.rank_title}
+                      Level {user.level_progress.level} •{" "}
+                      {user.level_progress.rank_title}
                     </div>
                   </div>
                   <DropdownMenuSeparator className="bg-sl-gray-muted" />
@@ -130,7 +169,9 @@ export default function Header({
                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                   />
                 </svg>
-                <span className="text-xs font-bold uppercase tracking-wider">Logout</span>
+                <span className="text-xs font-bold uppercase tracking-wider">
+                  Logout
+                </span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -152,7 +193,7 @@ export default function Header({
                   </div>
                 )}
                 {/* Level badge */}
-                <div className="absolute -bottom-1 -right-1 bg-sl-blue text-sl-black text-[10px] font-bold px-1.5 py-0.5 min-w-[20px] text-center">
+                <div className="absolute -bottom-1 -right-1 bg-sl-blue text-sl-black text-[10px] font-bold px-1.5 py-0.5 min-w-5 text-center">
                   {user.level_progress.level}
                 </div>
               </div>
@@ -172,15 +213,17 @@ export default function Header({
                 </div>
                 <div className="flex items-center gap-3 mt-2">
                   <span className="text-[10px] font-bold tracking-wider text-sl-blue text-glow-blue">
-                    {user.level_progress.current_level_exp.toLocaleString()} / {user.level_progress.exp_to_next_level.toLocaleString()} EXP
+                    {user.level_progress.current_level_exp.toLocaleString()} /{" "}
+                    {user.level_progress.exp_to_next_level.toLocaleString()} EXP
                   </span>
                   <div className="w-32 h-1.5 bg-sl-black border border-sl-gray-muted overflow-hidden">
                     <div
                       className="h-full transition-all duration-500"
                       style={{
                         width: `${user.level_progress.progress_percent}%`,
-                        background: 'linear-gradient(to right, #00A3FF, #7B2CBF)',
-                        boxShadow: '0 0 10px rgba(0, 163, 255, 0.5)',
+                        background:
+                          "linear-gradient(to right, #00A3FF, #7B2CBF)",
+                        boxShadow: "0 0 10px rgba(0, 163, 255, 0.5)",
                       }}
                     />
                   </div>
@@ -192,9 +235,7 @@ export default function Header({
 
         {/* Center - Logo */}
         <div className="flex-1 flex justify-center">
-          <h1 className="text-xl font-black uppercase tracking-[0.2em] text-sl-blue text-glow-blue-intense">
-            Leveling System
-          </h1>
+          <AppTitle className="h-12" />
         </div>
 
         {/* Right - Navigation */}
@@ -249,7 +290,8 @@ export default function Header({
               Confirm Logout
             </DialogTitle>
             <DialogDescription className="text-sl-silver-muted text-sm pt-2">
-              Are you sure you want to logout? Your progress is saved, but you'll need to login again to continue your quests.
+              Are you sure you want to logout? Your progress is saved, but
+              you'll need to login again to continue your quests.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 pt-4">
@@ -286,7 +328,8 @@ export default function Header({
           <div className="flex-1 overflow-y-auto pr-2 -mr-2">
             <div className="space-y-2 pt-2">
               {rankData.map((rank) => {
-                const isCurrentRank = user?.level_progress.rank_title === rank.title;
+                const isCurrentRank =
+                  user?.level_progress.rank_title === rank.title;
                 return (
                   <div
                     key={rank.range}
@@ -299,7 +342,9 @@ export default function Header({
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className={`text-xs font-bold uppercase tracking-wider ${
-                          isCurrentRank ? "text-sl-blue" : "text-sl-silver-muted"
+                          isCurrentRank
+                            ? "text-sl-blue"
+                            : "text-sl-silver-muted"
                         }`}
                       >
                         Level {rank.range}
@@ -319,7 +364,9 @@ export default function Header({
                     </div>
                     <div
                       className={`text-xs mt-1 ${
-                        isCurrentRank ? "text-sl-silver-muted" : "text-sl-silver-dark"
+                        isCurrentRank
+                          ? "text-sl-silver-muted"
+                          : "text-sl-silver-dark"
                       }`}
                     >
                       {rank.theme}

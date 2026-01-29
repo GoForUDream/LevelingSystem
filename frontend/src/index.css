@@ -44,6 +44,7 @@
 /* Base styles */
 body {
   background-color: var(--sl-black);
+  font-family: 'Oxanium', Inter, sans-serif;
 }
 
 /* Hide scrollbar */
