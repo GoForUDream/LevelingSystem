@@ -75,6 +75,20 @@ export default function CalendarPage() {
     return dateOnly < todayOnly;
   };
 
+  const isFuture = (date: Date) => {
+    const dateOnly = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    );
+    const todayOnly = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    );
+    return dateOnly > todayOnly;
+  };
+
   const importanceOrder: Record<string, number> = {
     CRITICAL: 0,
     HIGH: 1,
@@ -346,6 +360,7 @@ export default function CalendarPage() {
                             onComplete={completeTask}
                             onEdit={handleEditTask}
                             isCompleting={completingTaskId === task.id}
+                            isFuture={isFuture(day)}
                           />
                         ))}
                       </div>

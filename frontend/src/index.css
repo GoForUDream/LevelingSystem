@@ -253,6 +253,43 @@ html {
   --color-ring: var(--ring);
 }
 
+/* LED border animation */
+@keyframes led-spin {
+  from { --led-angle: 0deg; }
+  to { --led-angle: 360deg; }
+}
+
+@property --led-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.led-border {
+  position: relative;
+}
+
+.led-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: 1;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--led-angle),
+    transparent 0deg,
+    transparent 330deg,
+    var(--led-color) 350deg,
+    transparent 360deg
+  );
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  padding: 1px;
+  animation: led-spin 3s linear infinite;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

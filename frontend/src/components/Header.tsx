@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import AppTitle from "@/components/AppTitle";
+import { Menu, Trophy, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +53,7 @@ export default function Header({
   onToday,
 }: HeaderProps) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showRanksModal, setShowRanksModal] = useState(false);
 
@@ -118,20 +121,8 @@ export default function Header({
           {/* Menu Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <IconButton className="hover:text-sl-blue">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
+              <IconButton className="hover:text-sl-blue focus:outline-none focus-visible:outline-none data-[state=open]:bg-transparent">
+                <Menu size={20} />
               </IconButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -153,25 +144,19 @@ export default function Header({
                 </>
               )}
               <DropdownMenuItem
-                onClick={() => setShowLogoutModal(true)}
-                className="text-sl-red/70 hover:text-sl-red hover:bg-sl-red/5 cursor-pointer"
+                onClick={() => navigate("/achievements")}
+                className="text-sl-silver hover:text-sl-blue hover:bg-sl-blue/5 cursor-pointer text-xs font-bold uppercase tracking-wider"
               >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  />
-                </svg>
-                <span className="text-xs font-bold uppercase tracking-wider">
-                  Logout
-                </span>
+                <Trophy size={16} />
+                Achievements
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-sl-gray-muted" />
+              <DropdownMenuItem
+                onClick={() => setShowLogoutModal(true)}
+                className="text-sl-red hover:text-sl-red hover:bg-sl-red/5 cursor-pointer text-xs font-bold uppercase tracking-wider"
+              >
+                <LogOut size={16} />
+                Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -244,19 +229,7 @@ export default function Header({
 
           <div className="flex items-center gap-1 ml-4">
             <IconButton onClick={onPrevMonth}>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
+              <ChevronLeft size={16} />
             </IconButton>
 
             <span className="text-sm font-bold uppercase tracking-wider text-sl-silver min-w-40 text-center">
@@ -264,19 +237,7 @@ export default function Header({
             </span>
 
             <IconButton onClick={onNextMonth}>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+              <ChevronRight size={16} />
             </IconButton>
           </div>
         </div>

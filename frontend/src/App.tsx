@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/sonner'
 import LoginPage from '@/pages/LoginPage'
 import AuthCallback from '@/pages/AuthCallback'
 import CalendarPage from '@/pages/CalendarPage'
+import AchievementsPage from '@/pages/AchievementsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
@@ -64,6 +65,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <CalendarPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/achievements"
+        element={
+          <ProtectedRoute>
+            <AchievementsPage />
           </ProtectedRoute>
         }
       />

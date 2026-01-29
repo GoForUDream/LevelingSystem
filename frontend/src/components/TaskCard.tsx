@@ -20,6 +20,7 @@ interface TaskCardProps {
   onComplete: (taskId: number, expValue: number) => void
   onEdit: (task: Task) => void
   isCompleting: boolean
+  isFuture?: boolean
 }
 
 const importanceColors: Record<string, string> = {
@@ -38,7 +39,7 @@ const importanceGlow: Record<string, string> = {
   TRIVIAL: 'border-sl-gray-muted/50 hover:border-sl-silver-muted',
 }
 
-export function TaskCard({ task, onComplete, onEdit, isCompleting }: TaskCardProps) {
+export function TaskCard({ task, onComplete, onEdit, isCompleting, isFuture = false }: TaskCardProps) {
   return (
     <div
       className={`group relative p-3 border transition-all duration-200 overflow-hidden bg-linear-to-r from-sl-gray-light/80 to-sl-gray/50 ${importanceGlow[task.importance]}`}
@@ -76,18 +77,20 @@ export function TaskCard({ task, onComplete, onEdit, isCompleting }: TaskCardPro
             <Pencil size={16} strokeWidth={2} />
           </button>
 
-          {/* Complete button */}
-          <button
-            onClick={() => onComplete(task.id, task.exp_value)}
-            disabled={isCompleting}
-            className="p-1 text-sl-silver-muted hover:text-sl-blue transition-all disabled:opacity-50 cursor-pointer"
-          >
-            {isCompleting ? (
-              <div className="w-4 h-4 border-2 border-sl-blue border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Check size={18} strokeWidth={2.5} />
-            )}
-          </button>
+          {/* Complete button - hidden for future tasks */}
+          {!isFuture && (
+            <button
+              onClick={() => onComplete(task.id, task.exp_value)}
+              disabled={isCompleting}
+              className="p-1 text-sl-silver-muted hover:text-sl-blue transition-all disabled:opacity-50 cursor-pointer"
+            >
+              {isCompleting ? (
+                <div className="w-4 h-4 border-2 border-sl-blue border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Check size={18} strokeWidth={2.5} />
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>
