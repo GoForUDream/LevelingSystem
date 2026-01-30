@@ -13,6 +13,7 @@ export interface Task {
   recurrence_type: string | null
   recurrence_days: string | null
   recurrence_interval: number | null
+  goal_id: number | null
 }
 
 interface TaskCardProps {

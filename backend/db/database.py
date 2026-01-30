@@ -37,6 +37,7 @@ async def init_db():
             "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recurrence_days VARCHAR(100)",
             "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recurrence_interval INTEGER",
             "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recurrence_end_date TIMESTAMP",
+            "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS goal_id INTEGER",
         ]
         for sql in migrations:
             await conn.execute(text(sql))

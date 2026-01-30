@@ -62,6 +62,7 @@ class Task(Base):
 
     category_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     project_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    goal_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

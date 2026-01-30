@@ -11,6 +11,7 @@ class TaskCreate(BaseModel):
     due_date: datetime | None = None
     category_id: int | None = None
     project_id: int | None = None
+    goal_id: int | None = None
     is_recurring: bool = False
     recurrence_type: RecurrenceType | None = None
     recurrence_days: list[int] | None = None
@@ -26,6 +27,7 @@ class TaskUpdate(BaseModel):
     due_date: datetime | None = None
     category_id: int | None = None
     project_id: int | None = None
+    goal_id: int | None = None
     is_recurring: bool | None = None
     recurrence_type: RecurrenceType | None = None
     recurrence_days: list[int] | None = None
@@ -50,6 +52,7 @@ class TaskResponse(BaseModel):
     is_exp_processed: bool
     category_id: int | None
     project_id: int | None
+    goal_id: int | None
     started_at: datetime | None
     completed_at: datetime | None
     failed_at: datetime | None

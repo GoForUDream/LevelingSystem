@@ -72,6 +72,20 @@ const importanceLevels = [
   },
 ];
 
+interface GoalOption {
+  id: number;
+  title: string;
+  rank: string;
+}
+
+const rankColors: Record<string, string> = {
+  S: "text-sl-red",
+  A: "text-[#FF6B00]",
+  B: "text-sl-purple",
+  C: "text-sl-blue",
+  D: "text-sl-silver-muted",
+};
+
 const API_URL = "http://localhost:8000";
 
 export default function TaskModal({
@@ -91,8 +105,22 @@ export default function TaskModal({
   const [weeklyDays, setWeeklyDays] = useState<number[]>([]);
   const [monthlyDays, setMonthlyDays] = useState<number[]>([]);
   const [customInterval, setCustomInterval] = useState(2);
+  const [goalId, setGoalId] = useState<number | null>(null);
+  const [goals, setGoals] = useState<GoalOption[]>([]);
 
   const isEditMode = !!editTask;
+
+  // Fetch goals list when modal opens
+  useEffect(() => {
+    if (isOpen && token) {
+      fetch(`${API_URL}/api/goals`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => setGoals(data))
+        .catch(() => setGoals([]));
+    }
+  }, [isOpen, token]);
 
   // Populate form when editing
   useEffect(() => {
@@ -102,6 +130,7 @@ export default function TaskModal({
       setImportance(editTask.importance);
       setIsRecurring(editTask.is_recurring ?? false);
       setRecurrenceType(editTask.recurrence_type || "DAILY");
+      setGoalId(editTask.goal_id ?? null);
       const days: number[] = editTask.recurrence_days ? JSON.parse(editTask.recurrence_days) : [];
       if (editTask.recurrence_type === "WEEKLY") {
         setWeeklyDays(days);
@@ -123,6 +152,7 @@ export default function TaskModal({
       setWeeklyDays([]);
       setMonthlyDays([]);
       setCustomInterval(2);
+      setGoalId(null);
     }
   }, [editTask, isOpen]);
 
@@ -149,6 +179,7 @@ export default function TaskModal({
             title: title.trim(),
             description: description.trim() || null,
             importance,
+            goal_id: goalId,
             is_recurring: isRecurring,
             ...(isRecurring
               ? {
@@ -187,6 +218,7 @@ export default function TaskModal({
             description: description.trim() || null,
             importance,
             due_date: dueDate.toISOString(),
+            goal_id: goalId,
         };
 
         if (isRecurring) {
@@ -465,6 +497,40 @@ export default function TaskModal({
                       <span className="text-[10px] text-sl-silver-muted">days</span>
                     </div>
                   )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Link to Goal */}
+          {goals.length > 0 && (
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted mb-2">
+                Link to Goal{" "}
+                <span className="text-sl-silver-dark font-normal">(optional)</span>
+              </label>
+              <select
+                value={goalId ?? ""}
+                onChange={(e) =>
+                  setGoalId(e.target.value ? Number(e.target.value) : null)
+                }
+                className="w-full bg-sl-gray border border-sl-gray-muted px-4 py-3 text-sl-silver focus:outline-none focus:border-sl-blue focus:shadow-[0_0_10px_rgba(0,163,255,0.3)] transition-all appearance-none"
+              >
+                <option value="">None</option>
+                {goals.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    [{g.rank}] {g.title}
+                  </option>
+                ))}
+              </select>
+              {goalId && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${rankColors[goals.find((g) => g.id === goalId)?.rank ?? "C"]}`}>
+                    {goals.find((g) => g.id === goalId)?.rank}-Rank
+                  </span>
+                  <span className="text-[10px] text-sl-silver-muted">
+                    {goals.find((g) => g.id === goalId)?.title}
+                  </span>
                 </div>
               )}
             </div>

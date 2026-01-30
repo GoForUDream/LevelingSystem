@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import AppTitle from "@/components/AppTitle";
-import { Menu, Trophy, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { Menu, Trophy, Target, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -143,6 +143,13 @@ export default function Header({
                   <DropdownMenuSeparator className="bg-sl-gray-muted" />
                 </>
               )}
+              <DropdownMenuItem
+                onClick={() => navigate("/goals")}
+                className="text-sl-silver hover:text-sl-blue hover:bg-sl-blue/5 cursor-pointer text-xs font-bold uppercase tracking-wider"
+              >
+                <Target size={16} />
+                Goals
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => navigate("/achievements")}
                 className="text-sl-silver hover:text-sl-blue hover:bg-sl-blue/5 cursor-pointer text-xs font-bold uppercase tracking-wider"

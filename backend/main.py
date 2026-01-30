@@ -5,6 +5,7 @@ from db.database import init_db
 from resolvers.task_resolver import router as task_router
 from resolvers.user_resolver import router as user_router
 from resolvers.auth_resolver import router as auth_router
+from resolvers.goal_resolver import router as goal_router
 
 
 @asynccontextmanager
@@ -26,6 +27,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(task_router)
 app.include_router(user_router)
+app.include_router(goal_router)
 
 
 @app.get("/api/info")

@@ -51,6 +51,7 @@ export const ranks: RankSection[] = [
         category: "Early Bird",
         requirement: "5 tasks before 7 AM",
         tagline: "The early hunter catches prey",
+        image: "/badges/E-Rank-Dawn-Waker.png",
       },
       {
         name: "Night Walker",
@@ -112,6 +113,7 @@ export const ranks: RankSection[] = [
         category: "Early Bird",
         requirement: "20 tasks before 7 AM",
         tagline: "Discipline starts at sunrise",
+        image: "/badges/D-Rank-Morning-Strike.png",
       },
       {
         name: "Dusk Hunter",
@@ -173,6 +175,7 @@ export const ranks: RankSection[] = [
         category: "Early Bird",
         requirement: "50 tasks before 7 AM",
         tagline: "You own the morning",
+        image: "/badges/C-Rank-First-Light.png",
       },
       {
         name: "Midnight Striker",
@@ -234,6 +237,7 @@ export const ranks: RankSection[] = [
         category: "Early Bird",
         requirement: "100 tasks before 7 AM",
         tagline: "Dawn is your domain",
+        image: "/badges/B-Rank-Sunrise-Hunter.png",
       },
       {
         name: "Shadow Stalker",
@@ -295,6 +299,7 @@ export const ranks: RankSection[] = [
         category: "Early Bird",
         requirement: "250 tasks before 7 AM",
         tagline: "Light follows your lead",
+        image: "/badges/A-Rank-Aurora-Knight.png",
       },
       {
         name: "Void Knight",
@@ -356,6 +361,7 @@ export const ranks: RankSection[] = [
         category: "Early Bird",
         requirement: "500 tasks before 7 AM",
         tagline: "The sun rises for you",
+        image: "/badges/S-Rank-Sun-Sovereign.png",
       },
       {
         name: "Night Monarch",
