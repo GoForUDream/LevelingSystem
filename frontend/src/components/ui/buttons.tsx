@@ -200,7 +200,7 @@ export const AddButton = forwardRef<HTMLButtonElement, ButtonProps>(
           w-full py-3
           bg-transparent text-sl-silver
           font-bold uppercase tracking-wider text-xs
-          border border-dashed border-sl-gray-muted/50
+          border border-dashed border-sl-gray-muted
           transition-all duration-200
           cursor-pointer
           hover:text-sl-blue hover:border-sl-blue hover:bg-sl-blue/5

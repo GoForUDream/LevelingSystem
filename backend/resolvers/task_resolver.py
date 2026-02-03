@@ -110,6 +110,27 @@ async def complete_task(
     return updated
 
 
+@router.post("/{task_id}/cancel", response_model=TaskResponse)
+async def cancel_task(
+    task_id: int,
+    current_user: User = Depends(get_current_user),
+    service: TaskService = Depends(get_task_service),
+    user_service: UserService = Depends(get_user_service),
+):
+    task = await service.get_task(task_id)
+    if not task or task.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.status == "COMPLETED":
+        raise HTTPException(status_code=400, detail="Cannot cancel a completed task")
+    if task.status == "CANCELLED":
+        raise HTTPException(status_code=400, detail="Task already cancelled")
+    updated = await service.cancel_task(task_id)
+    # Deduct 20% EXP penalty from user
+    if updated.exp_penalty:
+        await user_service.add_exp(current_user.id, -updated.exp_penalty)
+    return updated
+
+
 @router.post("/{task_id}/fail", response_model=TaskResponse)
 async def fail_task(
     task_id: int,

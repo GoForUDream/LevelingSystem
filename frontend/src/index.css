@@ -75,55 +75,9 @@ html {
   background: var(--sl-blue);
 }
 
-/* Background colors */
-.bg-sl-black { background-color: var(--sl-black); }
-.bg-sl-gray { background-color: var(--sl-gray); }
-.bg-sl-gray-light { background-color: var(--sl-gray-light); }
-.bg-sl-gray-muted { background-color: var(--sl-gray-muted); }
-.bg-sl-blue { background-color: var(--sl-blue); }
-.bg-sl-blue-dark { background-color: var(--sl-blue-dark); }
-.bg-sl-purple { background-color: var(--sl-purple); }
-.bg-sl-red { background-color: var(--sl-red); }
-
-/* Text colors */
-.text-sl-blue { color: var(--sl-blue); }
-.text-sl-blue-dark { color: var(--sl-blue-dark); }
-.text-sl-purple { color: var(--sl-purple); }
-.text-sl-silver { color: var(--sl-silver); }
-.text-sl-silver-muted { color: var(--sl-silver-muted); }
-.text-sl-silver-dark { color: var(--sl-silver-dark); }
-.text-sl-red { color: var(--sl-red); }
-.text-sl-black { color: var(--sl-black); }
-
-/* Border colors */
-.border-sl-blue { border-color: var(--sl-blue); }
-.border-sl-blue-dark { border-color: var(--sl-blue-dark); }
-.border-sl-purple { border-color: var(--sl-purple); }
-.border-sl-gray { border-color: var(--sl-gray); }
-.border-sl-gray-light { border-color: var(--sl-gray-light); }
-.border-sl-gray-muted { border-color: var(--sl-gray-muted); }
-.border-sl-red { border-color: var(--sl-red); }
-
-/* Ring colors */
-.ring-sl-blue { --tw-ring-color: var(--sl-blue); }
-.ring-sl-purple { --tw-ring-color: var(--sl-purple); }
-
-/* Focus ring */
-.focus\:ring-sl-blue:focus { --tw-ring-color: var(--sl-blue); }
-.focus\:border-sl-blue:focus { border-color: var(--sl-blue); }
-
-/* Placeholder color */
-.placeholder-sl-silver-dark::placeholder { color: var(--sl-silver-dark); }
-
-/* Hover states */
-.hover\:bg-sl-gray:hover { background-color: var(--sl-gray); }
-.hover\:bg-sl-gray-light:hover { background-color: var(--sl-gray-light); }
-.hover\:bg-sl-blue:hover { background-color: var(--sl-blue); }
-.hover\:bg-sl-blue-dark:hover { background-color: var(--sl-blue-dark); }
-.hover\:text-sl-blue:hover { color: var(--sl-blue); }
-.hover\:text-sl-silver:hover { color: var(--sl-silver); }
-.hover\:border-sl-blue:hover { border-color: var(--sl-blue); }
-.hover\:border-sl-gray-muted:hover { border-color: var(--sl-gray-muted); }
+/* Manual utility classes removed — sl-* colors are now registered
+   in @theme inline below, so Tailwind generates all variants
+   (bg-, text-, border-, hover:, /opacity, etc.) automatically. */
 
 /* Glow effects */
 .glow-blue {
@@ -215,13 +169,6 @@ html {
   background: linear-gradient(135deg, var(--sl-gray-light) 0%, var(--sl-gray) 100%);
 }
 
-/* Importance colors for tasks */
-.importance-trivial { background-color: var(--sl-silver-muted); }
-.importance-low { background-color: var(--sl-blue-dark); }
-.importance-medium { background-color: var(--sl-blue); }
-.importance-high { background-color: var(--sl-purple); }
-.importance-critical { background-color: var(--sl-red); }
-
 /* Spinner animation border */
 .border-t-sl-blue { border-top-color: var(--sl-blue); }
 
@@ -251,6 +198,19 @@ html {
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Solo Leveling colors */
+  --color-sl-blue: var(--sl-blue);
+  --color-sl-blue-dark: var(--sl-blue-dark);
+  --color-sl-purple: var(--sl-purple);
+  --color-sl-black: var(--sl-black);
+  --color-sl-silver: var(--sl-silver);
+  --color-sl-silver-muted: var(--sl-silver-muted);
+  --color-sl-silver-dark: var(--sl-silver-dark);
+  --color-sl-red: var(--sl-red);
+  --color-sl-gray: var(--sl-gray);
+  --color-sl-gray-light: var(--sl-gray-light);
+  --color-sl-gray-muted: var(--sl-gray-muted);
 }
 
 /* LED border animation */

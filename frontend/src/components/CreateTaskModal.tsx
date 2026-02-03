@@ -19,12 +19,13 @@ interface TaskModalProps {
   editTask?: Task | null;
 }
 
-const importanceLevels = [
+const rankLevels = [
   {
     value: "TRIVIAL",
-    label: "Trivial",
+    label: "D",
     exp: 10,
-    color: "importance-trivial",
+    color: "bg-sl-silver-muted",
+    accent: "border-sl-silver-muted",
     subtitle: "Quick wins, minimal effort",
     description:
       "Tasks that take less than 5 minutes and require almost no mental energy.",
@@ -32,9 +33,10 @@ const importanceLevels = [
   },
   {
     value: "LOW",
-    label: "Low",
+    label: "C",
     exp: 25,
-    color: "importance-low",
+    color: "bg-sl-blue",
+    accent: "border-sl-blue",
     subtitle: "Simple daily habits",
     description:
       "Routine tasks that are easy but still require some intention.",
@@ -42,9 +44,10 @@ const importanceLevels = [
   },
   {
     value: "MEDIUM",
-    label: "Medium",
+    label: "B",
     exp: 50,
-    color: "importance-medium",
+    color: "bg-sl-purple",
+    accent: "border-sl-purple",
     subtitle: "Standard meaningful tasks",
     description:
       "Tasks that require focus, time, or effort. Core actions that move your goals forward.",
@@ -52,9 +55,10 @@ const importanceLevels = [
   },
   {
     value: "HIGH",
-    label: "High",
+    label: "A",
     exp: 100,
-    color: "importance-high",
+    color: "bg-[#FF6B00]",
+    accent: "border-[#FF6B00]",
     subtitle: "Important and challenging",
     description:
       "Tasks that demand significant effort, skill, or courage. Often involve deadlines or stepping outside comfort zone.",
@@ -62,9 +66,10 @@ const importanceLevels = [
   },
   {
     value: "CRITICAL",
-    label: "Critical",
+    label: "S",
     exp: 200,
-    color: "importance-critical",
+    color: "bg-sl-red",
+    accent: "border-sl-red",
     subtitle: "Life-changing milestones",
     description:
       "Major achievements with lasting impact. These are the boss fights you've been building toward.",
@@ -254,7 +259,7 @@ export default function TaskModal({
         onTaskSaved();
         onClose();
 
-        const selectedExp = importanceLevels.find(
+        const selectedExp = rankLevels.find(
           (l) => l.value === importance
         )?.exp;
         toast.success("Quest accepted!", {
@@ -276,7 +281,7 @@ export default function TaskModal({
     }
   };
 
-  const selectedImportance = importanceLevels.find(
+  const selectedRank = rankLevels.find(
     (i) => i.value === importance
   );
 
@@ -332,10 +337,10 @@ export default function TaskModal({
           {/* Importance */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted mb-2">
-              Difficulty
+              Rank
             </label>
             <div className="grid grid-cols-5 gap-1">
-              {importanceLevels.map((level) => (
+              {rankLevels.map((level) => (
                 <button
                   key={level.value}
                   type="button"
@@ -351,22 +356,22 @@ export default function TaskModal({
               ))}
             </div>
 
-            {/* Importance Description */}
-            {selectedImportance && (
-              <div className="mt-3 p-3 bg-sl-gray border-l-2 border-sl-blue">
+            {/* Rank Description */}
+            {selectedRank && (
+              <div className={`mt-3 p-3 bg-sl-gray border-l-2 ${selectedRank.accent}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold text-sl-silver">
-                    {selectedImportance.subtitle}
+                    {selectedRank.subtitle}
                   </span>
                   <span className="text-xs font-bold text-sl-blue text-glow-blue">
-                    +{selectedImportance.exp} EXP
+                    +{selectedRank.exp} EXP
                   </span>
                 </div>
                 <p className="text-xs text-sl-silver-muted mb-2">
-                  {selectedImportance.description}
+                  {selectedRank.description}
                 </p>
                 <p className="text-[10px] text-sl-silver-dark">
-                  e.g. {selectedImportance.examples}
+                  e.g. {selectedRank.examples}
                 </p>
               </div>
             )}

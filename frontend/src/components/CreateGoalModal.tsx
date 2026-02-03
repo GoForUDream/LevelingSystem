@@ -27,11 +27,56 @@ interface GoalModalProps {
 }
 
 const rankLevels = [
-  { value: "D", label: "D", color: "bg-sl-gray text-sl-silver-muted border-sl-gray-muted" },
-  { value: "C", label: "C", color: "bg-sl-blue/20 text-sl-blue border-sl-blue/50" },
-  { value: "B", label: "B", color: "bg-sl-purple/20 text-sl-purple border-sl-purple/50" },
-  { value: "A", label: "A", color: "bg-[#FF6B00]/20 text-[#FF6B00] border-[#FF6B00]/50" },
-  { value: "S", label: "S", color: "bg-sl-red/20 text-sl-red border-sl-red/50" },
+  {
+    value: "D",
+    label: "D",
+    color: "bg-sl-gray text-sl-silver-muted border-sl-gray-muted",
+    accent: "border-sl-silver-muted",
+    subtitle: "Short-term goals with a clear finish line",
+    description: "Goals that can be completed within days to a couple of weeks. Low complexity, low risk, but still meaningful progress.",
+    timeframe: "Days to 2 weeks",
+    examples: "Organize workspace, finish a book, set up a budget spreadsheet",
+  },
+  {
+    value: "C",
+    label: "C",
+    color: "bg-sl-blue/20 text-sl-blue border-sl-blue/50",
+    accent: "border-sl-blue",
+    subtitle: "Mid-term goals that need a plan",
+    description: "Goals that take weeks to a month and involve multiple steps or phases. Moderate complexity with some dependencies between tasks.",
+    timeframe: "2 weeks to 1 month",
+    examples: "Complete an online course, build a 30-day exercise routine, redesign your portfolio",
+  },
+  {
+    value: "B",
+    label: "B",
+    color: "bg-sl-purple/20 text-sl-purple border-sl-purple/50",
+    accent: "border-sl-purple",
+    subtitle: "Long-term goals that test your commitment",
+    description: "Goals that span one to three months across different stages. They require planning, tracking, and adapting along the way.",
+    timeframe: "1-3 months",
+    examples: "Train for a half marathon, launch an MVP, pass a certification exam",
+  },
+  {
+    value: "A",
+    label: "A",
+    color: "bg-[#FF6B00]/20 text-[#FF6B00] border-[#FF6B00]/50",
+    accent: "border-[#FF6B00]",
+    subtitle: "Major goals that reshape part of your life",
+    description: "Goals that take three to six months of sustained effort with complex task structures and multiple milestones. You won't be the same person when you finish.",
+    timeframe: "3-6 months",
+    examples: "Get a promotion, write a book draft, complete a body transformation",
+  },
+  {
+    value: "S",
+    label: "S",
+    color: "bg-sl-red/20 text-sl-red border-sl-red/50",
+    accent: "border-sl-red",
+    subtitle: "Life-defining goals that transform who you are",
+    description: "Goals that take six months to a year or more, made up of dozens or hundreds of tasks. These are the mountains that change everything.",
+    timeframe: "6 months to 1 year+",
+    examples: "Start a business, earn a degree, achieve financial independence",
+  },
 ];
 
 const API_URL = "http://localhost:8000";
@@ -181,6 +226,30 @@ export default function CreateGoalModal({
                 </button>
               ))}
             </div>
+
+            {/* Rank Description */}
+            {(() => {
+              const selected = rankLevels.find((l) => l.value === rank);
+              if (!selected) return null;
+              return (
+                <div className={`mt-3 p-3 bg-sl-gray border-l-2 ${selected.accent}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-sl-silver">
+                      {selected.subtitle}
+                    </span>
+                    <span className="text-[10px] font-bold text-sl-blue text-glow-blue">
+                      {selected.timeframe}
+                    </span>
+                  </div>
+                  <p className="text-xs text-sl-silver-muted mb-2">
+                    {selected.description}
+                  </p>
+                  <p className="text-[10px] text-sl-silver-dark">
+                    e.g. {selected.examples}
+                  </p>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Dates */}

@@ -278,26 +278,26 @@ Text: sl-blue
 
 ---
 
-## Importance/Difficulty Levels
+## Rank Tiers (Task Difficulty)
 
-Visual hierarchy for task importance:
+Visual hierarchy for task rank:
 
 ```
-TRIVIAL     │ sl-silver-muted  │ Subtle, low contrast
-LOW         │ sl-blue-dark     │ Cool, understated
-MEDIUM      │ sl-blue          │ Standard, visible
-HIGH        │ sl-purple        │ Magical, important
-CRITICAL    │ sl-red           │ Urgent, glowing
+D-Rank      │ sl-silver-muted  │ Subtle, low contrast       │  10 EXP
+C-Rank      │ sl-blue          │ Cool, visible               │  25 EXP
+B-Rank      │ sl-purple        │ Magical, standard           │  50 EXP
+A-Rank      │ #FF6B00 (orange) │ Important, bold             │ 100 EXP
+S-Rank      │ sl-red           │ Urgent, glowing             │ 200 EXP
 ```
 
-### Hover Effects by Importance
+### Hover Effects by Rank
 
 ```css
-TRIVIAL:  border-sl-gray-muted → border-sl-silver-muted
-LOW:      border-sl-blue-dark/30 → border-sl-blue-dark
-MEDIUM:   border-sl-blue/30 → border-sl-blue + glow
-HIGH:     border-sl-purple/50 → border-sl-purple + glow
-CRITICAL: border-sl-red/50 → border-sl-red + intense glow
+D-Rank:   border-sl-gray-muted → border-sl-silver-muted
+C-Rank:   border-sl-blue/30 → border-sl-blue + glow
+B-Rank:   border-sl-purple/30 → border-sl-purple + glow
+A-Rank:   border-[#FF6B00]/50 → border-[#FF6B00] + glow
+S-Rank:   border-sl-red/50 → border-sl-red + intense glow
 ```
 
 ---
@@ -342,7 +342,7 @@ transition: box-shadow 0.3s ease;
 |---------------|----------|
 | Task | Quest |
 | Create | Accept |
-| Importance | Difficulty |
+| Importance | Rank |
 | Complete | Done/Complete |
 | Experience Points | EXP |
 | User Level | Level |

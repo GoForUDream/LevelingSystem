@@ -14,6 +14,7 @@ import {
   Circle,
 } from "lucide-react";
 import { AddButton } from "@/components/ui/buttons";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import CreateGoalModal from "@/components/CreateGoalModal";
 
 interface GoalTask {
@@ -116,6 +117,16 @@ export default function GoalsPage() {
   }, [fetchGoals]);
 
   const handleToggleDone = async (goalId: number) => {
+    const goal = goals.find((g) => g.id === goalId);
+    if (goal && !goal.is_done) {
+      const undoneTasks = goal.tasks.filter((t) => t.status !== "COMPLETED");
+      if (undoneTasks.length > 0) {
+        toast.error("Complete all tasks first", {
+          description: `${undoneTasks.length} task${undoneTasks.length > 1 ? "s" : ""} still incomplete`,
+        });
+        return;
+      }
+    }
     try {
       const res = await fetch(`${API_URL}/api/goals/${goalId}/toggle`, {
         method: "POST",
@@ -229,29 +240,43 @@ export default function GoalsPage() {
                       {goal.rank}-Rank
                     </span>
                     <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleToggleDone(goal.id)}
-                        className="p-1 text-sl-silver-muted hover:text-sl-blue transition-all cursor-pointer"
-                        title={goal.is_done ? "Mark incomplete" : "Mark complete"}
-                      >
-                        {goal.is_done ? (
-                          <CheckCircle size={16} />
-                        ) : (
-                          <Circle size={16} />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => openEdit(goal)}
-                        className="p-1 text-sl-silver-muted hover:text-sl-silver transition-all cursor-pointer"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(goal.id)}
-                        className="p-1 text-sl-silver-muted hover:text-sl-red transition-all cursor-pointer"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => handleToggleDone(goal.id)}
+                            className="p-1 text-sl-silver-muted hover:text-sl-blue transition-all cursor-pointer"
+                          >
+                            {goal.is_done ? (
+                              <CheckCircle size={16} />
+                            ) : (
+                              <Circle size={16} />
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>{goal.is_done ? "Mark Incomplete" : "Mark Complete"}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => openEdit(goal)}
+                            className="p-1 text-sl-silver-muted hover:text-sl-silver transition-all cursor-pointer"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => handleDelete(goal.id)}
+                            className="p-1 text-sl-silver-muted hover:text-sl-red transition-all cursor-pointer"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete</TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                   <h2 className={`text-lg font-bold text-sl-silver tracking-wide ${goal.is_done ? "line-through" : ""}`}>

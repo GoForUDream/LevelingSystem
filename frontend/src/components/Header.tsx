@@ -23,6 +23,7 @@ import {
   PrimaryButton,
   DangerButton,
 } from "@/components/ui/buttons";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface HeaderProps {
   currentDate: Date;
@@ -235,17 +236,27 @@ export default function Header({
           <GhostButton onClick={onToday}>Today</GhostButton>
 
           <div className="flex items-center gap-1 ml-4">
-            <IconButton onClick={onPrevMonth}>
-              <ChevronLeft size={16} />
-            </IconButton>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <IconButton onClick={onPrevMonth}>
+                  <ChevronLeft size={16} />
+                </IconButton>
+              </TooltipTrigger>
+              <TooltipContent>Previous Month</TooltipContent>
+            </Tooltip>
 
             <span className="text-sm font-bold uppercase tracking-wider text-sl-silver min-w-40 text-center">
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </span>
 
-            <IconButton onClick={onNextMonth}>
-              <ChevronRight size={16} />
-            </IconButton>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <IconButton onClick={onNextMonth}>
+                  <ChevronRight size={16} />
+                </IconButton>
+              </TooltipTrigger>
+              <TooltipContent>Next Month</TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>

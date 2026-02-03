@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo, useLayoutEffect } from "react";
 import Header from "@/components/Header";
 import TaskModal from "@/components/CreateTaskModal";
-import { TaskCard, CompletedTaskCard, type Task } from "@/components/TaskCard";
+import { TaskCard, CompletedTaskCard, CancelledTaskCard, type Task } from "@/components/TaskCard";
 import { AddButton, DisabledButton } from "@/components/ui/buttons";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -49,6 +49,7 @@ export default function CalendarPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
+  const [cancellingTaskId, setCancellingTaskId] = useState<number | null>(null);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -84,7 +85,7 @@ export default function CalendarPage() {
     });
   };
 
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
 
   const isToday = (date: Date) => {
     return date.toDateString() === today.toDateString();
@@ -179,6 +180,40 @@ export default function CalendarPage() {
     }
   };
 
+  const cancelTask = async (taskId: number, expValue: number) => {
+    if (!token) return;
+
+    setCancellingTaskId(taskId);
+    try {
+      const response = await fetch(`${API_URL}/api/tasks/${taskId}/cancel`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const penalty = Math.floor(expValue / 5);
+        await fetchTasks();
+        await refreshUser();
+        toast.error("Task cancelled", {
+          description: `-${penalty} EXP penalty`,
+        });
+      } else {
+        const error = await response.json();
+        toast.error("Failed to cancel task", {
+          description: error.detail || "Please try again.",
+        });
+      }
+    } catch {
+      toast.error("Failed to cancel task", {
+        description: "Please try again.",
+      });
+    } finally {
+      setCancellingTaskId(null);
+    }
+  };
+
   // Scroll-edge detection to load more months + visible month tracking
   const handleScroll = useCallback(() => {
     const container = scrollRef.current;
@@ -215,7 +250,6 @@ export default function CalendarPage() {
     let closestKey: string | null = null;
     let closestDist = Infinity;
     monthMarkerRefs.current.forEach((el, key) => {
-      const markerCenter = el.offsetLeft + el.offsetWidth / 2;
       // Find the month marker whose first day is closest to (but not past) center,
       // i.e. the rightmost marker that starts at or before the viewport center
       if (el.offsetLeft <= centerX) {
@@ -502,10 +536,13 @@ export default function CalendarPage() {
 
                   {(() => {
                     const activeTasks = dayTasks.filter(
-                      (t) => t.status !== "COMPLETED",
+                      (t) => t.status !== "COMPLETED" && t.status !== "CANCELLED",
                     );
                     const completedTasks = dayTasks.filter(
                       (t) => t.status === "COMPLETED",
+                    );
+                    const cancelledTasks = dayTasks.filter(
+                      (t) => t.status === "CANCELLED",
                     );
                     const dateKey = day.toISOString();
                     const isExpanded = expandedDays.has(dateKey);
@@ -520,16 +557,29 @@ export default function CalendarPage() {
                               key={task.id}
                               task={task}
                               onComplete={completeTask}
+                              onCancel={cancelTask}
                               onEdit={handleEditTask}
                               isCompleting={completingTaskId === task.id}
+                              isCancelling={cancellingTaskId === task.id}
                               isFuture={isFuture(day)}
                             />
                           ))}
                         </div>
 
+                        {/* Cancelled Tasks */}
+                        {cancelledTasks.length > 0 && (
+                          <div className={activeTasks.length > 0 ? "mt-3" : ""}>
+                            <div className="space-y-2">
+                              {cancelledTasks.map((task) => (
+                                <CancelledTaskCard key={task.id} task={task} />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Completed Tasks */}
                         {completedTasks.length > 0 && (
-                          <div className={activeTasks.length > 0 ? "mt-3" : ""}>
+                          <div className={activeTasks.length > 0 || cancelledTasks.length > 0 ? "mt-3" : ""}>
                             {shouldCollapse ? (
                               <>
                                 <button

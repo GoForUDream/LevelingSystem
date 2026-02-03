@@ -8,3 +8,4 @@ greenlet
 email-validator
 python-jose[cryptography]
 httpx
+apscheduler

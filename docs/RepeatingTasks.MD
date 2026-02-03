@@ -66,7 +66,7 @@ POST /api/tasks
 {
   "title": "Morning Workout",
   "description": "30 min exercise",
-  "importance": "MEDIUM",
+  "importance": "MEDIUM",  // Displayed as B-Rank in UI
   "is_recurring": true,
   "recurrence_type": "WEEKLY",
   "recurrence_days": [1, 3, 5],  // Mon, Wed, Fri

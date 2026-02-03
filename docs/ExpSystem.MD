@@ -17,26 +17,26 @@ Goal: Build confidence through consistency
 
 ---
 
-## Importance Factor → EXP Reward
+## Rank Tiers → EXP Reward
 
 ```
-IMPORTANCE ENUM:
-────────────────
+RANK TIERS:
+───────────
 
-TRIVIAL      →  10 EXP     (Quick tasks, small wins)
-LOW          →  25 EXP     (Simple daily tasks)
-MEDIUM       →  50 EXP     (Standard tasks)
-HIGH         → 100 EXP     (Important tasks)
-CRITICAL     → 200 EXP     (Major milestones, life-changing tasks)
+D-Rank       →  10 EXP     (Quick tasks, small wins)
+C-Rank       →  25 EXP     (Simple daily tasks)
+B-Rank       →  50 EXP     (Standard tasks)
+A-Rank       → 100 EXP     (Important tasks)
+S-Rank       → 200 EXP     (Major milestones, life-changing tasks)
 
 
 Example tasks:
 ──────────────
-TRIVIAL:   Drink water, make bed, reply to a message
-LOW:       Read 10 pages, 15-min exercise, organize desk
-MEDIUM:    Complete work assignment, study 1 hour, gym session
-HIGH:      Finish project, job interview prep, important meeting
-CRITICAL:  Submit thesis, launch product, major presentation
+D-Rank:    Drink water, make bed, reply to a message
+C-Rank:    Read 10 pages, 15-min exercise, organize desk
+B-Rank:    Complete work assignment, study 1 hour, gym session
+A-Rank:    Finish project, job interview prep, important meeting
+S-Rank:    Submit thesis, launch product, major presentation
 ```
 
 ---
@@ -137,15 +137,15 @@ What does 1,570 EXP/day look like?
 ──────────────────────────────────
 
 Option 1: Many small tasks
-• 10 TRIVIAL (100) + 10 LOW (250) + 10 MEDIUM (500) = 850 EXP
+• 10 D-Rank (100) + 10 C-Rank (250) + 10 B-Rank (500) = 850 EXP
 • Need about 2x this → Very active user
 
 Option 2: Balanced approach
-• 3 TRIVIAL (30) + 5 LOW (125) + 5 MEDIUM (250) + 3 HIGH (300) = 705 EXP
+• 3 D-Rank (30) + 5 C-Rank (125) + 5 B-Rank (250) + 3 A-Rank (300) = 705 EXP
 • About 2-3x this needed
 
 Option 3: Focus on important tasks
-• 2 TRIVIAL (20) + 3 LOW (75) + 4 MEDIUM (200) + 2 HIGH (200) + 1 CRITICAL (200) = 695 EXP
+• 2 D-Rank (20) + 3 C-Rank (75) + 4 B-Rank (200) + 2 A-Rank (200) + 1 S-Rank (200) = 695 EXP
 • About 2-3x this needed
 
 
@@ -184,12 +184,12 @@ EXP_needed = 100 × (Level ^ 1.8)
 ## Summary
 
 ```
-IMPORTANCE ENUM:
-• TRIVIAL:   10 EXP
-• LOW:       25 EXP
-• MEDIUM:    50 EXP
-• HIGH:      100 EXP
-• CRITICAL:  200 EXP
+RANK TIERS:
+• D-Rank:    10 EXP
+• C-Rank:    25 EXP
+• B-Rank:    50 EXP
+• A-Rank:   100 EXP
+• S-Rank:   200 EXP
 
 LEVEL FORMULA:
 • Total EXP needed for level = 100 × (Level ^ 1.8)
@@ -221,7 +221,7 @@ title String(255) Yes -
 description Text No null
 
 status Enum Yes TODO
-importance Enum Yes MEDIUM
+importance Enum Yes MEDIUM (displayed as B-Rank)
 exp_value Integer Yes (calculated)
 
 due_date DateTime No null
@@ -249,7 +249,7 @@ Here's a description for each importance level:
 
 ---
 
-## **TRIVIAL** — 10 EXP
+## **D-Rank** — 10 EXP
 
 **Quick wins, minimal effort**
 
@@ -259,7 +259,7 @@ _Examples: Drink a glass of water, make your bed, reply to a simple message, tak
 
 ---
 
-## **LOW** — 25 EXP
+## **C-Rank** — 25 EXP
 
 **Simple daily habits**
 
@@ -269,7 +269,7 @@ _Examples: Check emails, do a 10-minute walk, review your to-do list, prepare a 
 
 ---
 
-## **MEDIUM** — 50 EXP
+## **B-Rank** — 50 EXP
 
 **Standard meaningful tasks**
 
@@ -279,7 +279,7 @@ _Examples: Complete a work assignment, exercise for 30 minutes, study for an hou
 
 ---
 
-## **HIGH** — 100 EXP
+## **A-Rank** — 100 EXP
 
 **Important and challenging**
 
@@ -289,7 +289,7 @@ _Examples: Finish a major project, have a difficult conversation, complete a job
 
 ---
 
-## **CRITICAL** — 200 EXP
+## **S-Rank** — 200 EXP
 
 **Life-changing milestones**
 

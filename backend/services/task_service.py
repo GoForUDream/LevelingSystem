@@ -211,6 +211,21 @@ class TaskService:
 
         return completed_task
 
+    async def cancel_task(self, task_id: int) -> Task | None:
+        task = await self.repository.get_by_id(task_id)
+        if not task:
+            return None
+
+        exp_penalty = task.exp_value // 5  # 20% penalty
+        return await self.repository.update(
+            task_id,
+            {
+                "status": TaskStatus.CANCELLED,
+                "exp_penalty": exp_penalty,
+                "is_exp_processed": True,
+            },
+        )
+
     async def fail_task(self, task_id: int) -> Task | None:
         task = await self.repository.get_by_id(task_id)
         if not task:
