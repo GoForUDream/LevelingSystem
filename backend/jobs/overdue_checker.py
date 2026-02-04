@@ -4,9 +4,11 @@ from models.task import Task, TaskStatus
 from models.user import User
 from constants.levels import get_level_from_exp
 from repositories.task_repository import TaskRepository
+from repositories.achievement_repository import AchievementRepository
 from services.task_service import TaskService
+from services.achievement_service import AchievementService
 from db.database import async_session
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,6 +36,7 @@ async def mark_overdue_tasks():
 
         if not overdue_tasks:
             logger.info("Overdue check: no overdue tasks found.")
+            await check_perfect_days(db, today_start)
             return
 
         logger.info(f"Overdue check: found {len(overdue_tasks)} overdue task(s).")
@@ -102,3 +105,43 @@ async def mark_overdue_tasks():
 
         await db.commit()
         logger.info("Overdue check: complete.")
+
+        # Check perfect days: for each user, if ALL tasks due yesterday are COMPLETED
+        await check_perfect_days(db, today_start)
+
+
+async def check_perfect_days(db, today_start):
+    """
+    Check if any user completed ALL their tasks due yesterday.
+    If so, increment their perfect_days counter.
+    """
+    yesterday_start = today_start - timedelta(days=1)
+
+    # Find all tasks due yesterday
+    result = await db.execute(
+        select(Task).where(
+            Task.due_date >= yesterday_start,
+            Task.due_date < today_start,
+        )
+    )
+    yesterday_tasks = list(result.scalars().all())
+
+    if not yesterday_tasks:
+        logger.info("Perfect day check: no tasks due yesterday.")
+        return
+
+    # Group by user
+    user_tasks: dict[int, list[Task]] = {}
+    for task in yesterday_tasks:
+        user_tasks.setdefault(task.user_id, []).append(task)
+
+    achievement_service = AchievementService(AchievementRepository(db))
+
+    for user_id, tasks in user_tasks.items():
+        all_completed = all(t.status == TaskStatus.COMPLETED for t in tasks)
+        if all_completed:
+            new_badges = await achievement_service.on_perfect_day(user_id)
+            logger.info(
+                f"User {user_id}: perfect day! ({len(tasks)} tasks all completed). "
+                f"New badges: {new_badges}"
+            )

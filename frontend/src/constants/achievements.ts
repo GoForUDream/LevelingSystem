@@ -1,5 +1,6 @@
 export interface Badge {
   name: string;
+  badgeId: string;
   category: string;
   requirement: string;
   tagline: string;
@@ -27,6 +28,7 @@ export const ranks: RankSection[] = [
     badges: [
       {
         name: "Awakened",
+        badgeId: "streak_e",
         category: "Streak",
         requirement: "3-day streak",
         tagline: "The system has noticed you",
@@ -34,6 +36,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "First Blood",
+        badgeId: "tasks_e",
         category: "Tasks",
         requirement: "10 tasks completed",
         tagline: "Your first shadows rise",
@@ -41,6 +44,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Gate Finder",
+        badgeId: "goals_e",
         category: "Goals",
         requirement: "Complete 1 goal",
         tagline: "Your first gate cleared",
@@ -48,6 +52,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Dawn Waker",
+        badgeId: "early_bird_e",
         category: "Early Bird",
         requirement: "5 tasks before 7 AM",
         tagline: "The early hunter catches prey",
@@ -55,6 +60,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Night Walker",
+        badgeId: "night_owl_e",
         category: "Night Owl",
         requirement: "5 tasks after 10 PM",
         tagline: "Shadows welcome you",
@@ -62,6 +68,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Second Chance",
+        badgeId: "comeback_e",
         category: "Comeback",
         requirement: "Return after 3 days inactive",
         tagline: "You came back",
@@ -69,6 +76,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Clean Sweep",
+        badgeId: "perfect_day_e",
         category: "Perfect Day",
         requirement: "3 perfect days",
         tagline: "No task left behind",
@@ -76,6 +84,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Quick Start",
+        badgeId: "speed_e",
         category: "Speed",
         requirement: "5 instant completions",
         tagline: "No hesitation",
@@ -93,6 +102,7 @@ export const ranks: RankSection[] = [
     badges: [
       {
         name: "Persistent",
+        badgeId: "streak_d",
         category: "Streak",
         requirement: "7-day streak",
         tagline: "A week of discipline",
@@ -100,6 +110,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Squad Leader",
+        badgeId: "tasks_d",
         category: "Tasks",
         requirement: "50 tasks completed",
         tagline: "A small army forms",
@@ -107,6 +118,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Gate Raider",
+        badgeId: "goals_d",
         category: "Goals",
         requirement: "Complete 5 goals",
         tagline: "You hunt for challenges",
@@ -114,6 +126,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Morning Strike",
+        badgeId: "early_bird_d",
         category: "Early Bird",
         requirement: "20 tasks before 7 AM",
         tagline: "Discipline starts at sunrise",
@@ -121,6 +134,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Dusk Hunter",
+        badgeId: "night_owl_d",
         category: "Night Owl",
         requirement: "20 tasks after 10 PM",
         tagline: "You thrive in darkness",
@@ -128,6 +142,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Resilient",
+        badgeId: "comeback_d",
         category: "Comeback",
         requirement: "Return after 7 days inactive",
         tagline: "Setbacks don't define you",
@@ -135,6 +150,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Full Clear",
+        badgeId: "perfect_day_d",
         category: "Perfect Day",
         requirement: "10 perfect days",
         tagline: "You clear every dungeon",
@@ -142,6 +158,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Rapid Fire",
+        badgeId: "speed_d",
         category: "Speed",
         requirement: "20 instant completions",
         tagline: "Think, act, done",
@@ -159,6 +176,7 @@ export const ranks: RankSection[] = [
     badges: [
       {
         name: "Relentless",
+        badgeId: "streak_c",
         category: "Streak",
         requirement: "14-day streak",
         tagline: "You don't know how to quit",
@@ -166,6 +184,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Platoon Commander",
+        badgeId: "tasks_c",
         category: "Tasks",
         requirement: "150 tasks completed",
         tagline: "They march at your command",
@@ -173,6 +192,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Gate Breaker",
+        badgeId: "goals_c",
         category: "Goals",
         requirement: "Complete 15 goals",
         tagline: "No gate can hold you",
@@ -180,6 +200,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "First Light",
+        badgeId: "early_bird_c",
         category: "Early Bird",
         requirement: "50 tasks before 7 AM",
         tagline: "You own the morning",
@@ -187,6 +208,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Midnight Striker",
+        badgeId: "night_owl_c",
         category: "Night Owl",
         requirement: "50 tasks after 10 PM",
         tagline: "The night fuels you",
@@ -194,6 +216,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Reborn",
+        badgeId: "comeback_c",
         category: "Comeback",
         requirement: "Return after 14 days inactive",
         tagline: "A new awakening",
@@ -201,6 +224,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Zero Escape",
+        badgeId: "perfect_day_c",
         category: "Perfect Day",
         requirement: "25 perfect days",
         tagline: "Nothing escapes your grasp",
@@ -208,6 +232,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Blitz",
+        badgeId: "speed_c",
         category: "Speed",
         requirement: "50 instant completions",
         tagline: "Speed is your weapon",
@@ -225,6 +250,7 @@ export const ranks: RankSection[] = [
     badges: [
       {
         name: "Unstoppable",
+        badgeId: "streak_b",
         category: "Streak",
         requirement: "30-day streak",
         tagline: "A month of dominance",
@@ -232,6 +258,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Legion General",
+        badgeId: "tasks_b",
         category: "Tasks",
         requirement: "500 tasks completed",
         tagline: "An army awaits your orders",
@@ -239,6 +266,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Dungeon Master",
+        badgeId: "goals_b",
         category: "Goals",
         requirement: "Complete 30 goals",
         tagline: "Dungeons fear your name",
@@ -246,6 +274,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Sunrise Hunter",
+        badgeId: "early_bird_b",
         category: "Early Bird",
         requirement: "100 tasks before 7 AM",
         tagline: "Dawn is your domain",
@@ -253,6 +282,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Shadow Stalker",
+        badgeId: "night_owl_b",
         category: "Night Owl",
         requirement: "100 tasks after 10 PM",
         tagline: "Darkness is your weapon",
@@ -260,6 +290,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Phoenix",
+        badgeId: "comeback_b",
         category: "Comeback",
         requirement: "Return after 30 days inactive",
         tagline: "From ashes, you rise",
@@ -267,6 +298,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Absolute",
+        badgeId: "perfect_day_b",
         category: "Perfect Day",
         requirement: "50 perfect days",
         tagline: "Perfection is habit",
@@ -274,6 +306,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Lightning",
+        badgeId: "speed_b",
         category: "Speed",
         requirement: "100 instant completions",
         tagline: "Faster than thought",
@@ -291,6 +324,7 @@ export const ranks: RankSection[] = [
     badges: [
       {
         name: "Unbreakable",
+        badgeId: "streak_a",
         category: "Streak",
         requirement: "90-day streak",
         tagline: "Nothing can shatter your will",
@@ -298,6 +332,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Shadow Marshal",
+        badgeId: "tasks_a",
         category: "Tasks",
         requirement: "1,500 tasks completed",
         tagline: "Thousands rise for you",
@@ -305,6 +340,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Rift Walker",
+        badgeId: "goals_a",
         category: "Goals",
         requirement: "Complete 60 goals",
         tagline: "You walk between worlds",
@@ -312,6 +348,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Aurora Knight",
+        badgeId: "early_bird_a",
         category: "Early Bird",
         requirement: "250 tasks before 7 AM",
         tagline: "Light follows your lead",
@@ -319,6 +356,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Void Knight",
+        badgeId: "night_owl_a",
         category: "Night Owl",
         requirement: "250 tasks after 10 PM",
         tagline: "You rule the silent hours",
@@ -326,6 +364,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Undying",
+        badgeId: "comeback_a",
         category: "Comeback",
         requirement: "Return after 60 days inactive",
         tagline: "Death cannot hold you",
@@ -333,6 +372,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Flawless",
+        badgeId: "perfect_day_a",
         category: "Perfect Day",
         requirement: "100 perfect days",
         tagline: "Error is not in your code",
@@ -340,6 +380,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Flash Step",
+        badgeId: "speed_a",
         category: "Speed",
         requirement: "250 instant completions",
         tagline: "You move like shadow",
@@ -357,6 +398,7 @@ export const ranks: RankSection[] = [
     badges: [
       {
         name: "Immortal",
+        badgeId: "streak_s",
         category: "Streak",
         requirement: "365-day streak",
         tagline: "Time bends to your discipline",
@@ -364,6 +406,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Monarch's Army",
+        badgeId: "tasks_s",
         category: "Tasks",
         requirement: "5,000 tasks completed",
         tagline: "Infinite shadows, one ruler",
@@ -371,6 +414,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Gate Sovereign",
+        badgeId: "goals_s",
         category: "Goals",
         requirement: "Complete 100 goals",
         tagline: "All gates bow to you",
@@ -378,6 +422,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Sun Sovereign",
+        badgeId: "early_bird_s",
         category: "Early Bird",
         requirement: "500 tasks before 7 AM",
         tagline: "The sun rises for you",
@@ -385,6 +430,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Night Monarch",
+        badgeId: "night_owl_s",
         category: "Night Owl",
         requirement: "500 tasks after 10 PM",
         tagline: "The night belongs to you",
@@ -392,6 +438,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Eternal Return",
+        badgeId: "comeback_s",
         category: "Comeback",
         requirement: "Return after 90+ days inactive",
         tagline: "Legends never truly fall",
@@ -399,6 +446,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Perfect Monarch",
+        badgeId: "perfect_day_s",
         category: "Perfect Day",
         requirement: "250 perfect days",
         tagline: "Perfection incarnate",
@@ -406,6 +454,7 @@ export const ranks: RankSection[] = [
       },
       {
         name: "Time Bender",
+        badgeId: "speed_s",
         category: "Speed",
         requirement: "500 instant completions",
         tagline: "Time obeys your will",
@@ -414,6 +463,13 @@ export const ranks: RankSection[] = [
     ],
   },
 ];
+
+// Map badge IDs to badge names for toast notifications
+export const badgeIdToName: Record<string, string> = Object.fromEntries(
+  ranks.flatMap((section) =>
+    section.badges.map((badge) => [badge.badgeId, badge.name])
+  )
+);
 
 export const categoryIcons: Record<string, string> = {
   Streak: "🔥",

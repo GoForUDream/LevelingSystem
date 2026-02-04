@@ -3,8 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db
 from repositories.task_repository import TaskRepository
 from repositories.user_repository import UserRepository
+from repositories.achievement_repository import AchievementRepository
 from services.task_service import TaskService
 from services.user_service import UserService
+from services.achievement_service import AchievementService
 from schemas.task import TaskCreate, TaskUpdate, TaskResponse
 from middleware.auth_middleware import get_current_user
 from models.user import User
@@ -21,6 +23,11 @@ def get_task_service(db: AsyncSession = Depends(get_db)) -> TaskService:
 def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
     repository = UserRepository(db)
     return UserService(repository)
+
+
+def get_achievement_service(db: AsyncSession = Depends(get_db)) -> AchievementService:
+    repository = AchievementRepository(db)
+    return AchievementService(repository)
 
 
 @router.post("", response_model=TaskResponse)
@@ -92,12 +99,13 @@ async def start_task(
     return updated
 
 
-@router.post("/{task_id}/complete", response_model=TaskResponse)
+@router.post("/{task_id}/complete")
 async def complete_task(
     task_id: int,
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
     user_service: UserService = Depends(get_user_service),
+    achievement_service: AchievementService = Depends(get_achievement_service),
 ):
     task = await service.get_task(task_id)
     if not task or task.user_id != current_user.id:
@@ -107,7 +115,13 @@ async def complete_task(
     updated = await service.complete_task(task_id)
     # Add EXP to user
     await user_service.add_exp(current_user.id, updated.exp_earned)
-    return updated
+    # Track achievement
+    new_badges = await achievement_service.on_task_completed(
+        current_user.id, task.created_at, updated.completed_at
+    )
+    task_data = TaskResponse.model_validate(updated, from_attributes=True).model_dump()
+    task_data["new_badges"] = new_badges
+    return task_data
 
 
 @router.post("/{task_id}/cancel", response_model=TaskResponse)

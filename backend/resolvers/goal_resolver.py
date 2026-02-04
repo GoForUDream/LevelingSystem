@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db
 from repositories.goal_repository import GoalRepository
+from repositories.achievement_repository import AchievementRepository
 from services.goal_service import GoalService
+from services.achievement_service import AchievementService
 from schemas.goal import GoalCreate, GoalUpdate, GoalResponse
 from schemas.task import TaskResponse
 from middleware.auth_middleware import get_current_user
@@ -14,6 +16,11 @@ router = APIRouter(prefix="/api/goals", tags=["goals"])
 def get_goal_service(db: AsyncSession = Depends(get_db)) -> GoalService:
     repository = GoalRepository(db)
     return GoalService(repository)
+
+
+def get_achievement_service(db: AsyncSession = Depends(get_db)) -> AchievementService:
+    repository = AchievementRepository(db)
+    return AchievementService(repository)
 
 
 @router.post("", response_model=GoalResponse)
@@ -86,17 +93,28 @@ async def delete_goal(
     return {"message": "Goal deleted"}
 
 
-@router.post("/{goal_id}/toggle", response_model=GoalResponse)
+@router.post("/{goal_id}/toggle")
 async def toggle_goal(
     goal_id: int,
     current_user: User = Depends(get_current_user),
     service: GoalService = Depends(get_goal_service),
+    achievement_service: AchievementService = Depends(get_achievement_service),
 ):
     goal = await service.get_goal(goal_id)
     if not goal or goal.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Goal not found")
+    was_done = goal.is_done
     updated = await service.toggle_done(goal_id)
     tasks = await service.get_tasks_for_goal(goal_id)
     resp = GoalResponse.model_validate(updated, from_attributes=True)
     resp.tasks = [TaskResponse.model_validate(t, from_attributes=True) for t in tasks]
-    return resp
+    resp_data = resp.model_dump()
+
+    new_badges: list[str] = []
+    if not was_done and updated.is_done:
+        new_badges = await achievement_service.on_goal_completed(current_user.id)
+    elif was_done and not updated.is_done:
+        await achievement_service.on_goal_uncompleted(current_user.id)
+
+    resp_data["new_badges"] = new_badges
+    return resp_data

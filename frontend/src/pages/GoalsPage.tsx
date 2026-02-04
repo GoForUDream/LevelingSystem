@@ -16,6 +16,7 @@ import {
 import { AddButton } from "@/components/ui/buttons";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import CreateGoalModal from "@/components/CreateGoalModal";
+import { badgeIdToName } from "@/constants/achievements";
 
 interface GoalTask {
   id: number;
@@ -133,7 +134,14 @@ export default function GoalsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error();
+      const data = await res.json();
       fetchGoals();
+      if (data.new_badges && data.new_badges.length > 0) {
+        for (const badgeId of data.new_badges) {
+          const name = badgeIdToName[badgeId] || badgeId;
+          toast.success(`Badge Unlocked: ${name}!`);
+        }
+      }
     } catch {
       toast.error("Failed to toggle goal");
     }

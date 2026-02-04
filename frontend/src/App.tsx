@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { Toaster } from '@/components/ui/sonner'
@@ -49,7 +50,26 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function useDayChangeReload() {
+  const loadedDate = useRef(new Date().toDateString())
+
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (document.visibilityState !== 'visible') return
+      const today = new Date().toDateString()
+      if (today !== loadedDate.current) {
+        window.location.reload()
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [])
+}
+
 function AppRoutes() {
+  useDayChangeReload()
+
   return (
     <Routes>
       <Route

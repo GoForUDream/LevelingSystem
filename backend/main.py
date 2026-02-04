@@ -8,6 +8,7 @@ from resolvers.task_resolver import router as task_router
 from resolvers.user_resolver import router as user_router
 from resolvers.auth_resolver import router as auth_router
 from resolvers.goal_resolver import router as goal_router
+from resolvers.achievement_resolver import router as achievement_router
 from jobs.overdue_checker import mark_overdue_tasks
 import logging
 
@@ -50,6 +51,7 @@ app.include_router(auth_router)
 app.include_router(task_router)
 app.include_router(user_router)
 app.include_router(goal_router)
+app.include_router(achievement_router)
 
 
 @app.get("/api/info")

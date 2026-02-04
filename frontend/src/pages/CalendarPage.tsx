@@ -5,6 +5,7 @@ import { TaskCard, CompletedTaskCard, CancelledTaskCard, type Task } from "@/com
 import { AddButton, DisabledButton } from "@/components/ui/buttons";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { badgeIdToName } from "@/constants/achievements";
 
 const dayNames = [
   "Sunday",
@@ -160,11 +161,18 @@ export default function CalendarPage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
         await fetchTasks();
         await refreshUser();
         toast.success("Task completed!", {
           description: `+${expValue} EXP earned`,
         });
+        if (data.new_badges && data.new_badges.length > 0) {
+          for (const badgeId of data.new_badges) {
+            const name = badgeIdToName[badgeId] || badgeId;
+            toast.success(`Badge Unlocked: ${name}!`);
+          }
+        }
       } else {
         const error = await response.json();
         toast.error("Failed to complete task", {
