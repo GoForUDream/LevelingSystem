@@ -7,6 +7,7 @@ import AuthCallback from '@/pages/AuthCallback'
 import CalendarPage from '@/pages/CalendarPage'
 import AchievementsPage from '@/pages/AchievementsPage'
 import GoalsPage from '@/pages/GoalsPage'
+import StatsPage from '@/pages/StatsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
@@ -102,6 +103,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <GoalsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stats"
+        element={
+          <ProtectedRoute>
+            <StatsPage />
           </ProtectedRoute>
         }
       />

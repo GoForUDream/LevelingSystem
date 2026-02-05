@@ -178,9 +178,9 @@ export default function GoalsPage() {
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-sl-silver-muted hover:text-sl-blue transition-all cursor-pointer"
+            className="flex items-center gap-1 text-sl-silver-muted hover:text-sl-blue transition-all cursor-pointer"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={16} className="relative -top-px" />
             <span className="text-xs font-bold uppercase tracking-wider">
               Back
             </span>

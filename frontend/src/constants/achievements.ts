@@ -471,6 +471,58 @@ export const badgeIdToName: Record<string, string> = Object.fromEntries(
   )
 );
 
+// Map badge IDs to their threshold and corresponding stat key for progress display
+export const badgeProgress: Record<string, { threshold: number; statKey: string; label: string }> = {
+  streak_e: { threshold: 3, statKey: "longest_streak", label: "day streak" },
+  streak_d: { threshold: 7, statKey: "longest_streak", label: "day streak" },
+  streak_c: { threshold: 14, statKey: "longest_streak", label: "day streak" },
+  streak_b: { threshold: 30, statKey: "longest_streak", label: "day streak" },
+  streak_a: { threshold: 90, statKey: "longest_streak", label: "day streak" },
+  streak_s: { threshold: 365, statKey: "longest_streak", label: "day streak" },
+  tasks_e: { threshold: 10, statKey: "total_tasks_completed", label: "tasks" },
+  tasks_d: { threshold: 50, statKey: "total_tasks_completed", label: "tasks" },
+  tasks_c: { threshold: 150, statKey: "total_tasks_completed", label: "tasks" },
+  tasks_b: { threshold: 500, statKey: "total_tasks_completed", label: "tasks" },
+  tasks_a: { threshold: 1500, statKey: "total_tasks_completed", label: "tasks" },
+  tasks_s: { threshold: 5000, statKey: "total_tasks_completed", label: "tasks" },
+  goals_e: { threshold: 1, statKey: "total_goals_completed", label: "goals" },
+  goals_d: { threshold: 5, statKey: "total_goals_completed", label: "goals" },
+  goals_c: { threshold: 15, statKey: "total_goals_completed", label: "goals" },
+  goals_b: { threshold: 30, statKey: "total_goals_completed", label: "goals" },
+  goals_a: { threshold: 60, statKey: "total_goals_completed", label: "goals" },
+  goals_s: { threshold: 100, statKey: "total_goals_completed", label: "goals" },
+  early_bird_e: { threshold: 5, statKey: "early_bird_count", label: "early tasks" },
+  early_bird_d: { threshold: 20, statKey: "early_bird_count", label: "early tasks" },
+  early_bird_c: { threshold: 50, statKey: "early_bird_count", label: "early tasks" },
+  early_bird_b: { threshold: 100, statKey: "early_bird_count", label: "early tasks" },
+  early_bird_a: { threshold: 250, statKey: "early_bird_count", label: "early tasks" },
+  early_bird_s: { threshold: 500, statKey: "early_bird_count", label: "early tasks" },
+  night_owl_e: { threshold: 5, statKey: "night_owl_count", label: "night tasks" },
+  night_owl_d: { threshold: 20, statKey: "night_owl_count", label: "night tasks" },
+  night_owl_c: { threshold: 50, statKey: "night_owl_count", label: "night tasks" },
+  night_owl_b: { threshold: 100, statKey: "night_owl_count", label: "night tasks" },
+  night_owl_a: { threshold: 250, statKey: "night_owl_count", label: "night tasks" },
+  night_owl_s: { threshold: 500, statKey: "night_owl_count", label: "night tasks" },
+  comeback_e: { threshold: 3, statKey: "longest_inactive_days", label: "days inactive" },
+  comeback_d: { threshold: 7, statKey: "longest_inactive_days", label: "days inactive" },
+  comeback_c: { threshold: 14, statKey: "longest_inactive_days", label: "days inactive" },
+  comeback_b: { threshold: 30, statKey: "longest_inactive_days", label: "days inactive" },
+  comeback_a: { threshold: 60, statKey: "longest_inactive_days", label: "days inactive" },
+  comeback_s: { threshold: 90, statKey: "longest_inactive_days", label: "days inactive" },
+  perfect_day_e: { threshold: 3, statKey: "perfect_days", label: "perfect days" },
+  perfect_day_d: { threshold: 10, statKey: "perfect_days", label: "perfect days" },
+  perfect_day_c: { threshold: 25, statKey: "perfect_days", label: "perfect days" },
+  perfect_day_b: { threshold: 50, statKey: "perfect_days", label: "perfect days" },
+  perfect_day_a: { threshold: 100, statKey: "perfect_days", label: "perfect days" },
+  perfect_day_s: { threshold: 250, statKey: "perfect_days", label: "perfect days" },
+  speed_e: { threshold: 5, statKey: "instant_completions", label: "instant completions" },
+  speed_d: { threshold: 20, statKey: "instant_completions", label: "instant completions" },
+  speed_c: { threshold: 50, statKey: "instant_completions", label: "instant completions" },
+  speed_b: { threshold: 100, statKey: "instant_completions", label: "instant completions" },
+  speed_a: { threshold: 250, statKey: "instant_completions", label: "instant completions" },
+  speed_s: { threshold: 500, statKey: "instant_completions", label: "instant completions" },
+};
+
 export const categoryIcons: Record<string, string> = {
   Streak: "🔥",
   Tasks: "⚔️",
@@ -481,3 +533,37 @@ export const categoryIcons: Record<string, string> = {
   "Perfect Day": "✨",
   Speed: "⚡",
 };
+
+export interface BadgeInfo {
+  badgeId: string;
+  name: string;
+  category: string;
+  tagline: string;
+  image?: string;
+  rankColor: string;
+  rankGlow: string;
+  rankBorder: string;
+  rankName: string;
+}
+
+// Helper to get badge info from constants for display
+export function getBadgeDisplayInfo(badgeId: string): BadgeInfo | null {
+  for (const section of ranks) {
+    for (const badge of section.badges) {
+      if (badge.badgeId === badgeId) {
+        return {
+          badgeId: badge.badgeId,
+          name: badge.name,
+          category: badge.category,
+          tagline: badge.tagline,
+          image: badge.image,
+          rankColor: section.color,
+          rankGlow: section.ledColor,
+          rankBorder: section.borderColor,
+          rankName: section.rank,
+        };
+      }
+    }
+  }
+  return null;
+}

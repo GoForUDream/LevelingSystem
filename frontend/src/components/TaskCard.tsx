@@ -1,4 +1,4 @@
-import { Check, Pencil, Repeat, X } from 'lucide-react'
+import { AlertTriangle, Check, Pencil, Repeat, X } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 export interface Task {
@@ -164,6 +164,49 @@ export function CancelledTaskCard({ task }: { task: Task }) {
           <div className="flex items-center gap-2 mt-1">
             <span className="text-[10px] font-bold tracking-wider text-sl-red/40">
               -{penalty} EXP
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function OverdueTaskCard({ task }: { task: Task }) {
+  return (
+    <div className="relative p-3 bg-[#080808] border border-sl-red/20 overflow-hidden">
+      <div
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 4px,
+            #1a1a1a 4px,
+            #1a1a1a 5px
+          )`
+        }}
+      />
+
+      <div className="relative flex items-center gap-3">
+        <div className="shrink-0 w-5 h-5 border border-sl-red/30 flex items-center justify-center">
+          <AlertTriangle size={12} className="text-sl-red/50" strokeWidth={2.5} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="relative">
+            <span className="text-sm font-medium text-[#3a3a3a]">
+              {task.title}
+            </span>
+            <div className="absolute top-1/2 left-0 right-0 h-px bg-[#333]" />
+          </div>
+
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[10px] font-bold tracking-wider text-sl-red/50">
+              -{task.exp_value} EXP
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-sl-red/40">
+              Overdue
             </span>
           </div>
         </div>

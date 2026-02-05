@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback, useMemo, useLayoutEffect } from "react";
 import Header from "@/components/Header";
 import TaskModal from "@/components/CreateTaskModal";
-import { TaskCard, CompletedTaskCard, CancelledTaskCard, type Task } from "@/components/TaskCard";
+import BadgeUnlockModal from "@/components/BadgeUnlockModal";
+import { getBadgeDisplayInfo } from "@/constants/achievements";
+import { TaskCard, CompletedTaskCard, CancelledTaskCard, OverdueTaskCard, type Task } from "@/components/TaskCard";
 import { AddButton, DisabledButton } from "@/components/ui/buttons";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { badgeIdToName } from "@/constants/achievements";
 
 const dayNames = [
   "Sunday",
@@ -53,6 +54,20 @@ export default function CalendarPage() {
   const [cancellingTaskId, setCancellingTaskId] = useState<number | null>(null);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+  const [badgeQueue, setBadgeQueue] = useState<string[]>([]);
+  const [currentBadge, setCurrentBadge] = useState<ReturnType<typeof getBadgeDisplayInfo>>(null);
+
+  // Process badge queue - show one at a time
+  useEffect(() => {
+    if (!currentBadge && badgeQueue.length > 0) {
+      const [nextBadgeId, ...rest] = badgeQueue;
+      const badgeInfo = getBadgeDisplayInfo(nextBadgeId);
+      if (badgeInfo) {
+        setCurrentBadge(badgeInfo);
+      }
+      setBadgeQueue(rest);
+    }
+  }, [currentBadge, badgeQueue]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
   const hasScrolledToToday = useRef(false);
@@ -168,10 +183,7 @@ export default function CalendarPage() {
           description: `+${expValue} EXP earned`,
         });
         if (data.new_badges && data.new_badges.length > 0) {
-          for (const badgeId of data.new_badges) {
-            const name = badgeIdToName[badgeId] || badgeId;
-            toast.success(`Badge Unlocked: ${name}!`);
-          }
+          setBadgeQueue((prev) => [...prev, ...data.new_badges]);
         }
       } else {
         const error = await response.json();
@@ -544,13 +556,16 @@ export default function CalendarPage() {
 
                   {(() => {
                     const activeTasks = dayTasks.filter(
-                      (t) => t.status !== "COMPLETED" && t.status !== "CANCELLED",
+                      (t) => t.status !== "COMPLETED" && t.status !== "CANCELLED" && t.status !== "OVERDUE",
                     );
                     const completedTasks = dayTasks.filter(
                       (t) => t.status === "COMPLETED",
                     );
                     const cancelledTasks = dayTasks.filter(
                       (t) => t.status === "CANCELLED",
+                    );
+                    const overdueTasks = dayTasks.filter(
+                      (t) => t.status === "OVERDUE",
                     );
                     const dateKey = day.toISOString();
                     const isExpanded = expandedDays.has(dateKey);
@@ -574,9 +589,20 @@ export default function CalendarPage() {
                           ))}
                         </div>
 
+                        {/* Overdue Tasks */}
+                        {overdueTasks.length > 0 && (
+                          <div className={activeTasks.length > 0 ? "mt-3" : ""}>
+                            <div className="space-y-2">
+                              {overdueTasks.map((task) => (
+                                <OverdueTaskCard key={task.id} task={task} />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Cancelled Tasks */}
                         {cancelledTasks.length > 0 && (
-                          <div className={activeTasks.length > 0 ? "mt-3" : ""}>
+                          <div className={activeTasks.length > 0 || overdueTasks.length > 0 ? "mt-3" : ""}>
                             <div className="space-y-2">
                               {cancelledTasks.map((task) => (
                                 <CancelledTaskCard key={task.id} task={task} />
@@ -587,7 +613,7 @@ export default function CalendarPage() {
 
                         {/* Completed Tasks */}
                         {completedTasks.length > 0 && (
-                          <div className={activeTasks.length > 0 || cancelledTasks.length > 0 ? "mt-3" : ""}>
+                          <div className={activeTasks.length > 0 || overdueTasks.length > 0 || cancelledTasks.length > 0 ? "mt-3" : ""}>
                             {shouldCollapse ? (
                               <>
                                 <button
@@ -648,6 +674,13 @@ export default function CalendarPage() {
         selectedDate={selectedDate}
         onTaskSaved={fetchTasks}
         editTask={editTask}
+      />
+
+      {/* Badge Unlock Modal */}
+      <BadgeUnlockModal
+        isOpen={!!currentBadge}
+        onClose={() => setCurrentBadge(null)}
+        badge={currentBadge}
       />
     </div>
   );
