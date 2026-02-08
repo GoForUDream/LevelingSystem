@@ -1,4 +1,4 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import Literal
 from repositories.stats_repository import StatsRepository
 from repositories.user_repository import UserRepository
@@ -26,19 +26,24 @@ class StatsService:
         self.achievement_repo = achievement_repo
 
     async def get_stats(
-        self, user_id: int, period: Literal["7d", "30d", "90d", "all"]
+        self, user_id: int, period: Literal["7d", "30d", "90d", "all"],
+        timezone_offset: int = 0
     ) -> StatsResponse:
-        # Get user for account age
+        # Get user for account age and timezone
         user = await self.user_repo.get_by_id(user_id)
         if not user:
             raise ValueError("User not found")
 
+        # Use user's stored timezone if no offset provided
+        tz_offset = timezone_offset if timezone_offset != 0 else user.timezone_offset
+
         account_created = user.created_at.date()
-        today = datetime.utcnow().date()
+        utc_now = datetime.now(timezone.utc).replace(tzinfo=None)
+        today = utc_now.date()
         account_age_days = (today - account_created).days
 
         # Calculate date range from period
-        now = datetime.utcnow()
+        now = utc_now
         if period == "7d":
             start = now - timedelta(days=7)
         elif period == "30d":

@@ -23,7 +23,8 @@ def get_stats_service(db: AsyncSession = Depends(get_db)) -> StatsService:
 @router.get("", response_model=StatsResponse)
 async def get_stats(
     period: Literal["7d", "30d", "90d", "all"] = "30d",
+    timezone_offset: int = 0,
     current_user: User = Depends(get_current_user),
     service: StatsService = Depends(get_stats_service),
 ):
-    return await service.get_stats(current_user.id, period)
+    return await service.get_stats(current_user.id, period, timezone_offset)

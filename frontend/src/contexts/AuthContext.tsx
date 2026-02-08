@@ -56,6 +56,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = `${API_URL}/api/auth/login`
   }
 
+  const syncTimezone = useCallback(async () => {
+    if (!token) return
+
+    // Get timezone offset in minutes (negative for ahead of UTC)
+    // JavaScript returns negative for ahead of UTC, but we want positive for ahead
+    const timezoneOffset = -new Date().getTimezoneOffset()
+
+    try {
+      await fetch(`${API_URL}/api/auth/timezone?timezone_offset=${timezoneOffset}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    } catch (error) {
+      console.error('Failed to sync timezone:', error)
+    }
+  }, [token])
+
   const fetchUser = useCallback(async () => {
     if (!token) {
       setIsLoading(false)
@@ -72,6 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const userData = await response.json()
         setUser(userData)
+        // Sync timezone after successful auth
+        syncTimezone()
       } else {
         logout()
       }
@@ -81,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }, [token])
+  }, [token, syncTimezone])
 
   const refreshUser = useCallback(async () => {
     await fetchUser()

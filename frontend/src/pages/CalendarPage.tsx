@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo, useLayoutEffect } fr
 import Header from "@/components/Header";
 import TaskModal from "@/components/CreateTaskModal";
 import BadgeUnlockModal from "@/components/BadgeUnlockModal";
+import CancelRecurringModal from "@/components/CancelRecurringModal";
 import { getBadgeDisplayInfo } from "@/constants/achievements";
 import { TaskCard, CompletedTaskCard, CancelledTaskCard, OverdueTaskCard, type Task } from "@/components/TaskCard";
 import { AddButton, DisabledButton } from "@/components/ui/buttons";
@@ -56,6 +57,7 @@ export default function CalendarPage() {
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const [badgeQueue, setBadgeQueue] = useState<string[]>([]);
   const [currentBadge, setCurrentBadge] = useState<ReturnType<typeof getBadgeDisplayInfo>>(null);
+  const [cancelModalTask, setCancelModalTask] = useState<Task | null>(null);
 
   // Process badge queue - show one at a time
   useEffect(() => {
@@ -168,7 +170,11 @@ export default function CalendarPage() {
 
     setCompletingTaskId(taskId);
     try {
-      const response = await fetch(`${API_URL}/api/tasks/${taskId}/complete`, {
+      // Send local time info for achievement tracking
+      const now = new Date();
+      const localHour = now.getHours();
+      const localDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+      const response = await fetch(`${API_URL}/api/tasks/${taskId}/complete?local_hour=${localHour}&local_date=${localDate}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -200,33 +206,60 @@ export default function CalendarPage() {
     }
   };
 
-  const cancelTask = async (taskId: number, expValue: number) => {
+  const handleCancelClick = (taskId: number) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    if (task.is_recurring) {
+      // Show modal for recurring tasks
+      setCancelModalTask(task);
+    } else {
+      // Cancel directly for non-recurring tasks
+      cancelTask(taskId, false);
+    }
+  };
+
+  const cancelTask = async (taskId: number, skipOnly: boolean) => {
     if (!token) return;
+
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
 
     setCancellingTaskId(taskId);
     try {
-      const response = await fetch(`${API_URL}/api/tasks/${taskId}/cancel`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${API_URL}/api/tasks/${taskId}/cancel?skip_only=${skipOnly}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
-        const penalty = Math.floor(expValue / 5);
+        const penalty = Math.floor(task.exp_value / 5);
         await fetchTasks();
         await refreshUser();
-        toast.error("Task cancelled", {
-          description: `-${penalty} EXP penalty`,
-        });
+        setCancelModalTask(null);
+
+        if (skipOnly) {
+          toast.error("Quest skipped", {
+            description: `-${penalty} EXP penalty. Next occurrence created.`,
+          });
+        } else {
+          toast.error("Quest cancelled", {
+            description: `-${penalty} EXP penalty`,
+          });
+        }
       } else {
         const error = await response.json();
-        toast.error("Failed to cancel task", {
+        toast.error("Failed to cancel quest", {
           description: error.detail || "Please try again.",
         });
       }
     } catch {
-      toast.error("Failed to cancel task", {
+      toast.error("Failed to cancel quest", {
         description: "Please try again.",
       });
     } finally {
@@ -580,7 +613,7 @@ export default function CalendarPage() {
                               key={task.id}
                               task={task}
                               onComplete={completeTask}
-                              onCancel={cancelTask}
+                              onCancel={handleCancelClick}
                               onEdit={handleEditTask}
                               isCompleting={completingTaskId === task.id}
                               isCancelling={cancellingTaskId === task.id}
@@ -681,6 +714,17 @@ export default function CalendarPage() {
         isOpen={!!currentBadge}
         onClose={() => setCurrentBadge(null)}
         badge={currentBadge}
+      />
+
+      {/* Cancel Recurring Modal */}
+      <CancelRecurringModal
+        isOpen={!!cancelModalTask}
+        onClose={() => setCancelModalTask(null)}
+        onSkipOnce={() => cancelModalTask && cancelTask(cancelModalTask.id, true)}
+        onCancelAll={() => cancelModalTask && cancelTask(cancelModalTask.id, false)}
+        taskTitle={cancelModalTask?.title || ""}
+        expPenalty={cancelModalTask ? Math.floor(cancelModalTask.exp_value / 5) : 0}
+        isLoading={cancellingTaskId === cancelModalTask?.id}
       />
     </div>
   );

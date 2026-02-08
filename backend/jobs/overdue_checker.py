@@ -112,36 +112,52 @@ async def mark_overdue_tasks():
 
 async def check_perfect_days(db, today_start):
     """
-    Check if any user completed ALL their tasks due yesterday.
+    Check if any user completed ALL their tasks due on their local yesterday.
     If so, increment their perfect_days counter.
+    Uses each user's timezone_offset for accurate local date calculation.
     """
-    yesterday_start = today_start - timedelta(days=1)
+    # Get all users with their timezone offsets
+    users_result = await db.execute(select(User))
+    users = list(users_result.scalars().all())
 
-    # Find all tasks due yesterday
-    result = await db.execute(
-        select(Task).where(
-            Task.due_date >= yesterday_start,
-            Task.due_date < today_start,
-        )
-    )
-    yesterday_tasks = list(result.scalars().all())
-
-    if not yesterday_tasks:
-        logger.info("Perfect day check: no tasks due yesterday.")
+    if not users:
         return
 
-    # Group by user
-    user_tasks: dict[int, list[Task]] = {}
-    for task in yesterday_tasks:
-        user_tasks.setdefault(task.user_id, []).append(task)
-
     achievement_service = AchievementService(AchievementRepository(db))
+    utc_now = datetime.now(timezone.utc).replace(tzinfo=None)
 
-    for user_id, tasks in user_tasks.items():
-        all_completed = all(t.status == TaskStatus.COMPLETED for t in tasks)
+    for user in users:
+        # Calculate user's local "yesterday" based on their timezone
+        # timezone_offset is in minutes (positive = ahead of UTC)
+        user_offset = timedelta(minutes=user.timezone_offset)
+        user_local_now = utc_now + user_offset
+        user_local_today = user_local_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        user_local_yesterday_start = user_local_today - timedelta(days=1)
+        user_local_yesterday_end = user_local_today
+
+        # Convert back to UTC for querying (tasks are stored in UTC)
+        utc_yesterday_start = user_local_yesterday_start - user_offset
+        utc_yesterday_end = user_local_yesterday_end - user_offset
+
+        # Find all tasks due on user's local yesterday
+        result = await db.execute(
+            select(Task).where(
+                Task.user_id == user.id,
+                Task.due_date >= utc_yesterday_start,
+                Task.due_date < utc_yesterday_end,
+            )
+        )
+        yesterday_tasks = list(result.scalars().all())
+
+        if not yesterday_tasks:
+            continue
+
+        all_completed = all(t.status == TaskStatus.COMPLETED for t in yesterday_tasks)
         if all_completed:
-            new_badges = await achievement_service.on_perfect_day(user_id)
+            # Pass the local yesterday date to prevent double-counting
+            yesterday_date = user_local_yesterday_start.date()
+            new_badges = await achievement_service.on_perfect_day(user.id, yesterday_date)
             logger.info(
-                f"User {user_id}: perfect day! ({len(tasks)} tasks all completed). "
+                f"User {user.id}: perfect day on {yesterday_date}! ({len(yesterday_tasks)} tasks all completed). "
                 f"New badges: {new_badges}"
             )

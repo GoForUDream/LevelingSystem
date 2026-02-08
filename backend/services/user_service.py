@@ -52,8 +52,11 @@ class UserService:
     async def get_all_users(self) -> list[User]:
         return await self.repository.get_all()
 
-    async def update_user(self, user_id: int, data: UserUpdate) -> User | None:
-        update_data = data.model_dump(exclude_unset=True)
+    async def update_user(self, user_id: int, data: UserUpdate | dict) -> User | None:
+        if isinstance(data, dict):
+            update_data = data
+        else:
+            update_data = data.model_dump(exclude_unset=True)
         return await self.repository.update(user_id, update_data)
 
     async def add_exp(self, user_id: int, exp: int) -> User | None:

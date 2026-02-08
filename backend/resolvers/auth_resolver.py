@@ -29,18 +29,26 @@ async def callback(code: str, db: AsyncSession = Depends(get_db)):
         # Exchange code for tokens
         tokens = await auth_service.exchange_code_for_tokens(code)
         access_token = tokens.get("access_token")
+        if not access_token:
+            raise ValueError("No access token received from Google")
 
         # Get user info from Google
         google_user = await auth_service.get_google_user_info(access_token)
+
+        google_id = google_user.get("id")
+        email = google_user.get("email")
+        name = google_user.get("name")
+        if not google_id or not email or not name:
+            raise ValueError("Missing required user info from Google")
 
         # Get or create user
         repository = UserRepository(db)
         service = UserService(repository)
 
         user = await service.get_or_create_by_google(
-            google_id=google_user.get("id"),
-            email=google_user.get("email"),
-            name=google_user.get("name"),
+            google_id=google_id,
+            email=email,
+            name=name,
             avatar_url=google_user.get("picture"),
         )
 
@@ -83,3 +91,16 @@ async def get_me(
 async def logout(current_user: User = Depends(get_current_user)):
     """Logout user (client should discard token)"""
     return {"message": "Logged out successfully"}
+
+
+@router.patch("/timezone")
+async def update_timezone(
+    timezone_offset: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update user's timezone offset (minutes from UTC)"""
+    repository = UserRepository(db)
+    service = UserService(repository)
+    await service.update_user(current_user.id, {"timezone_offset": timezone_offset})
+    return {"message": "Timezone updated", "timezone_offset": timezone_offset}

@@ -102,6 +102,8 @@ async def start_task(
 @router.post("/{task_id}/complete")
 async def complete_task(
     task_id: int,
+    local_hour: int | None = None,
+    local_date: str | None = None,
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
     user_service: UserService = Depends(get_user_service),
@@ -115,9 +117,9 @@ async def complete_task(
     updated = await service.complete_task(task_id)
     # Add EXP to user
     await user_service.add_exp(current_user.id, updated.exp_earned)
-    # Track achievement
+    # Track achievement (use local_hour/local_date for time-based achievements)
     new_badges = await achievement_service.on_task_completed(
-        current_user.id, task.created_at, updated.completed_at
+        current_user.id, task.created_at, updated.completed_at, local_hour, local_date
     )
     task_data = TaskResponse.model_validate(updated, from_attributes=True).model_dump()
     task_data["new_badges"] = new_badges
@@ -127,6 +129,7 @@ async def complete_task(
 @router.post("/{task_id}/cancel", response_model=TaskResponse)
 async def cancel_task(
     task_id: int,
+    skip_only: bool = False,
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
     user_service: UserService = Depends(get_user_service),
@@ -138,7 +141,7 @@ async def cancel_task(
         raise HTTPException(status_code=400, detail="Cannot cancel a completed task")
     if task.status == "CANCELLED":
         raise HTTPException(status_code=400, detail="Task already cancelled")
-    updated = await service.cancel_task(task_id)
+    updated = await service.cancel_task(task_id, skip_only=skip_only)
     # Deduct 20% EXP penalty from user
     if updated.exp_penalty:
         await user_service.add_exp(current_user.id, -updated.exp_penalty)

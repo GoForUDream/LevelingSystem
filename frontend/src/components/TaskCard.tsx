@@ -20,7 +20,7 @@ export interface Task {
 interface TaskCardProps {
   task: Task
   onComplete: (taskId: number, expValue: number) => void
-  onCancel: (taskId: number, expValue: number) => void
+  onCancel: (taskId: number) => void
   onEdit: (task: Task) => void
   isCompleting: boolean
   isCancelling: boolean
@@ -91,7 +91,7 @@ export function TaskCard({ task, onComplete, onCancel, onEdit, isCompleting, isC
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => onCancel(task.id, task.exp_value)}
+                  onClick={() => onCancel(task.id)}
                   disabled={isCancelling}
                   className="p-1 text-sl-silver-muted hover:text-sl-red transition-all disabled:opacity-50 cursor-pointer"
                 >

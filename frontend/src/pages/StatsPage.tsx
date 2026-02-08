@@ -127,7 +127,10 @@ export default function StatsPage() {
     setLoading(true);
     setError(null);
 
-    fetch(`${API_URL}/api/stats?period=${period}`, {
+    // Get timezone offset in minutes (positive for ahead of UTC)
+    const timezoneOffset = -new Date().getTimezoneOffset();
+
+    fetch(`${API_URL}/api/stats?period=${period}&timezone_offset=${timezoneOffset}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

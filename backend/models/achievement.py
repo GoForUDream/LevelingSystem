@@ -17,6 +17,7 @@ class UserAchievementStats(Base):
     night_owl_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     instant_completions: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     perfect_days: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_perfect_day_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     current_streak: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     longest_streak: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

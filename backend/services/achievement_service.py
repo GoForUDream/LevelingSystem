@@ -11,7 +11,8 @@ class AchievementService:
         self.repository = repository
 
     async def on_task_completed(
-        self, user_id: int, created_at: datetime, completed_at: datetime
+        self, user_id: int, created_at: datetime, completed_at: datetime,
+        local_hour: int | None = None, local_date_str: str | None = None
     ) -> list[str]:
         stats = await self.repository.get_or_create_stats(user_id)
 
@@ -19,12 +20,15 @@ class AchievementService:
             "total_tasks_completed": stats.total_tasks_completed + 1,
         }
 
-        # Early bird: completed before 7 AM UTC
-        if completed_at.hour < 7:
+        # Use local_hour if provided, otherwise fall back to UTC hour
+        hour = local_hour if local_hour is not None else completed_at.hour
+
+        # Early bird: completed before 7 AM local time
+        if hour < 7:
             updates["early_bird_count"] = stats.early_bird_count + 1
 
-        # Night owl: completed at or after 10 PM UTC
-        if completed_at.hour >= 22:
+        # Night owl: completed at or after 10 PM local time
+        if hour >= 22:
             updates["night_owl_count"] = stats.night_owl_count + 1
 
         # Speed: completed within 120 seconds of creation
@@ -36,8 +40,12 @@ class AchievementService:
             if delta <= 120:
                 updates["instant_completions"] = stats.instant_completions + 1
 
-        # Streak logic
-        today = datetime.now(timezone.utc).date()
+        # Streak logic - use local date if provided, otherwise fall back to UTC
+        if local_date_str:
+            today = date.fromisoformat(local_date_str)
+        else:
+            today = datetime.now(timezone.utc).date()
+
         current_streak = stats.current_streak
         longest_streak = stats.longest_streak
         longest_inactive = stats.longest_inactive_days
@@ -84,10 +92,21 @@ class AchievementService:
             user_id, {"total_goals_completed": new_count}
         )
 
-    async def on_perfect_day(self, user_id: int) -> list[str]:
+    async def on_perfect_day(self, user_id: int, perfect_date: date) -> list[str]:
+        """
+        Record a perfect day for the user.
+        Only increments if this date hasn't already been counted.
+        """
         stats = await self.repository.get_or_create_stats(user_id)
+
+        # Check if we already counted this date
+        if stats.last_perfect_day_date == perfect_date:
+            logger.info(f"User {user_id}: perfect day for {perfect_date} already counted, skipping")
+            return []
+
         updates = {
             "perfect_days": stats.perfect_days + 1,
+            "last_perfect_day_date": perfect_date,
         }
         updated_stats = await self.repository.update_stats(user_id, updates)
         return await self._check_and_unlock(user_id, updated_stats)

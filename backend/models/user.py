@@ -17,6 +17,9 @@ class User(Base):
     total_exp: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     level: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
+    # Timezone offset in minutes from UTC (e.g., UTC+7 = 420, UTC-5 = -300)
+    timezone_offset: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     created_at: Mapped[datetime] = mapped_column(
