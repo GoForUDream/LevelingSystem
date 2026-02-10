@@ -1,15 +1,43 @@
 # Leveling System
 
-A gamified task management application that turns your productivity into an RPG-like experience. Complete tasks, earn EXP, and level up your life.
+A Solo Leveling-inspired gamified task management application that turns your productivity into an RPG experience. Complete quests, earn EXP, unlock achievements, and level up your life.
 
 ## Features
 
-- **Horizontal Calendar View** - Intuitive day-by-day task planning with full-height columns
+### Core Features
+- **Horizontal Calendar View** - Infinite scroll day-by-day task planning with month-based lazy loading
 - **Google OAuth 2.0** - Secure authentication with Google accounts
-- **EXP & Leveling System** - Earn experience points by completing tasks
-- **Task Priorities** - Five levels from Trivial to Critical, each with different EXP rewards
-- **Task Status Tracking** - TODO, In Progress, Completed, Failed, Rescheduled, and more
-- **Reschedule Limits** - Built-in accountability with configurable reschedule limits
+- **EXP & Leveling System** - Earn experience points by completing tasks, level up with progression
+- **Rank Titles** - 12 rank tiers from "Awakened One" to "Shadow Monarch" based on your level
+
+### Tasks (Quests)
+- **Task Priorities** - Five importance levels (Trivial → Critical) with different EXP rewards
+- **Recurring Tasks** - Daily, weekly, or monthly repeating quests
+- **Overdue System** - Missed tasks become overdue with EXP penalties
+- **Task Cancellation** - Cancel or skip recurring tasks with penalty
+
+### Goals
+- **Long-term Goals** - Set S/A/B/C/D rank goals with deadlines
+- **Goal Progress** - Link tasks to goals and track completion
+- **Goal Achievements** - Earn badges for completing goals
+
+### Achievement System
+- **48 Badges** - Across 8 categories with 6 ranks each (E/D/C/B/A/S)
+- **Categories**: Tasks, Goals, Early Bird, Night Owl, Speed, Streak, Comeback, Perfect Day
+- **Badge Unlock Animations** - Celebratory modal when unlocking new achievements
+
+### Stats & Analytics
+- **Hunter Analytics Dashboard** - Comprehensive stats with Recharts visualizations
+- **Period Selection** - View stats for 7d, 30d, 90d, or all time
+- **Charts**: Tasks over time, completion breakdown, EXP progress, time-of-day distribution
+- **Activity Heatmap** - GitHub-style contribution heatmap
+- **Period Comparisons** - Monthly and yearly comparisons with trend indicators
+
+### UI/UX
+- **Solo Leveling Theme** - Dark theme with blue/purple glow effects, LED borders
+- **Responsive Design** - Works on desktop and mobile
+- **Toast Notifications** - Sonner-powered feedback for all actions
+- **Timezone Support** - Automatic timezone detection and sync
 
 ## Tech Stack
 
@@ -19,6 +47,7 @@ A gamified task management application that turns your productivity into an RPG-
 - **SQLAlchemy 2.0** - Async ORM with PostgreSQL
 - **Pydantic** - Data validation
 - **JWT** - Token-based authentication
+- **APScheduler** - Background jobs for overdue checking
 
 ### Frontend
 - **React 19** - Latest React with hooks
@@ -26,6 +55,9 @@ A gamified task management application that turns your productivity into an RPG-
 - **Tailwind CSS 4** - Utility-first styling
 - **Vite** - Fast build tool
 - **React Router 7** - Client-side routing
+- **Recharts** - Data visualization
+- **Sonner** - Toast notifications
+- **Lucide React** - Icon library
 
 ### Infrastructure
 - **PostgreSQL 16** - Primary database
@@ -37,21 +69,28 @@ A gamified task management application that turns your productivity into an RPG-
 LevelingSystem/
 ├── backend/
 │   ├── db/                 # Database configuration
-│   ├── models/             # SQLAlchemy models
+│   ├── models/             # SQLAlchemy models (user, task, goal, achievement)
 │   ├── schemas/            # Pydantic schemas
 │   ├── repositories/       # Data access layer
 │   ├── services/           # Business logic
-│   ├── resolvers/          # API endpoints
+│   ├── resolvers/          # API endpoints (routers)
 │   ├── middleware/         # Auth middleware
+│   ├── jobs/               # Background jobs (overdue checker)
 │   ├── main.py             # FastAPI app
 │   ├── config.py           # Configuration
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
 │   │   ├── components/     # Reusable components
-│   │   ├── contexts/       # React contexts
+│   │   │   ├── stats/      # Stats page chart components
+│   │   │   └── ui/         # UI primitives (buttons, dialogs, etc.)
+│   │   ├── contexts/       # React contexts (Auth)
+│   │   ├── hooks/          # Custom hooks (useStats)
+│   │   ├── types/          # TypeScript type definitions
+│   │   ├── constants/      # Achievement definitions
+│   │   ├── lib/            # Utilities
 │   │   ├── pages/          # Page components
-│   │   └── App.tsx         # Main app
+│   │   └── App.tsx         # Main app with routing
 │   ├── package.json
 │   └── vite.config.ts
 ├── docker-compose.yml
@@ -160,27 +199,38 @@ cd frontend && npm run dev
 | GET | `/api/auth/login` | Initiate Google OAuth |
 | GET | `/api/auth/callback` | OAuth callback |
 | GET | `/api/auth/me` | Get current user |
+| PATCH | `/api/auth/timezone` | Sync user timezone |
 
 ### Tasks
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/tasks` | List all tasks |
+| GET | `/api/tasks/range` | Get tasks in date range |
 | POST | `/api/tasks` | Create task |
 | GET | `/api/tasks/{id}` | Get task |
 | PATCH | `/api/tasks/{id}` | Update task |
 | DELETE | `/api/tasks/{id}` | Delete task |
-| POST | `/api/tasks/{id}/start` | Start task |
 | POST | `/api/tasks/{id}/complete` | Complete task |
-| POST | `/api/tasks/{id}/fail` | Fail task |
-| POST | `/api/tasks/{id}/reschedule` | Reschedule task |
+| POST | `/api/tasks/{id}/cancel` | Cancel/skip task |
 
-### Users
+### Goals
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/users` | List all users |
-| GET | `/api/users/{id}` | Get user |
-| PATCH | `/api/users/{id}` | Update user |
-| POST | `/api/users/{id}/add-exp` | Add EXP to user |
+| GET | `/api/goals` | List all goals |
+| POST | `/api/goals` | Create goal |
+| PATCH | `/api/goals/{id}` | Update goal |
+| DELETE | `/api/goals/{id}` | Delete goal |
+| POST | `/api/goals/{id}/toggle` | Toggle goal completion |
+
+### Achievements
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/achievements` | Get user achievements & stats |
+
+### Stats
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/stats` | Get analytics data |
 
 ## EXP System
 
@@ -193,6 +243,58 @@ cd frontend && npm run dev
 | Critical | 200 |
 
 **Leveling Formula:** Each level requires `level × 100` EXP
+
+**Penalties:**
+- Overdue task: -20% of task EXP
+- Cancelled task: -20% of task EXP
+
+## Rank System
+
+| Level Range | Rank Title |
+|-------------|------------|
+| 1-5 | Awakened One |
+| 6-10 | Beginner Warrior |
+| 11-20 | Task Slayer |
+| 21-30 | Dungeon Crawler |
+| 31-40 | Goal Hunter |
+| 41-50 | Elite Achiever |
+| 51-60 | S-Rank Executor |
+| 61-70 | Master of Habits |
+| 71-80 | Sovereign of Will |
+| 81-90 | Ruler of Self |
+| 91-99 | Monarch's Equal |
+| 100+ | Shadow Monarch |
+
+## Achievement Categories
+
+| Category | Description |
+|----------|-------------|
+| Tasks | Complete tasks (10 → 1000) |
+| Goals | Complete goals (1 → 50) |
+| Early Bird | Complete tasks before 9 AM |
+| Night Owl | Complete tasks after 9 PM |
+| Speed | Complete tasks within 1 hour of creation |
+| Streak | Maintain daily completion streaks |
+| Comeback | Return after inactivity |
+| Perfect Day | Complete all tasks for a day |
+
+Each category has 6 ranks: E → D → C → B → A → S
+
+## Development
+
+### Run checks
+```bash
+cd frontend
+npm run check      # TypeScript + ESLint
+npm run typecheck  # TypeScript only
+npm run lint       # ESLint only
+```
+
+### Build for production
+```bash
+cd frontend
+npm run build
+```
 
 ## License
 
