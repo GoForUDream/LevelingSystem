@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from sqlalchemy.sql import func
 from models.goal import Goal
-from models.task import Task
+from models.task import Task, TaskStatus
 
 
 class GoalRepository:
@@ -28,9 +28,13 @@ class GoalRepository:
         return list(result.scalars().all())
 
     async def get_tasks_for_goal(self, goal_id: int) -> list[Task]:
+        """Get tasks for a goal, excluding overdue and cancelled tasks."""
         result = await self.db.execute(
             select(Task)
-            .where(Task.goal_id == goal_id)
+            .where(
+                Task.goal_id == goal_id,
+                Task.status.notin_([TaskStatus.OVERDUE, TaskStatus.CANCELLED]),
+            )
             .order_by(Task.created_at.asc())
         )
         return list(result.scalars().all())

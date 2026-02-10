@@ -168,3 +168,36 @@ class StatsRepository:
         )
         result = await self.db.execute(query)
         return result.scalar() or 0
+
+    async def get_net_exp_in_period(
+        self, user_id: int, start: datetime, end: datetime
+    ) -> int:
+        """
+        Get net EXP in period (completed exp minus overdue penalties).
+        Completed tasks: +exp_earned (based on completed_at)
+        Overdue tasks: -exp_value penalty (based on failed_at)
+        Note: Cancelled tasks store exp_penalty but don't deduct from user.total_exp
+        """
+        # Sum of exp_earned from completed tasks
+        completed_query = (
+            select(func.coalesce(func.sum(Task.exp_earned), 0))
+            .where(Task.user_id == user_id)
+            .where(Task.status == TaskStatus.COMPLETED)
+            .where(Task.completed_at >= start)
+            .where(Task.completed_at <= end)
+        )
+        completed_result = await self.db.execute(completed_query)
+        completed_exp = completed_result.scalar() or 0
+
+        # Sum of penalties from overdue tasks (exp_value is the penalty)
+        overdue_query = (
+            select(func.coalesce(func.sum(Task.exp_value), 0))
+            .where(Task.user_id == user_id)
+            .where(Task.status.in_([TaskStatus.OVERDUE, TaskStatus.FAILED]))
+            .where(Task.failed_at >= start)
+            .where(Task.failed_at <= end)
+        )
+        overdue_result = await self.db.execute(overdue_query)
+        overdue_penalty = overdue_result.scalar() or 0
+
+        return completed_exp - overdue_penalty

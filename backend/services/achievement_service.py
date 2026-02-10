@@ -31,13 +31,13 @@ class AchievementService:
         if hour >= 22:
             updates["night_owl_count"] = stats.night_owl_count + 1
 
-        # Speed: completed within 120 seconds of creation
+        # Speed: completed within 30 minutes of creation
         if created_at and completed_at:
             # Ensure both are naive UTC for comparison
             c = created_at.replace(tzinfo=None) if created_at.tzinfo else created_at
             f = completed_at.replace(tzinfo=None) if completed_at.tzinfo else completed_at
             delta = (f - c).total_seconds()
-            if delta <= 120:
+            if delta <= 1800:  # 30 minutes
                 updates["instant_completions"] = stats.instant_completions + 1
 
         # Streak logic - use local date if provided, otherwise fall back to UTC

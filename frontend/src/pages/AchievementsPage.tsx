@@ -4,8 +4,7 @@ import { ChevronLeft, Lock, Trophy } from "lucide-react";
 import { ranks, categoryIcons, badgeProgress } from "@/constants/achievements";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-
-const API_URL = "http://localhost:8000";
+import { API_URL } from "@/lib/utils";
 
 interface UnlockedBadge {
   badge_id: string;
@@ -108,7 +107,7 @@ export default function AchievementsPage() {
         />
 
         {/* Ambient orbs - purple themed */}
-        <div className="absolute top-1/4 left-1/6 w-[500px] h-[500px] bg-sl-purple/10 rounded-full blur-[150px] animate-pulse" />
+        <div className="absolute top-1/4 left-1/6 w-125 h-125 bg-sl-purple/10 rounded-full blur-[150px] animate-pulse" />
         <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-sl-blue/8 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1.5s' }} />
         <div className="absolute top-2/3 left-1/3 w-72 h-72 bg-sl-purple/5 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '0.5s' }} />
         <div className="absolute top-1/6 right-1/6 w-64 h-64 bg-yellow-500/5 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -287,7 +286,7 @@ export default function AchievementsPage() {
                         </p>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="!bg-sl-gray !border-sl-gray-muted !text-sl-silver p-3 max-w-[200px]">
+                    <TooltipContent side="top" className="bg-sl-gray! border-sl-gray-muted! text-sl-silver! p-3 max-w-50">
                       {isUnlocked ? (
                         <p className="text-xs font-bold text-sl-blue">Unlocked!</p>
                       ) : (

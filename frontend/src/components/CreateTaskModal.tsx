@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { API_URL } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -90,8 +91,6 @@ const rankColors: Record<string, string> = {
   C: "text-sl-blue",
   D: "text-sl-silver-muted",
 };
-
-const API_URL = "http://localhost:8000";
 
 export default function TaskModal({
   isOpen,

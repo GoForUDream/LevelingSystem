@@ -30,6 +30,12 @@ class TaskRepository:
     async def get_by_date_range(
         self, user_id: int, start_date: datetime, end_date: datetime
     ) -> list[Task]:
+        # Convert to naive UTC if timezone-aware (DB stores naive datetimes)
+        if start_date.tzinfo is not None:
+            start_date = start_date.replace(tzinfo=None)
+        if end_date.tzinfo is not None:
+            end_date = end_date.replace(tzinfo=None)
+
         result = await self.db.execute(
             select(Task)
             .where(Task.user_id == user_id)

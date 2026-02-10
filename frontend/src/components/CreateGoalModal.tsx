@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { API_URL } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -78,8 +79,6 @@ const rankLevels = [
     examples: "Start a business, earn a degree, achieve financial independence",
   },
 ];
-
-const API_URL = "http://localhost:8000";
 
 function toDateInputValue(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -262,7 +261,7 @@ export default function CreateGoalModal({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full bg-sl-gray border border-sl-gray-muted px-4 py-3 text-sl-silver focus:outline-none focus:border-sl-blue focus:shadow-[0_0_10px_rgba(0,163,255,0.3)] transition-all [color-scheme:dark]"
+                className="w-full bg-sl-gray border border-sl-gray-muted px-4 py-3 text-sl-silver focus:outline-none focus:border-sl-blue focus:shadow-[0_0_10px_rgba(0,163,255,0.3)] transition-all scheme-dark"
               />
             </div>
             <div>
@@ -273,7 +272,7 @@ export default function CreateGoalModal({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full bg-sl-gray border border-sl-gray-muted px-4 py-3 text-sl-silver focus:outline-none focus:border-sl-blue focus:shadow-[0_0_10px_rgba(0,163,255,0.3)] transition-all [color-scheme:dark]"
+                className="w-full bg-sl-gray border border-sl-gray-muted px-4 py-3 text-sl-silver focus:outline-none focus:border-sl-blue focus:shadow-[0_0_10px_rgba(0,163,255,0.3)] transition-all scheme-dark"
               />
             </div>
           </div>

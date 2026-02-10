@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -9,27 +10,49 @@ import {
   Cell,
 } from 'recharts';
 import { chartColors, tooltipStyle, axisStyle, gridStyle } from './ChartTheme';
-
-interface TimeOfDayDistribution {
-  hour: number;
-  count: number;
-}
+import type { TimeOfDayDistribution } from '@/types/stats';
 
 interface TimeOfDayChartProps {
   data: TimeOfDayDistribution[];
   mostProductiveHour: number | null;
 }
 
-export default function TimeOfDayChart({ data, mostProductiveHour }: TimeOfDayChartProps) {
-  const chartData = data.map((d) => ({
-    ...d,
-    label: formatHour(d.hour),
-  }));
+function formatHour(hour: number): string {
+  if (hour === 0) return '12 AM';
+  if (hour === 12) return '12 PM';
+  if (hour < 12) return `${hour} AM`;
+  return `${hour - 12} PM`;
+}
 
-  const maxCount = Math.max(...data.map((d) => d.count));
+function getHourColor(hour: number): string {
+  // Dawn/morning: 5-11 (soft blue/cyan)
+  if (hour >= 5 && hour < 12) return '#00A3FF';
+  // Afternoon: 12-17 (yellow/green)
+  if (hour >= 12 && hour < 18) return '#4ADE80';
+  // Evening: 18-22 (purple)
+  if (hour >= 18 && hour < 23) return '#7B2CBF';
+  // Night: 23-4 (dark blue)
+  return '#3B82F6';
+}
+
+function TimeOfDayChart({ data, mostProductiveHour }: TimeOfDayChartProps) {
+  const { chartData, maxCount } = useMemo(() => {
+    const formatted = data.map((d) => ({
+      ...d,
+      label: formatHour(d.hour),
+    }));
+
+    return {
+      chartData: formatted,
+      maxCount: Math.max(...data.map((d) => d.count)),
+    };
+  }, [data]);
 
   return (
-    <div className="led-border p-4 border border-orange-400/30 bg-linear-to-b from-sl-gray-light/30 to-sl-gray/20" style={{ '--led-color': '#FF6B00' } as React.CSSProperties}>
+    <div
+      className="led-border p-4 border border-orange-400/30 bg-linear-to-b from-sl-gray-light/30 to-sl-gray/20"
+      style={{ '--led-color': '#FF6B00' } as React.CSSProperties}
+    >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold uppercase tracking-wider text-orange-400">
           Time of Day
@@ -56,7 +79,7 @@ export default function TimeOfDayChart({ data, mostProductiveHour }: TimeOfDayCh
             <YAxis {...axisStyle} fontSize={10} allowDecimals={false} />
             <Tooltip
               {...tooltipStyle}
-              formatter={(value: number) => [value, 'Tasks']}
+              formatter={(value) => [value as number, 'Tasks']}
               labelFormatter={(label) => `Time: ${label}`}
             />
             <Bar dataKey="count" radius={[2, 2, 0, 0]} maxBarSize={20}>
@@ -78,20 +101,4 @@ export default function TimeOfDayChart({ data, mostProductiveHour }: TimeOfDayCh
   );
 }
 
-function formatHour(hour: number): string {
-  if (hour === 0) return '12 AM';
-  if (hour === 12) return '12 PM';
-  if (hour < 12) return `${hour} AM`;
-  return `${hour - 12} PM`;
-}
-
-function getHourColor(hour: number): string {
-  // Dawn/morning: 5-11 (soft blue/cyan)
-  if (hour >= 5 && hour < 12) return '#00A3FF';
-  // Afternoon: 12-17 (yellow/green)
-  if (hour >= 12 && hour < 18) return '#4ADE80';
-  // Evening: 18-22 (purple)
-  if (hour >= 18 && hour < 23) return '#7B2CBF';
-  // Night: 23-4 (dark blue)
-  return '#3B82F6';
-}
+export default memo(TimeOfDayChart);

@@ -8,47 +8,38 @@ import { TaskCard, CompletedTaskCard, CancelledTaskCard, OverdueTaskCard, type T
 import { AddButton, DisabledButton } from "@/components/ui/buttons";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
-const dayNames = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
-const API_URL = "http://localhost:8000";
-
-interface MonthKey {
-  year: number;
-  month: number;
-}
-
-function monthKeyStr(mk: MonthKey): string {
-  return `${mk.year}-${mk.month}`;
-}
-
-function getDaysForMonth(mk: MonthKey): Date[] {
-  const daysInMonth = new Date(mk.year, mk.month + 1, 0).getDate();
-  const days: Date[] = [];
-  for (let day = 1; day <= daysInMonth; day++) {
-    days.push(new Date(mk.year, mk.month, day));
-  }
-  return days;
-}
-
-function addMonths(mk: MonthKey, offset: number): MonthKey {
-  const d = new Date(mk.year, mk.month + offset, 1);
-  return { year: d.getFullYear(), month: d.getMonth() };
-}
+import {
+  API_URL,
+  DAY_NAMES,
+  type MonthKey,
+  monthKeyStr,
+  getMonthDateRange,
+  getDaysForMonth,
+  addMonths,
+} from "@/lib/utils";
 
 const MAX_LOADED_MONTHS = 12;
 
 export default function CalendarPage() {
-  const { token, refreshUser } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { token, refreshUser, user } = useAuth();
+
+  // Calculate earliest allowed month based on account creation date
+  const earliestMonth: MonthKey | null = useMemo(() => {
+    if (!user?.created_at) return null;
+    const createdDate = new Date(user.created_at);
+    return { year: createdDate.getFullYear(), month: createdDate.getMonth() };
+  }, [user?.created_at]);
+
+  // Check if a month is before the earliest allowed
+  const isBeforeEarliestMonth = useCallback((mk: MonthKey): boolean => {
+    if (!earliestMonth) return false;
+    if (mk.year < earliestMonth.year) return true;
+    if (mk.year === earliestMonth.year && mk.month < earliestMonth.month) return true;
+    return false;
+  }, [earliestMonth]);
+  const [tasksByMonth, setTasksByMonth] = useState<Map<string, Task[]>>(new Map());
+  const fetchedMonthsRef = useRef<Set<string>>(new Set());
+  const fetchingMonthsRef = useRef<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
@@ -58,6 +49,15 @@ export default function CalendarPage() {
   const [badgeQueue, setBadgeQueue] = useState<string[]>([]);
   const [currentBadge, setCurrentBadge] = useState<ReturnType<typeof getBadgeDisplayInfo>>(null);
   const [cancelModalTask, setCancelModalTask] = useState<Task | null>(null);
+
+  // Combine all tasks from fetched months
+  const tasks = useMemo(() => {
+    const allTasks: Task[] = [];
+    tasksByMonth.forEach((monthTasks) => {
+      allTasks.push(...monthTasks);
+    });
+    return allTasks;
+  }, [tasksByMonth]);
 
   // Process badge queue - show one at a time
   useEffect(() => {
@@ -86,6 +86,12 @@ export default function CalendarPage() {
   ]);
 
   const [visibleMonth, setVisibleMonth] = useState<MonthKey>(initialMonth);
+
+  // Check if we're at the earliest allowed month (can't go further back)
+  const isAtEarliestMonth = useMemo(() => {
+    if (!earliestMonth) return false;
+    return visibleMonth.year === earliestMonth.year && visibleMonth.month === earliestMonth.month;
+  }, [visibleMonth, earliestMonth]);
 
   const allDays = useMemo(() => {
     return loadedMonths.flatMap(getDaysForMonth);
@@ -143,27 +149,102 @@ export default function CalendarPage() {
     });
   };
 
-  const fetchTasks = useCallback(async () => {
+  // Fetch tasks for a specific month
+  const fetchMonthTasks = useCallback(async (mk: MonthKey, isBackground = false) => {
     if (!token) return;
 
+    const key = monthKeyStr(mk);
+
+    // Skip if already fetched or currently fetching
+    if (fetchedMonthsRef.current.has(key) || fetchingMonthsRef.current.has(key)) return;
+
+    fetchingMonthsRef.current.add(key);
+
     try {
-      const response = await fetch(`${API_URL}/api/tasks`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const { start, end } = getMonthDateRange(mk);
+      const response = await fetch(
+        `${API_URL}/api/tasks/range?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       if (response.ok) {
-        const data = await response.json();
-        setTasks(data);
+        const data: Task[] = await response.json();
+        setTasksByMonth((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(key, data);
+          return newMap;
+        });
+        fetchedMonthsRef.current.add(key);
       }
     } catch (error) {
-      console.error("Failed to fetch tasks:", error);
+      if (!isBackground) {
+        console.error("Failed to fetch tasks:", error);
+      }
+    } finally {
+      fetchingMonthsRef.current.delete(key);
     }
   }, [token]);
 
+  // Refetch a specific month (for after task updates)
+  const refetchMonth = useCallback(async (mk: MonthKey) => {
+    if (!token) return;
+
+    const key = monthKeyStr(mk);
+    const { start, end } = getMonthDateRange(mk);
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/tasks/range?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.ok) {
+        const data: Task[] = await response.json();
+        setTasksByMonth((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(key, data);
+          return newMap;
+        });
+      }
+    } catch (error) {
+      console.error("Failed to refetch tasks:", error);
+    }
+  }, [token]);
+
+  // Refetch current visible month (used after task operations)
+  const refreshTasks = useCallback(async () => {
+    await refetchMonth(visibleMonth);
+    // Also refetch adjacent months in case task moved
+    await Promise.all([
+      refetchMonth(addMonths(visibleMonth, -1)),
+      refetchMonth(addMonths(visibleMonth, 1)),
+    ]);
+  }, [refetchMonth, visibleMonth]);
+
+  // Initial fetch: current month first, then adjacent months in background
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    if (!token) return;
+
+    const currentMonth: MonthKey = { year: todayDate.getFullYear(), month: todayDate.getMonth() };
+
+    // Fetch current month first (blocking)
+    fetchMonthTasks(currentMonth, false).then(() => {
+      // Then fetch adjacent months in background
+      fetchMonthTasks(addMonths(currentMonth, -1), true);
+      fetchMonthTasks(addMonths(currentMonth, 1), true);
+    });
+  }, [token, todayDate, fetchMonthTasks]);
+
+  // Fetch newly loaded months as user scrolls
+  useEffect(() => {
+    loadedMonths.forEach((mk) => {
+      fetchMonthTasks(mk, true);
+    });
+  }, [loadedMonths, fetchMonthTasks]);
 
   const completeTask = async (taskId: number, expValue: number) => {
     if (!token) return;
@@ -183,7 +264,7 @@ export default function CalendarPage() {
 
       if (response.ok) {
         const data = await response.json();
-        await fetchTasks();
+        await refreshTasks();
         await refreshUser();
         toast.success("Task completed!", {
           description: `+${expValue} EXP earned`,
@@ -239,7 +320,7 @@ export default function CalendarPage() {
 
       if (response.ok) {
         const penalty = Math.floor(task.exp_value / 5);
-        await fetchTasks();
+        await refreshTasks();
         await refreshUser();
         setCancelModalTask(null);
 
@@ -289,6 +370,8 @@ export default function CalendarPage() {
         if (prev.length >= MAX_LOADED_MONTHS) return prev;
         const firstMonth = prev[0];
         const prevMo = addMonths(firstMonth, -1);
+        // Don't load months before account creation
+        if (isBeforeEarliestMonth(prevMo)) return prev;
         // Store scroll position before prepend
         prependAdjustRef.current = {
           scrollLeft: container.scrollLeft,
@@ -320,7 +403,7 @@ export default function CalendarPage() {
         return { year, month };
       });
     }
-  }, []);
+  }, [isBeforeEarliestMonth]);
 
   // Compensate scroll position after prepending months
   useLayoutEffect(() => {
@@ -355,6 +438,8 @@ export default function CalendarPage() {
 
   const prevMonth = useCallback(() => {
     const target = addMonths(visibleMonth, -1);
+    // Don't navigate before account creation month
+    if (isBeforeEarliestMonth(target)) return;
     setLoadedMonths((prev) => {
       const exists = prev.some((m) => m.year === target.year && m.month === target.month);
       if (exists) return prev;
@@ -370,7 +455,7 @@ export default function CalendarPage() {
         scrollToMonth(target);
       });
     });
-  }, [visibleMonth, scrollToMonth]);
+  }, [visibleMonth, scrollToMonth, isBeforeEarliestMonth]);
 
   const nextMonth = useCallback(() => {
     const target = addMonths(visibleMonth, 1);
@@ -460,6 +545,7 @@ export default function CalendarPage() {
         onPrevMonth={prevMonth}
         onNextMonth={nextMonth}
         onToday={goToToday}
+        disablePrevMonth={isAtEarliestMonth}
       />
 
       {/* Calendar */}
@@ -535,7 +621,7 @@ export default function CalendarPage() {
                           : "text-sl-silver-muted"
                     }`}
                   >
-                    {dayNames[day.getDay()]}
+                    {DAY_NAMES[day.getDay()]}
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -705,7 +791,7 @@ export default function CalendarPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         selectedDate={selectedDate}
-        onTaskSaved={fetchTasks}
+        onTaskSaved={refreshTasks}
         editTask={editTask}
       />
 

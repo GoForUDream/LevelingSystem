@@ -58,7 +58,7 @@ class StatsResponse(BaseModel):
 
     # Summary metrics
     total_tasks_completed: int
-    total_exp_earned: int
+    total_exp_earned: int  # EXP earned within the selected period
     completion_rate: float
     average_tasks_per_day: float
     most_productive_hour: int | None

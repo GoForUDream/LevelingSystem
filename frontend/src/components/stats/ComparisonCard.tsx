@@ -1,51 +1,45 @@
+import { memo, useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-
-interface ComparisonMetric {
-  current: number;
-  previous: number;
-  change_percent: number;
-  trend: 'up' | 'down' | 'neutral';
-}
-
-interface PeriodComparison {
-  period_label: string;
-  tasks_completed: ComparisonMetric;
-  exp_earned: ComparisonMetric;
-  completion_rate: ComparisonMetric;
-  average_daily_tasks: ComparisonMetric;
-}
+import type { PeriodComparison } from '@/types/stats';
 
 interface ComparisonCardProps {
   comparison: PeriodComparison;
 }
 
-export default function ComparisonCard({ comparison }: ComparisonCardProps) {
-  const metrics = [
-    {
-      label: 'Tasks Completed',
-      ...comparison.tasks_completed,
-      format: (v: number) => v.toLocaleString(),
-    },
-    {
-      label: 'EXP Earned',
-      ...comparison.exp_earned,
-      format: (v: number) => v.toLocaleString(),
-    },
-    {
-      label: 'Completion Rate',
-      ...comparison.completion_rate,
-      format: (v: number) => `${v.toFixed(1)}%`,
-    },
-    {
-      label: 'Avg Daily Tasks',
-      ...comparison.average_daily_tasks,
-      format: (v: number) => v.toFixed(1),
-    },
-  ];
+function ComparisonCard({ comparison }: ComparisonCardProps) {
+  const { metrics, ledColor, borderColor, titleColor } = useMemo(() => {
+    const metricsData = [
+      {
+        label: 'Tasks Completed',
+        ...comparison.tasks_completed,
+        format: (v: number) => v.toLocaleString(),
+      },
+      {
+        label: 'EXP Earned',
+        ...comparison.exp_earned,
+        format: (v: number) => v.toLocaleString(),
+      },
+      {
+        label: 'Completion Rate',
+        ...comparison.completion_rate,
+        format: (v: number) => `${v.toFixed(1)}%`,
+      },
+      {
+        label: 'Avg Daily Tasks',
+        ...comparison.average_daily_tasks,
+        format: (v: number) => v.toFixed(1),
+      },
+    ];
 
-  const ledColor = comparison.period_label === 'Monthly' ? '#00A3FF' : '#7B2CBF';
-  const borderColor = comparison.period_label === 'Monthly' ? 'border-sl-blue/30' : 'border-sl-purple/30';
-  const titleColor = comparison.period_label === 'Monthly' ? 'text-sl-blue' : 'text-sl-purple';
+    const isMonthly = comparison.period_label === 'Monthly';
+
+    return {
+      metrics: metricsData,
+      ledColor: isMonthly ? '#00A3FF' : '#7B2CBF',
+      borderColor: isMonthly ? 'border-sl-blue/30' : 'border-sl-purple/30',
+      titleColor: isMonthly ? 'text-sl-blue' : 'text-sl-purple',
+    };
+  }, [comparison]);
 
   return (
     <div
@@ -66,14 +60,9 @@ export default function ComparisonCard({ comparison }: ComparisonCardProps) {
               <span className="text-lg font-bold text-sl-silver">
                 {metric.format(metric.current)}
               </span>
-              <TrendBadge
-                trend={metric.trend}
-                changePercent={metric.change_percent}
-              />
+              <TrendBadge trend={metric.trend} changePercent={metric.change_percent} />
             </div>
-            <div className="text-xs text-sl-silver-dark">
-              vs {metric.format(metric.previous)} prev
-            </div>
+            <div className="text-xs text-sl-silver-dark">vs {metric.format(metric.previous)} prev</div>
           </div>
         ))}
       </div>
@@ -81,7 +70,7 @@ export default function ComparisonCard({ comparison }: ComparisonCardProps) {
   );
 }
 
-function TrendBadge({
+const TrendBadge = memo(function TrendBadge({
   trend,
   changePercent,
 }: {
@@ -119,4 +108,6 @@ function TrendBadge({
       {Math.abs(changePercent).toFixed(0)}%
     </span>
   );
-}
+});
+
+export default memo(ComparisonCard);

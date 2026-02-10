@@ -30,6 +30,7 @@ interface HeaderProps {
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onToday: () => void;
+  disablePrevMonth?: boolean;
 }
 
 const monthNames = [
@@ -52,6 +53,7 @@ export default function Header({
   onPrevMonth,
   onNextMonth,
   onToday,
+  disablePrevMonth = false,
 }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -295,7 +297,7 @@ export default function Header({
               {/* Avatar */}
               <div className="relative group">
                 {/* Animated ring */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-sl-blue via-sl-purple to-sl-blue rounded-sm opacity-50 blur-sm group-hover:opacity-75 transition-opacity animate-pulse" />
+                <div className="absolute -inset-1 bg-linear-to-r from-sl-blue via-sl-purple to-sl-blue rounded-sm opacity-50 blur-sm group-hover:opacity-75 transition-opacity animate-pulse" />
                 <div className="relative">
                   {user.avatar_url ? (
                     <img
@@ -371,11 +373,17 @@ export default function Header({
           <div className="flex items-center gap-1 ml-4">
             <Tooltip>
               <TooltipTrigger asChild>
-                <IconButton onClick={onPrevMonth}>
+                <IconButton
+                  onClick={onPrevMonth}
+                  disabled={disablePrevMonth}
+                  className={disablePrevMonth ? "opacity-30 cursor-not-allowed" : ""}
+                >
                   <ChevronLeft size={16} />
                 </IconButton>
               </TooltipTrigger>
-              <TooltipContent>Previous Month</TooltipContent>
+              <TooltipContent>
+                {disablePrevMonth ? "Account start" : "Previous Month"}
+              </TooltipContent>
             </Tooltip>
 
             <span className="text-sm font-bold uppercase tracking-wider text-sl-silver min-w-40 text-center">
@@ -457,7 +465,7 @@ export default function Header({
           <DialogHeader className="relative z-10 p-6 pb-4 border-b border-sl-blue/20">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-sl-blue to-sl-purple rounded-full blur-sm opacity-50" />
+                <div className="absolute -inset-1 bg-linear-to-r from-sl-blue to-sl-purple rounded-full blur-sm opacity-50" />
                 <div className="relative w-10 h-10 bg-sl-gray border border-sl-blue/50 flex items-center justify-center">
                   <Crown size={20} className="text-sl-blue" />
                 </div>
@@ -494,7 +502,7 @@ export default function Header({
 
           <div className="relative z-10 flex-1 overflow-y-auto p-4">
             <div className="space-y-2">
-              {rankData.map((rank, index) => {
+              {rankData.map((rank) => {
                 const isCurrentRank = user?.level_progress.rank_title === rank.title;
                 const currentLevel = user?.level_progress.level || 1;
                 const rankMinLevel = parseInt(rank.range.split('-')[0].replace('+', ''));

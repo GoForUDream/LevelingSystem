@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { API_URL } from '@/lib/utils'
 
 interface LevelProgress {
   level: number
@@ -18,6 +19,7 @@ interface User {
   total_exp: number
   level: number
   level_progress: LevelProgress
+  created_at: string
 }
 
 interface AuthContextType {
@@ -31,8 +33,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-const API_URL = 'http://localhost:8000'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -119,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {

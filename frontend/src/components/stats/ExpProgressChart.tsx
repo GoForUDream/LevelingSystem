@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -8,46 +9,44 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { chartColors, tooltipStyle, axisStyle, gridStyle } from './ChartTheme';
-
-interface DailyTaskStats {
-  date: string;
-  completed: number;
-  overdue: number;
-  cancelled: number;
-  exp_earned: number;
-}
+import type { DailyTaskStats } from '@/types/stats';
 
 interface ExpProgressChartProps {
   data: DailyTaskStats[];
 }
 
-export default function ExpProgressChart({ data }: ExpProgressChartProps) {
-  // Calculate cumulative EXP using reduce to avoid reassignment
-  const chartData = data.reduce<Array<{
-    date: string;
-    completed: number;
-    overdue: number;
-    cancelled: number;
-    exp_earned: number;
-    displayDate: string;
-    cumulativeExp: number;
-  }>>((acc, d, i) => {
-    const prevCumulative = i > 0 ? acc[i - 1].cumulativeExp : 0;
-    acc.push({
-      ...d,
-      displayDate: new Date(d.date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      }),
-      cumulativeExp: prevCumulative + d.exp_earned,
-    });
-    return acc;
-  }, []);
+function ExpProgressChart({ data }: ExpProgressChartProps) {
+  const { chartData, tickInterval } = useMemo(() => {
+    const formatted = data.reduce<
+      Array<{
+        date: string;
+        displayDate: string;
+        cumulativeExp: number;
+      }>
+    >((acc, d, i) => {
+      const prevCumulative = i > 0 ? acc[i - 1].cumulativeExp : 0;
+      acc.push({
+        date: d.date,
+        displayDate: new Date(d.date).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        }),
+        cumulativeExp: prevCumulative + d.exp_earned,
+      });
+      return acc;
+    }, []);
 
-  const tickInterval = Math.ceil(chartData.length / 10);
+    return {
+      chartData: formatted,
+      tickInterval: Math.ceil(formatted.length / 10),
+    };
+  }, [data]);
 
   return (
-    <div className="led-border p-4 border border-sl-purple/30 bg-linear-to-b from-sl-gray-light/30 to-sl-gray/20" style={{ '--led-color': '#7B2CBF' } as React.CSSProperties}>
+    <div
+      className="led-border p-4 border border-sl-purple/30 bg-linear-to-b from-sl-gray-light/30 to-sl-gray/20"
+      style={{ '--led-color': '#7B2CBF' } as React.CSSProperties}
+    >
       <h3 className="text-sm font-bold uppercase tracking-wider text-sl-purple mb-4">
         EXP Progress
       </h3>
@@ -93,3 +92,5 @@ export default function ExpProgressChart({ data }: ExpProgressChartProps) {
     </div>
   );
 }
+
+export default memo(ExpProgressChart);

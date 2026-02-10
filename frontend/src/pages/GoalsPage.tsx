@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { API_URL } from "@/lib/utils";
 import {
   ChevronLeft,
   Target,
@@ -14,7 +15,11 @@ import {
   Circle,
 } from "lucide-react";
 import { AddButton } from "@/components/ui/buttons";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import CreateGoalModal from "@/components/CreateGoalModal";
 import { badgeIdToName } from "@/constants/achievements";
 
@@ -75,14 +80,12 @@ const priorityStyles: Record<
   },
 };
 
-const API_URL = "http://localhost:8000";
-
 function getDaysRemaining(deadline: string | null): string | null {
   if (!deadline) return null;
   const now = new Date();
   const target = new Date(deadline);
   const diff = Math.ceil(
-    (target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    (target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
   );
   if (diff < 0) return "Overdue";
   if (diff === 0) return "Due today";
@@ -207,7 +210,7 @@ export default function GoalsPage() {
           <div className="flex-1 flex items-center justify-center p-8">
             <AddButton
               onClick={openCreate}
-              className="!w-auto px-8 py-6 border-sl-blue/20 flex items-center gap-3"
+              className="w-auto! px-8 py-6 border-sl-blue/20 flex items-center gap-3"
             >
               <Plus size={18} />
               New Goal
@@ -224,7 +227,7 @@ export default function GoalsPage() {
             const style = priorityStyles[goal.rank];
             const daysLeft = getDaysRemaining(goal.end_date);
             const completedTasks = goal.tasks.filter(
-              (t) => t.status === "COMPLETED"
+              (t) => t.status === "COMPLETED",
             ).length;
             const totalTasks = goal.tasks.length;
             const progress =
@@ -261,7 +264,9 @@ export default function GoalsPage() {
                             )}
                           </button>
                         </TooltipTrigger>
-                        <TooltipContent>{goal.is_done ? "Mark Incomplete" : "Mark Complete"}</TooltipContent>
+                        <TooltipContent>
+                          {goal.is_done ? "Mark Incomplete" : "Mark Complete"}
+                        </TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -287,7 +292,9 @@ export default function GoalsPage() {
                       </Tooltip>
                     </div>
                   </div>
-                  <h2 className={`text-lg font-bold text-sl-silver tracking-wide ${goal.is_done ? "line-through" : ""}`}>
+                  <h2
+                    className={`text-lg font-bold text-sl-silver tracking-wide ${goal.is_done ? "line-through" : ""}`}
+                  >
                     {goal.title}
                   </h2>
                   {daysLeft && (
@@ -357,18 +364,21 @@ export default function GoalsPage() {
                     <div className="space-y-2">
                       {(() => {
                         // Group tasks by title to collapse recurring duplicates
-                        const grouped = new Map<string, { total: number; completed: number; expValue: number }>();
+                        const grouped = new Map<
+                          string,
+                          { total: number; completed: number }
+                        >();
                         const unique: GoalTask[] = [];
                         for (const task of goal.tasks) {
                           const existing = grouped.get(task.title);
                           if (existing) {
                             existing.total++;
-                            if (task.status === "COMPLETED") existing.completed++;
+                            if (task.status === "COMPLETED")
+                              existing.completed++;
                           } else {
                             grouped.set(task.title, {
                               total: 1,
                               completed: task.status === "COMPLETED" ? 1 : 0,
-                              expValue: task.exp_value,
                             });
                             unique.push(task);
                           }
@@ -420,35 +430,32 @@ export default function GoalsPage() {
                                 >
                                   {task.title}
                                 </span>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[10px] text-sl-silver-dark">
-                                    {group.expValue} EXP
-                                  </span>
-                                  {isGroup && (
-                                    <>
-                                      <span className={`text-[10px] font-bold ${allDone ? "text-[#333]" : noneDone ? "text-sl-silver-muted" : style.color}`}>
-                                        {group.completed}/{group.total}
-                                      </span>
-                                      <div className="flex-1 h-1 bg-sl-gray-muted/50 overflow-hidden max-w-[80px]">
-                                        <div
-                                          className="h-full transition-all duration-300"
-                                          style={{
-                                            width: `${(group.completed / group.total) * 100}%`,
-                                            background: allDone
-                                              ? "#333"
-                                              : goal.rank === "S"
-                                                ? "#E63946"
-                                                : goal.rank === "A"
-                                                  ? "#FF6B00"
-                                                  : goal.rank === "B"
-                                                    ? "#7B2CBF"
-                                                    : "#00A3FF",
-                                          }}
-                                        />
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
+                                {isGroup && (
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span
+                                      className={`text-[10px] font-bold ${allDone ? "text-[#333]" : noneDone ? "text-sl-silver-muted" : style.color}`}
+                                    >
+                                      {group.completed}/{group.total}
+                                    </span>
+                                    <div className="flex-1 h-1 bg-sl-gray-muted/50 overflow-hidden max-w-20">
+                                      <div
+                                        className="h-full transition-all duration-300"
+                                        style={{
+                                          width: `${(group.completed / group.total) * 100}%`,
+                                          background: allDone
+                                            ? "#333"
+                                            : goal.rank === "S"
+                                              ? "#E63946"
+                                              : goal.rank === "A"
+                                                ? "#FF6B00"
+                                                : goal.rank === "B"
+                                                  ? "#7B2CBF"
+                                                  : "#00A3FF",
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );

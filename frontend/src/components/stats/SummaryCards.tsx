@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { CheckCircle, Zap, Target, Flame } from 'lucide-react';
 
 interface SummaryCardsProps {
@@ -8,48 +9,55 @@ interface SummaryCardsProps {
   longestStreak: number;
 }
 
-export default function SummaryCards({
+function SummaryCards({
   totalTasksCompleted,
   totalExpEarned,
   completionRate,
   currentStreak,
   longestStreak,
 }: SummaryCardsProps) {
-  const cards = [
-    {
-      label: 'Tasks Completed',
-      value: totalTasksCompleted.toLocaleString(),
-      icon: CheckCircle,
-      color: 'text-sl-blue',
-      borderColor: 'border-sl-blue/30',
-      ledColor: '#00A3FF',
-    },
-    {
-      label: 'Total EXP',
-      value: totalExpEarned.toLocaleString(),
-      icon: Zap,
-      color: 'text-sl-purple',
-      borderColor: 'border-sl-purple/30',
-      ledColor: '#7B2CBF',
-    },
-    {
-      label: 'Completion Rate',
-      value: `${completionRate}%`,
-      icon: Target,
-      color: 'text-green-400',
-      borderColor: 'border-green-400/30',
-      ledColor: '#4ADE80',
-    },
-    {
-      label: 'Current Streak',
-      value: currentStreak.toString(),
-      subValue: longestStreak > currentStreak ? `Best: ${longestStreak}` : 'Personal Best!',
-      icon: Flame,
-      color: currentStreak >= longestStreak && longestStreak > 0 ? 'text-sl-red' : 'text-orange-400',
-      borderColor: currentStreak >= longestStreak && longestStreak > 0 ? 'border-sl-red/30' : 'border-orange-400/30',
-      ledColor: currentStreak >= longestStreak && longestStreak > 0 ? '#E63946' : '#FF6B00',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        label: 'Tasks Completed',
+        value: totalTasksCompleted.toLocaleString(),
+        icon: CheckCircle,
+        color: 'text-sl-blue',
+        borderColor: 'border-sl-blue/30',
+        ledColor: '#00A3FF',
+      },
+      {
+        label: 'Total EXP',
+        value: totalExpEarned.toLocaleString(),
+        icon: Zap,
+        color: 'text-sl-purple',
+        borderColor: 'border-sl-purple/30',
+        ledColor: '#7B2CBF',
+      },
+      {
+        label: 'Completion Rate',
+        value: `${completionRate}%`,
+        icon: Target,
+        color: 'text-green-400',
+        borderColor: 'border-green-400/30',
+        ledColor: '#4ADE80',
+      },
+      {
+        label: 'Current Streak',
+        value: currentStreak.toString(),
+        subValue: longestStreak > currentStreak ? `Best: ${longestStreak}` : 'Personal Best!',
+        icon: Flame,
+        color:
+          currentStreak >= longestStreak && longestStreak > 0 ? 'text-sl-red' : 'text-orange-400',
+        borderColor:
+          currentStreak >= longestStreak && longestStreak > 0
+            ? 'border-sl-red/30'
+            : 'border-orange-400/30',
+        ledColor: currentStreak >= longestStreak && longestStreak > 0 ? '#E63946' : '#FF6B00',
+      },
+    ],
+    [totalTasksCompleted, totalExpEarned, completionRate, currentStreak, longestStreak]
+  );
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -74,3 +82,5 @@ export default function SummaryCards({
     </div>
   );
 }
+
+export default memo(SummaryCards);

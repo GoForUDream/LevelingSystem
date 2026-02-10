@@ -158,7 +158,13 @@ class StatsService:
 
         # Calculate summary metrics
         total_tasks_completed = totals["total_completed"]
-        total_exp_earned = totals["total_exp"]
+        # Total EXP calculation:
+        # - "all" period: use user.total_exp (authoritative source)
+        # - other periods: calculate from tasks in that period
+        if period == "all":
+            total_exp_earned = user.total_exp
+        else:
+            total_exp_earned = await self.stats_repo.get_net_exp_in_period(user_id, start, end)
 
         # Completion rate: completed / (completed + overdue + cancelled)
         total_finished = (

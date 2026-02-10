@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -9,34 +10,33 @@ import {
   Legend,
 } from 'recharts';
 import { chartColors, tooltipStyle, axisStyle, gridStyle } from './ChartTheme';
-
-interface DailyTaskStats {
-  date: string;
-  completed: number;
-  overdue: number;
-  cancelled: number;
-  exp_earned: number;
-}
+import type { DailyTaskStats } from '@/types/stats';
 
 interface TasksOverTimeChartProps {
   data: DailyTaskStats[];
 }
 
-export default function TasksOverTimeChart({ data }: TasksOverTimeChartProps) {
-  // Format dates for display (show abbreviated date)
-  const chartData = data.map((d) => ({
-    ...d,
-    displayDate: new Date(d.date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    }),
-  }));
+function TasksOverTimeChart({ data }: TasksOverTimeChartProps) {
+  const { chartData, tickInterval } = useMemo(() => {
+    const formatted = data.map((d) => ({
+      ...d,
+      displayDate: new Date(d.date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
+    }));
 
-  // Show fewer labels if there's too much data
-  const tickInterval = Math.ceil(chartData.length / 10);
+    return {
+      chartData: formatted,
+      tickInterval: Math.ceil(formatted.length / 10),
+    };
+  }, [data]);
 
   return (
-    <div className="led-border p-4 border border-sl-blue/30 bg-linear-to-b from-sl-gray-light/30 to-sl-gray/20" style={{ '--led-color': '#00A3FF' } as React.CSSProperties}>
+    <div
+      className="led-border p-4 border border-sl-blue/30 bg-linear-to-b from-sl-gray-light/30 to-sl-gray/20"
+      style={{ '--led-color': '#00A3FF' } as React.CSSProperties}
+    >
       <h3 className="text-sm font-bold uppercase tracking-wider text-sl-blue mb-4">
         Tasks Over Time
       </h3>
@@ -56,9 +56,9 @@ export default function TasksOverTimeChart({ data }: TasksOverTimeChartProps) {
             <YAxis {...axisStyle} fontSize={10} allowDecimals={false} />
             <Tooltip
               {...tooltipStyle}
-              formatter={(value: number, name: string) => [
-                value,
-                name.charAt(0).toUpperCase() + name.slice(1),
+              formatter={(value, name) => [
+                value as number,
+                (name as string).charAt(0).toUpperCase() + (name as string).slice(1),
               ]}
             />
             <Legend
@@ -93,3 +93,5 @@ export default function TasksOverTimeChart({ data }: TasksOverTimeChartProps) {
     </div>
   );
 }
+
+export default memo(TasksOverTimeChart);

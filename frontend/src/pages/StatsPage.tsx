@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, BarChart3, ChevronDown } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,80 +16,18 @@ import {
   ActivityHeatmap,
   ComparisonCard,
 } from '@/components/stats';
+import { useStats } from '@/hooks/useStats';
+import type { Period } from '@/types/stats';
 
-const API_URL = 'http://localhost:8000';
-
-type Period = '7d' | '30d' | '90d' | 'all';
-
-interface DailyTaskStats {
-  date: string;
-  completed: number;
-  overdue: number;
-  cancelled: number;
-  exp_earned: number;
-}
-
-interface CompletionBreakdown {
-  completed: number;
-  overdue: number;
-  cancelled: number;
-  in_progress: number;
-  todo: number;
-}
-
-interface TimeOfDayDistribution {
-  hour: number;
-  count: number;
-}
-
-interface HeatmapDay {
-  date: string;
-  count: number;
-  intensity: number;
-}
-
-interface ComparisonMetric {
-  current: number;
-  previous: number;
-  change_percent: number;
-  trend: 'up' | 'down' | 'neutral';
-}
-
-interface PeriodComparison {
-  period_label: string;
-  tasks_completed: ComparisonMetric;
-  exp_earned: ComparisonMetric;
-  completion_rate: ComparisonMetric;
-  average_daily_tasks: ComparisonMetric;
-}
-
-interface StatsData {
-  account_created_at: string;
-  account_age_days: number;
-  daily_tasks: DailyTaskStats[];
-  completion_breakdown: CompletionBreakdown;
-  activity_heatmap: HeatmapDay[];
-  time_of_day: TimeOfDayDistribution[];
-  total_tasks_completed: number;
-  total_exp_earned: number;
-  completion_rate: number;
-  average_tasks_per_day: number;
-  most_productive_hour: number | null;
-  current_streak: number;
-  longest_streak: number;
-  monthly_comparison: PeriodComparison | null;
-  yearly_comparison: PeriodComparison | null;
-}
-
-const periodLabels: Record<Period, string> = {
+const PERIOD_LABELS: Record<Period, string> = {
   '7d': 'Last 7 Days',
   '30d': 'Last 30 Days',
   '90d': 'Last 90 Days',
-  'all': 'All Time',
+  all: 'All Time',
 };
 
 // Pre-computed particle positions for stable rendering
-const statsParticles = [
+const STATS_PARTICLES = [
   { left: 8, top: 15, duration: 12, delay: 0.5 },
   { left: 22, top: 38, duration: 16, delay: 2.1 },
   { left: 35, top: 62, duration: 10, delay: 3.8 },
@@ -111,41 +48,12 @@ const statsParticles = [
   { left: 45, top: 42, duration: 17, delay: 3.5 },
   { left: 58, top: 18, duration: 9, delay: 1.1 },
   { left: 72, top: 58, duration: 14, delay: 4.2 },
-];
+] as const;
 
 export default function StatsPage() {
   const navigate = useNavigate();
-  const { token } = useAuth();
   const [period, setPeriod] = useState<Period>('30d');
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!token) return;
-
-    setLoading(true);
-    setError(null);
-
-    // Get timezone offset in minutes (positive for ahead of UTC)
-    const timezoneOffset = -new Date().getTimezoneOffset();
-
-    fetch(`${API_URL}/api/stats?period=${period}&timezone_offset=${timezoneOffset}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch stats');
-        return res.json();
-      })
-      .then((data: StatsData) => {
-        setStats(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [token, period]);
+  const { stats, loading, error } = useStats(period);
 
   return (
     <div className="min-h-screen bg-sl-black relative overflow-hidden">
@@ -165,11 +73,17 @@ export default function StatsPage() {
 
         {/* Ambient orbs */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-sl-blue/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-sl-purple/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-sl-blue/5 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div
+          className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-sl-purple/10 rounded-full blur-[100px] animate-pulse"
+          style={{ animationDelay: '1s' }}
+        />
+        <div
+          className="absolute top-1/2 right-1/3 w-64 h-64 bg-sl-blue/5 rounded-full blur-[80px] animate-pulse"
+          style={{ animationDelay: '2s' }}
+        />
 
         {/* Floating particles */}
-        {statsParticles.map((p, i) => (
+        {STATS_PARTICLES.map((p, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-sl-blue/40 rounded-full"
@@ -186,7 +100,8 @@ export default function StatsPage() {
         <div
           className="absolute inset-0 opacity-[0.02]"
           style={{
-            background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 163, 255, 0.1) 2px, rgba(0, 163, 255, 0.1) 4px)',
+            background:
+              'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 163, 255, 0.1) 2px, rgba(0, 163, 255, 0.1) 4px)',
           }}
         />
 
@@ -194,7 +109,8 @@ export default function StatsPage() {
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at center, transparent 0%, rgba(13, 13, 13, 0.4) 70%, rgba(13, 13, 13, 0.8) 100%)',
+            background:
+              'radial-gradient(ellipse at center, transparent 0%, rgba(13, 13, 13, 0.4) 70%, rgba(13, 13, 13, 0.8) 100%)',
           }}
         />
       </div>
@@ -227,7 +143,7 @@ export default function StatsPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-sl-silver border border-sl-blue/30 px-3 py-1.5 hover:bg-sl-blue/10 transition-colors cursor-pointer">
-                {periodLabels[period]}
+                {PERIOD_LABELS[period]}
                 <ChevronDown size={14} />
               </button>
             </DropdownMenuTrigger>
@@ -235,7 +151,7 @@ export default function StatsPage() {
               align="end"
               className="bg-sl-gray border border-sl-blue/30 shadow-[0_0_20px_rgba(0,163,255,0.2)]"
             >
-              {(Object.keys(periodLabels) as Period[]).map((p) => (
+              {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
                 <DropdownMenuItem
                   key={p}
                   onClick={() => setPeriod(p)}
@@ -245,7 +161,7 @@ export default function StatsPage() {
                       : 'text-sl-silver hover:text-sl-blue hover:bg-sl-blue/5'
                   }`}
                 >
-                  {periodLabels[p]}
+                  {PERIOD_LABELS[p]}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -299,12 +215,8 @@ export default function StatsPage() {
             {/* Comparisons */}
             {(stats.monthly_comparison || stats.yearly_comparison) && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {stats.monthly_comparison && (
-                  <ComparisonCard comparison={stats.monthly_comparison} />
-                )}
-                {stats.yearly_comparison && (
-                  <ComparisonCard comparison={stats.yearly_comparison} />
-                )}
+                {stats.monthly_comparison && <ComparisonCard comparison={stats.monthly_comparison} />}
+                {stats.yearly_comparison && <ComparisonCard comparison={stats.yearly_comparison} />}
               </div>
             )}
 
@@ -318,8 +230,8 @@ export default function StatsPage() {
                     day: 'numeric',
                     year: 'numeric',
                   })}
-                </span>
-                {' '}({stats.account_age_days} days)
+                </span>{' '}
+                ({stats.account_age_days} days)
               </p>
             </div>
           </div>
@@ -335,10 +247,7 @@ function LoadingSkeleton() {
       {/* Summary Cards Skeleton */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="h-24 bg-sl-gray-light/20 border border-sl-gray-muted/30"
-          />
+          <div key={i} className="h-24 bg-sl-gray-light/20 border border-sl-gray-muted/30" />
         ))}
       </div>
 
