@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import AppTitle from "@/components/AppTitle";
-import { Menu, Trophy, Target, LogOut, ChevronLeft, ChevronRight, BarChart3, Crown, Swords, Shield, Flame, Star, Sparkles, Zap } from "lucide-react";
+import { Menu, Trophy, Target, LogOut, ChevronLeft, ChevronRight, BarChart3, Crown, Swords, Shield, Flame, Star, Sparkles, Zap, Link } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,7 +55,7 @@ export default function Header({
   onToday,
   disablePrevMonth = false,
 }: HeaderProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, linkGoogleAccount, isGuest } = useAuth();
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showRanksModal, setShowRanksModal] = useState(false);
@@ -281,6 +281,18 @@ export default function Header({
                 Stats
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-sl-gray-muted" />
+              {isGuest && (
+                <>
+                  <DropdownMenuItem
+                    onClick={linkGoogleAccount}
+                    className="text-amber-400 hover:text-amber-400 hover:bg-amber-400/5 cursor-pointer text-xs font-bold uppercase tracking-wider"
+                  >
+                    <Link size={16} />
+                    Link Google Account
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-sl-gray-muted" />
+                </>
+              )}
               <DropdownMenuItem
                 onClick={() => setShowLogoutModal(true)}
                 className="text-sl-red hover:text-sl-red hover:bg-sl-red/5 cursor-pointer text-xs font-bold uppercase tracking-wider"
@@ -410,8 +422,9 @@ export default function Header({
               Confirm Logout
             </DialogTitle>
             <DialogDescription className="text-sl-silver-muted text-sm pt-2">
-              Are you sure you want to logout? Your progress is saved, but
-              you'll need to login again to continue your quests.
+              {isGuest
+                ? "Warning: As a guest, logging out means you will lose access to this account permanently unless you link a Google account first."
+                : "Are you sure you want to logout? Your progress is saved, but you'll need to login again to continue your quests."}
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 pt-4">

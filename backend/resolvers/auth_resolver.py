@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db
@@ -22,40 +22,80 @@ async def login():
     return RedirectResponse(url=auth_url)
 
 
+@router.post("/guest")
+async def guest_login(db: AsyncSession = Depends(get_db)):
+    """Create a guest account and return a permanent JWT."""
+    repository = UserRepository(db)
+    service = UserService(repository)
+    user = await service.create_guest_user()
+    token = auth_service.create_guest_token(user.id)
+    return {"token": token}
+
+
+@router.get("/link-google")
+async def link_google(
+    current_user: User = Depends(get_current_user),
+):
+    """Return a Google OAuth URL with a signed state for guest account linking."""
+    if not current_user.is_guest:
+        raise HTTPException(status_code=400, detail="Account is already linked to Google")
+    state = auth_service.create_link_state(current_user.id)
+    url = auth_service.get_google_auth_url(state=state)
+    return {"url": url}
+
+
 @router.get("/callback")
-async def callback(code: str, db: AsyncSession = Depends(get_db)):
-    """Handle Google OAuth callback"""
+async def callback(
+    code: str,
+    state: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Handle Google OAuth callback — also handles guest account linking via state."""
     try:
-        # Exchange code for tokens
         tokens = await auth_service.exchange_code_for_tokens(code)
         access_token = tokens.get("access_token")
         if not access_token:
             raise ValueError("No access token received from Google")
 
-        # Get user info from Google
         google_user = await auth_service.get_google_user_info(access_token)
-
         google_id = google_user.get("id")
         email = google_user.get("email")
         name = google_user.get("name")
         if not google_id or not email or not name:
             raise ValueError("Missing required user info from Google")
 
-        # Get or create user
         repository = UserRepository(db)
         service = UserService(repository)
 
+        # Guest account link flow
+        if state:
+            guest_user_id = auth_service.verify_link_state(state)
+            if not guest_user_id:
+                return RedirectResponse(
+                    url=f"{FRONTEND_URL}/login?error=Invalid or tampered link request"
+                )
+            linked_user = await service.link_google_account(
+                guest_user_id=guest_user_id,
+                google_id=google_id,
+                email=email,
+                name=name,
+                avatar_url=google_user.get("picture"),
+            )
+            if not linked_user:
+                return RedirectResponse(
+                    url=f"{FRONTEND_URL}/login?error=This Google account is already linked to another account"
+                )
+            jwt_token = auth_service.create_access_token(linked_user.id, linked_user.email)
+            return RedirectResponse(url=f"{FRONTEND_URL}/auth/callback?token={jwt_token}")
+
+        # Normal login flow
         user = await service.get_or_create_by_google(
             google_id=google_id,
             email=email,
             name=name,
             avatar_url=google_user.get("picture"),
         )
-
-        # Create JWT token
         jwt_token = auth_service.create_access_token(user.id, user.email)
-
-        # Redirect to frontend with token
         return RedirectResponse(url=f"{FRONTEND_URL}/auth/callback?token={jwt_token}")
 
     except Exception as e:
@@ -78,6 +118,7 @@ async def get_me(
         name=current_user.name,
         avatar_url=current_user.avatar_url,
         google_id=current_user.google_id,
+        is_guest=current_user.is_guest,
         total_exp=current_user.total_exp,
         level=current_user.level,
         is_active=current_user.is_active,

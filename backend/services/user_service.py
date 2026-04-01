@@ -1,3 +1,4 @@
+import random
 from repositories.user_repository import UserRepository
 from models.user import User
 from schemas.user import UserCreate, UserUpdate
@@ -48,6 +49,40 @@ class UserService:
             google_id=google_id,
         )
         return await self.repository.create(user)
+
+    async def create_guest_user(self) -> User:
+        guest_number = random.randint(1000, 9999)
+        user = User(
+            name=f"Guest #{guest_number}",
+            is_guest=True,
+        )
+        return await self.repository.create(user)
+
+    async def link_google_account(
+        self,
+        guest_user_id: int,
+        google_id: str,
+        email: str,
+        name: str,
+        avatar_url: str | None,
+    ) -> User | None:
+        """Link a Google account to an existing guest user. Returns None if google_id already taken or guest not found."""
+        existing = await self.repository.get_by_google_id(google_id)
+        if existing:
+            return None
+        guest = await self.repository.get_by_id(guest_user_id)
+        if not guest:
+            return None
+        return await self.repository.update(
+            guest_user_id,
+            {
+                "google_id": google_id,
+                "email": email,
+                "name": name,
+                "avatar_url": avatar_url,
+                "is_guest": False,
+            },
+        )
 
     async def get_all_users(self) -> list[User]:
         return await self.repository.get_all()

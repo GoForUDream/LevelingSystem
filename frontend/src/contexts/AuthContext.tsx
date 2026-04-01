@@ -13,9 +13,10 @@ interface LevelProgress {
 
 interface User {
   id: number
-  email: string
+  email: string | null
   name: string
   avatar_url: string | null
+  is_guest: boolean
   total_exp: number
   level: number
   level_progress: LevelProgress
@@ -26,7 +27,10 @@ interface AuthContextType {
   user: User | null
   token: string | null
   isLoading: boolean
+  isGuest: boolean
   login: () => void
+  loginAsGuest: () => Promise<void>
+  linkGoogleAccount: () => Promise<void>
   logout: () => void
   setToken: (token: string) => void
   refreshUser: () => Promise<void>
@@ -56,13 +60,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = `${API_URL}/api/auth/login`
   }
 
+  const loginAsGuest = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/guest`, { method: 'POST' })
+      if (!response.ok) throw new Error('Failed to create guest account')
+      const data = await response.json()
+      setToken(data.token)
+    } catch (error) {
+      console.error('Guest login failed:', error)
+    }
+  }
+
+  const linkGoogleAccount = async () => {
+    if (!token) return
+    try {
+      const response = await fetch(`${API_URL}/api/auth/link-google`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!response.ok) throw new Error('Failed to get link URL')
+      const data = await response.json()
+      window.location.href = data.url
+    } catch (error) {
+      console.error('Link Google Account failed:', error)
+    }
+  }
+
   const syncTimezone = useCallback(async () => {
     if (!token) return
-
-    // Get timezone offset in minutes (negative for ahead of UTC)
-    // JavaScript returns negative for ahead of UTC, but we want positive for ahead
     const timezoneOffset = -new Date().getTimezoneOffset()
-
     try {
       await fetch(`${API_URL}/api/auth/timezone?timezone_offset=${timezoneOffset}`, {
         method: 'PATCH',
@@ -91,7 +116,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const userData = await response.json()
         setUser(userData)
-        // Sync timezone after successful auth
         syncTimezone()
       } else {
         logout()
@@ -112,8 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUser()
   }, [fetchUser])
 
+  const isGuest = user?.is_guest ?? false
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, setToken, refreshUser }}>
+    <AuthContext.Provider value={{ user, token, isLoading, isGuest, login, loginAsGuest, linkGoogleAccount, logout, setToken, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

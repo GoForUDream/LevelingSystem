@@ -1,9 +1,9 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from datetime import datetime
 
 
 class UserCreate(BaseModel):
-    email: EmailStr
+    email: str | None = None
     name: str
     avatar_url: str | None = None
     google_id: str | None = None
@@ -27,10 +27,11 @@ class LevelProgress(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
-    email: str
+    email: str | None
     name: str
     avatar_url: str | None
     google_id: str | None
+    is_guest: bool
     total_exp: int
     level: int
     is_active: bool

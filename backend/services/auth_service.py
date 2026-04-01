@@ -1,4 +1,10 @@
+import base64
+import hashlib
+import hmac
+import json
 from datetime import datetime, timezone, timedelta
+from urllib.parse import urlencode
+
 from jose import jwt, JWTError
 import httpx
 from config import (
@@ -16,7 +22,7 @@ class AuthService:
     GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
     GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
 
-    def get_google_auth_url(self) -> str:
+    def get_google_auth_url(self, state: str | None = None) -> str:
         params = {
             "client_id": GOOGLE_CLIENT_ID,
             "redirect_uri": GOOGLE_REDIRECT_URI,
@@ -25,8 +31,9 @@ class AuthService:
             "access_type": "offline",
             "prompt": "consent",
         }
-        query = "&".join(f"{k}={v}" for k, v in params.items())
-        return f"{self.GOOGLE_AUTH_URL}?{query}"
+        if state:
+            params["state"] = state
+        return f"{self.GOOGLE_AUTH_URL}?{urlencode(params)}"
 
     async def exchange_code_for_tokens(self, code: str) -> dict:
         async with httpx.AsyncClient() as client:
@@ -52,15 +59,49 @@ class AuthService:
             response.raise_for_status()
             return response.json()
 
-    def create_access_token(self, user_id: int, email: str) -> str:
+    def create_access_token(self, user_id: int, email: str | None = None) -> str:
         expire = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
-        payload = {
+        payload: dict = {
             "sub": str(user_id),
-            "email": email,
             "exp": expire,
             "iat": datetime.now(timezone.utc),
         }
+        if email:
+            payload["email"] = email
         return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+    def create_guest_token(self, user_id: int) -> str:
+        """Issue a permanent (no-expiry) token for guest accounts."""
+        payload = {
+            "sub": str(user_id),
+            "iat": datetime.now(timezone.utc),
+            "guest": True,
+        }
+        return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+    def create_link_state(self, guest_user_id: int) -> str:
+        """Encode a signed guest_user_id into an OAuth state parameter."""
+        payload = json.dumps({"guest_id": guest_user_id})
+        sig = hmac.new(
+            JWT_SECRET.encode(), payload.encode(), hashlib.sha256
+        ).hexdigest()
+        combined = f"{payload}|||{sig}"
+        return base64.urlsafe_b64encode(combined.encode()).decode()
+
+    def verify_link_state(self, state: str) -> int | None:
+        """Decode and verify the OAuth state parameter. Returns guest_user_id or None."""
+        try:
+            decoded = base64.urlsafe_b64decode(state.encode()).decode()
+            payload_str, sig = decoded.split("|||", 1)
+            expected_sig = hmac.new(
+                JWT_SECRET.encode(), payload_str.encode(), hashlib.sha256
+            ).hexdigest()
+            if not hmac.compare_digest(sig, expected_sig):
+                return None
+            payload = json.loads(payload_str)
+            return int(payload["guest_id"])
+        except Exception:
+            return None
 
     def verify_token(self, token: str) -> dict | None:
         try:
