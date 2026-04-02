@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/buttons";
+import { TaskPresetCombobox } from "@/components/TaskPresetCombobox";
 import type { Task } from "@/components/TaskCard";
 
 interface TaskModalProps {
@@ -308,14 +309,25 @@ export default function TaskModal({
             <label className="block text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted mb-2">
               Quest Name
             </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="What needs to be done?"
-              className="w-full bg-sl-gray border border-sl-gray-muted px-4 py-3 text-sl-silver placeholder-sl-silver-dark focus:outline-none focus:border-sl-blue focus:shadow-[0_0_10px_rgba(0,163,255,0.3)] transition-all"
-              autoFocus
-            />
+            {isEditMode ? (
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="What needs to be done?"
+                className="w-full bg-sl-gray border border-sl-gray-muted px-4 py-3 text-sl-silver placeholder-sl-silver-dark focus:outline-none focus:border-sl-blue focus:shadow-[0_0_10px_rgba(0,163,255,0.3)] transition-all"
+                autoFocus
+              />
+            ) : (
+              <TaskPresetCombobox
+                value={title}
+                onPresetSelect={(t, imp) => {
+                  setTitle(t);
+                  setImportance(imp);
+                }}
+                onTitleChange={setTitle}
+              />
+            )}
           </div>
 
           {/* Description */}

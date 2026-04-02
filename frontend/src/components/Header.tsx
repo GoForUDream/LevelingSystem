@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStreak } from "@/hooks/useStreak";
 import AppTitle from "@/components/AppTitle";
-import { Menu, Trophy, Target, LogOut, ChevronLeft, ChevronRight, BarChart3, Crown, Swords, Shield, Flame, Star, Sparkles, Zap, Link } from "lucide-react";
+import { Menu, Trophy, Target, LogOut, ChevronLeft, ChevronRight, BarChart3, Crown, Swords, Shield, Flame, Star, Sparkles, Zap, Link, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,7 +56,8 @@ export default function Header({
   onToday,
   disablePrevMonth = false,
 }: HeaderProps) {
-  const { user, logout, linkGoogleAccount, isGuest } = useAuth();
+  const { user, token, logout, linkGoogleAccount, isGuest } = useAuth();
+  const streak = useStreak(token, user?.total_exp);
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showRanksModal, setShowRanksModal] = useState(false);
@@ -184,14 +186,6 @@ export default function Header({
     },
   ];
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   return (
     <header className="shrink-0 px-8 py-4 border-b border-sl-blue/20 bg-linear-to-r from-sl-black via-sl-gray/50 to-sl-black relative overflow-hidden">
@@ -315,11 +309,12 @@ export default function Header({
                     <img
                       src={user.avatar_url}
                       alt={user.name}
+                      referrerPolicy="no-referrer"
                       className="w-10 h-10 border-2 border-sl-blue glow-blue relative z-10"
                     />
                   ) : (
-                    <div className="w-10 h-10 bg-sl-gray-light border-2 border-sl-blue flex items-center justify-center text-sm font-bold text-sl-silver relative z-10">
-                      {getInitials(user.name)}
+                    <div className="w-10 h-10 bg-sl-gray-light border-2 border-sl-blue flex items-center justify-center relative z-10">
+                      <User size={20} className="text-sl-silver" />
                     </div>
                   )}
                 </div>
@@ -367,6 +362,80 @@ export default function Header({
                       }}
                     />
                   </div>
+
+                  {/* Streak pill */}
+                  {(() => {
+                    const { currentStreak, longestStreak, isAtRisk } = streak;
+                    const legendary = currentStreak >= 30;
+                    const hot = currentStreak >= 7;
+                    const active = currentStreak > 0;
+                    const flameColor = isAtRisk && active
+                      ? 'text-amber-400'
+                      : legendary ? 'text-sl-red'
+                      : hot ? 'text-orange-400'
+                      : active ? 'text-sl-blue'
+                      : 'text-sl-silver-dark';
+                    const borderColor = isAtRisk && active
+                      ? 'border-amber-400/50'
+                      : legendary ? 'border-sl-red/50'
+                      : hot ? 'border-orange-400/40'
+                      : active ? 'border-sl-blue/30'
+                      : 'border-sl-gray-muted/20';
+                    const bgColor = isAtRisk && active
+                      ? 'bg-amber-400/5'
+                      : legendary ? 'bg-sl-red/10'
+                      : hot ? 'bg-orange-400/5'
+                      : active ? 'bg-sl-blue/5'
+                      : 'bg-transparent';
+                    const glowColor = isAtRisk && active
+                      ? 'rgba(251,191,36,0.7)'
+                      : legendary ? 'rgba(230,57,70,0.8)'
+                      : hot ? 'rgba(251,146,60,0.6)'
+                      : active ? 'rgba(0,163,255,0.5)'
+                      : 'transparent';
+                    return (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`flex items-center gap-1 px-2 py-0.5 border ${borderColor} ${bgColor} cursor-default shrink-0 select-none ${isAtRisk && active ? 'animate-pulse' : ''}`}
+                            style={{ boxShadow: active ? `0 0 8px ${glowColor}` : 'none' }}
+                          >
+                            <Flame
+                              size={11}
+                              className={flameColor}
+                              style={{ filter: active ? `drop-shadow(0 0 4px ${glowColor})` : 'none' }}
+                            />
+                            <span className={`text-[10px] font-bold tabular-nums ${flameColor}`}
+                              style={{ textShadow: active ? `0 0 8px ${glowColor}` : 'none' }}>
+                              {active ? currentStreak : '—'}
+                            </span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="bg-sl-gray border border-sl-blue/30 text-sl-silver">
+                          <div className="text-xs space-y-1 py-0.5">
+                            <div className="flex items-center gap-2">
+                              <Flame size={12} className={flameColor} />
+                              <span>Current streak: <span className="font-bold text-sl-silver">{currentStreak} days</span></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Star size={12} className="text-yellow-400" />
+                              <span>Best streak: <span className="font-bold text-sl-silver">{longestStreak} days</span></span>
+                            </div>
+                            {isAtRisk && active && (
+                              <div className="text-amber-400 font-semibold pt-0.5 border-t border-amber-400/20">
+                                ⚠ Complete a task today to keep it!
+                              </div>
+                            )}
+                            {!active && (
+                              <div className="text-sl-silver-muted pt-0.5">
+                                Complete a task to start your streak
+                              </div>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })()}
                 </div>
               </div>
             </>

@@ -424,6 +424,29 @@ export default function CalendarPage() {
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
+  // Convert vertical mouse wheel to horizontal scroll,
+  // unless the cursor is over a scrollable task list area.
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Let trackpad horizontal swipe pass through naturally
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+
+      // Let native vertical scroll work inside day task areas
+      const target = e.target as HTMLElement;
+      const taskArea = target.closest<HTMLElement>(".overflow-y-auto");
+      if (taskArea && taskArea !== container && taskArea.scrollHeight > taskArea.clientHeight) return;
+
+      e.preventDefault();
+      container.scrollLeft += e.deltaY;
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
+  }, []);
+
 
   // Scroll to a specific month
   const scrollToMonth = useCallback((target: MonthKey, behavior: ScrollBehavior = "smooth") => {
@@ -499,6 +522,27 @@ export default function CalendarPage() {
     setSelectedDate(date);
     setIsModalOpen(true);
   };
+
+  const handleQuickAdd = useCallback(() => {
+    setEditTask(null);
+    setSelectedDate(new Date());
+    setIsModalOpen(true);
+  }, []);
+
+  // "N" keyboard shortcut to quick-add for today
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isModalOpen) return;
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement).isContentEditable) return;
+      if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        handleQuickAdd();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen, handleQuickAdd]);
 
   const handleEditTask = (task: Task) => {
     setEditTask(task);
@@ -812,6 +856,37 @@ export default function CalendarPage() {
         expPenalty={cancelModalTask ? Math.floor(cancelModalTask.exp_value / 5) : 0}
         isLoading={cancellingTaskId === cancelModalTask?.id}
       />
+
+      {/* Floating Quick-Add Button */}
+      <div className="fixed bottom-8 right-8 z-50 flex flex-col items-center gap-2">
+        {/* Keyboard hint */}
+        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="text-[10px] text-sl-silver-muted uppercase tracking-widest">press</span>
+          <kbd className="text-[10px] font-bold text-sl-blue bg-sl-gray border border-sl-blue/30 px-1.5 py-0.5 rounded">N</kbd>
+        </div>
+        <div className="group relative">
+          {/* Ping ring */}
+          <span className="absolute inset-0 rounded-full bg-sl-blue opacity-20 animate-ping" />
+          {/* Glow ring */}
+          <span className="absolute -inset-1 rounded-full bg-sl-blue/10 blur-md" />
+          <button
+            onClick={handleQuickAdd}
+            title="New Quest (N)"
+            className="relative w-14 h-14 rounded-full bg-sl-blue text-white text-2xl font-bold flex items-center justify-center shadow-lg shadow-sl-blue/40 hover:bg-sl-blue/80 hover:shadow-sl-blue/60 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+            style={{ boxShadow: "0 0 24px rgba(0, 112, 243, 0.5), 0 0 48px rgba(0, 112, 243, 0.2)" }}
+          >
+            +
+          </button>
+          {/* Tooltip on hover */}
+          <div className="absolute bottom-full right-0 mb-3 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+            <div className="bg-sl-gray border border-sl-blue/30 text-sl-silver text-xs px-3 py-1.5 rounded flex items-center gap-2">
+              <span>New Quest for Today</span>
+              <kbd className="text-sl-blue font-bold bg-sl-black border border-sl-blue/30 px-1.5 py-0.5 rounded text-[10px]">N</kbd>
+            </div>
+            <div className="w-2 h-2 bg-sl-gray border-r border-b border-sl-blue/30 rotate-45 ml-auto mr-5 -mt-1" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
