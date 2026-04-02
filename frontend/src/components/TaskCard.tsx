@@ -1,5 +1,7 @@
 import { AlertTriangle, Check, Pencil, Repeat, X } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { RANK_THEME } from '@/constants/rankTheme'
+import { type TaskImportance } from '@/types/task'
 
 export interface Task {
   id: number
@@ -27,29 +29,15 @@ interface TaskCardProps {
   isFuture?: boolean
 }
 
-const importanceColors: Record<string, string> = {
-  TRIVIAL: 'bg-sl-silver-muted',
-  LOW: 'bg-sl-blue',
-  MEDIUM: 'bg-sl-purple',
-  HIGH: 'bg-[#FF6B00]',
-  CRITICAL: 'bg-sl-red',
-}
-
-const importanceGlow: Record<string, string> = {
-  CRITICAL: 'border-sl-red/50 hover:border-sl-red hover:shadow-[0_0_15px_rgba(230,57,70,0.3)]',
-  HIGH: 'border-[#FF6B00]/50 hover:border-[#FF6B00] hover:shadow-[0_0_15px_rgba(255,107,0,0.3)]',
-  MEDIUM: 'border-sl-purple/30 hover:border-sl-purple hover:shadow-[0_0_15px_rgba(123,44,191,0.3)]',
-  LOW: 'border-sl-blue/30 hover:border-sl-blue hover:shadow-[0_0_15px_rgba(0,163,255,0.3)]',
-  TRIVIAL: 'border-sl-gray-muted/50 hover:border-sl-silver-muted',
-}
+const rank = (importance: string) => RANK_THEME[importance as TaskImportance]
 
 export function TaskCard({ task, onComplete, onCancel, onEdit, isCompleting, isCancelling, isFuture = false }: TaskCardProps) {
   return (
     <div
-      className={`group relative p-3 border transition-all duration-200 overflow-hidden bg-linear-to-r from-sl-gray-light/80 to-sl-gray/50 ${importanceGlow[task.importance]}`}
+      className={`group relative p-3 border transition-all duration-200 overflow-hidden bg-linear-to-r from-sl-gray-light/80 to-sl-gray/50 ${rank(task.importance).cardGlow}`}
     >
       {/* Left accent bar */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${importanceColors[task.importance]}`} />
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${rank(task.importance).bgSolid}`} />
 
       <div className="flex items-start gap-3 pl-2 pr-16">
         <div className="flex-1 min-w-0">

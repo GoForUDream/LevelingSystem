@@ -2,14 +2,7 @@ import { useMemo } from 'react'
 import { GroupedCombobox, type ComboboxOption } from '@/components/ui/GroupedCombobox'
 import { TASK_PRESET_CATEGORIES, type TaskPreset } from '@/constants/taskPresets'
 import { TaskImportance } from '@/types/task'
-
-const RANK_BADGE: Record<TaskImportance, { label: string; textColor: string; bgColor: string }> = {
-  [TaskImportance.TRIVIAL]: { label: 'D', textColor: 'text-sl-silver-muted', bgColor: 'bg-sl-black/60 border border-sl-gray-muted' },
-  [TaskImportance.LOW]:     { label: 'C', textColor: 'text-sl-blue',         bgColor: 'bg-sl-blue/10 border border-sl-blue/30' },
-  [TaskImportance.MEDIUM]:  { label: 'B', textColor: 'text-sl-purple',       bgColor: 'bg-sl-purple/10 border border-sl-purple/30' },
-  [TaskImportance.HIGH]:    { label: 'A', textColor: 'text-[#FF6B00]',       bgColor: 'bg-[#FF6B00]/10 border border-[#FF6B00]/30' },
-  [TaskImportance.CRITICAL]:{ label: 'S', textColor: 'text-sl-red',          bgColor: 'bg-sl-red/10 border border-sl-red/30' },
-}
+import { RANK_THEME } from '@/constants/rankTheme'
 
 interface TaskPresetComboboxProps {
   value: string
@@ -20,7 +13,7 @@ interface TaskPresetComboboxProps {
 }
 
 function renderOption(option: ComboboxOption<TaskPreset>, isHighlighted: boolean) {
-  const badge = RANK_BADGE[option.data.importance] ?? RANK_BADGE.TRIVIAL
+  const theme = RANK_THEME[option.data.importance]
   return (
     <div
       className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors duration-100 ${
@@ -31,9 +24,9 @@ function renderOption(option: ComboboxOption<TaskPreset>, isHighlighted: boolean
     >
       {/* Rank badge */}
       <span
-        className={`shrink-0 w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded ${badge.textColor} ${badge.bgColor}`}
+        className={`shrink-0 w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded ${theme.badgeClasses}`}
       >
-        {badge.label}
+        {theme.label}
       </span>
 
       {/* Title + description */}

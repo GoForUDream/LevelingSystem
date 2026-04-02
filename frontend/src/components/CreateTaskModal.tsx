@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/buttons";
 import { TaskPresetCombobox } from "@/components/TaskPresetCombobox";
+import { RANK_THEME, RANK_THEME_BY_LETTER } from "@/constants/rankTheme";
+import { TaskImportance } from "@/types/task";
 import type { Task } from "@/components/TaskCard";
 
 interface TaskModalProps {
@@ -21,77 +23,16 @@ interface TaskModalProps {
   editTask?: Task | null;
 }
 
-const rankLevels = [
-  {
-    value: "TRIVIAL",
-    label: "D",
-    exp: 10,
-    color: "bg-sl-silver-muted",
-    accent: "border-sl-silver-muted",
-    subtitle: "Quick wins, minimal effort",
-    description:
-      "Tasks that take less than 5 minutes and require almost no mental energy.",
-    examples: "Drink water, make bed, reply to a simple message",
-  },
-  {
-    value: "LOW",
-    label: "C",
-    exp: 25,
-    color: "bg-sl-blue",
-    accent: "border-sl-blue",
-    subtitle: "Simple daily habits",
-    description:
-      "Routine tasks that are easy but still require some intention.",
-    examples: "Check emails, 10-min walk, tidy your desk",
-  },
-  {
-    value: "MEDIUM",
-    label: "B",
-    exp: 50,
-    color: "bg-sl-purple",
-    accent: "border-sl-purple",
-    subtitle: "Standard meaningful tasks",
-    description:
-      "Tasks that require focus, time, or effort. Core actions that move your goals forward.",
-    examples: "Work assignment, 30-min exercise, study for an hour",
-  },
-  {
-    value: "HIGH",
-    label: "A",
-    exp: 100,
-    color: "bg-[#FF6B00]",
-    accent: "border-[#FF6B00]",
-    subtitle: "Important and challenging",
-    description:
-      "Tasks that demand significant effort, skill, or courage. Often involve deadlines or stepping outside comfort zone.",
-    examples: "Major project, difficult conversation, job application",
-  },
-  {
-    value: "CRITICAL",
-    label: "S",
-    exp: 200,
-    color: "bg-sl-red",
-    accent: "border-sl-red",
-    subtitle: "Life-changing milestones",
-    description:
-      "Major achievements with lasting impact. These are the boss fights you've been building toward.",
-    examples: "Pass important exam, launch project, complete certification",
-  },
-];
+const rankLevels = (Object.values(TaskImportance) as TaskImportance[]).map((value) => ({
+  value,
+  ...RANK_THEME[value],
+}));
 
 interface GoalOption {
   id: number;
   title: string;
   rank: string;
 }
-
-const rankColors: Record<string, string> = {
-  S: "text-sl-red",
-  A: "text-[#FF6B00]",
-  B: "text-sl-purple",
-  C: "text-sl-blue",
-  D: "text-sl-silver-muted",
-};
 
 export default function TaskModal({
   isOpen,
@@ -358,7 +299,7 @@ export default function TaskModal({
                   onClick={() => setImportance(level.value)}
                   className={`py-2 px-1 text-[10px] font-bold uppercase tracking-wider transition-all border ${
                     importance === level.value
-                      ? `${level.color} text-white border-transparent shadow-[0_0_10px_rgba(0,163,255,0.3)]`
+                      ? `${level.bgSolid} text-white border-transparent shadow-[0_0_10px_rgba(0,163,255,0.3)]`
                       : "bg-sl-gray text-sl-silver-muted border-sl-gray-muted hover:border-sl-silver-muted"
                   }`}
                 >
@@ -369,7 +310,7 @@ export default function TaskModal({
 
             {/* Rank Description */}
             {selectedRank && (
-              <div className={`mt-3 p-3 bg-sl-gray border-l-2 ${selectedRank.accent}`}>
+              <div className={`mt-3 p-3 bg-sl-gray border-l-2 ${selectedRank.borderSolid}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold text-sl-silver">
                     {selectedRank.subtitle}
@@ -541,7 +482,7 @@ export default function TaskModal({
               </select>
               {goalId && (
                 <div className="mt-2 flex items-center gap-2">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${rankColors[goals.find((g) => g.id === goalId)?.rank ?? "C"]}`}>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${RANK_THEME_BY_LETTER[goals.find((g) => g.id === goalId)?.rank ?? "C"].textColor}`}>
                     {goals.find((g) => g.id === goalId)?.rank}-Rank
                   </span>
                   <span className="text-[10px] text-sl-silver-muted">
