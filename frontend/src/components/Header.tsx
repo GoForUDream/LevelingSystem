@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import AppTitle from "@/components/AppTitle";
@@ -35,20 +36,6 @@ interface HeaderProps {
   disablePrevMonth?: boolean;
 }
 
-const monthNames = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 export default function Header({
   currentDate,
@@ -67,6 +54,7 @@ export default function Header({
   const rankData = [
     {
       range: "1-5",
+      key: "Awakened One",
       title: t('rankTitles.Awakened One'),
       theme: t('rankThemes.Just discovered their potential'),
       icon: Sparkles,
@@ -77,6 +65,7 @@ export default function Header({
     },
     {
       range: "6-10",
+      key: "Beginner Warrior",
       title: t('rankTitles.Beginner Warrior'),
       theme: t('rankThemes.Starting the journey'),
       icon: Shield,
@@ -87,6 +76,7 @@ export default function Header({
     },
     {
       range: "11-20",
+      key: "Task Slayer",
       title: t('rankTitles.Task Slayer'),
       theme: t('rankThemes.Learning to conquer daily challenges'),
       icon: Swords,
@@ -97,6 +87,7 @@ export default function Header({
     },
     {
       range: "21-30",
+      key: "Dungeon Crawler",
       title: t('rankTitles.Dungeon Crawler'),
       theme: t('rankThemes.Consistently tackling goals'),
       icon: Flame,
@@ -107,6 +98,7 @@ export default function Header({
     },
     {
       range: "31-40",
+      key: "Goal Hunter",
       title: t('rankTitles.Goal Hunter'),
       theme: t('rankThemes.Actively pursuing objectives'),
       icon: Target,
@@ -117,6 +109,7 @@ export default function Header({
     },
     {
       range: "41-50",
+      key: "Elite Achiever",
       title: t('rankTitles.Elite Achiever'),
       theme: t('rankThemes.Proven track record'),
       icon: Trophy,
@@ -127,6 +120,7 @@ export default function Header({
     },
     {
       range: "51-60",
+      key: "S-Rank Executor",
       title: t('rankTitles.S-Rank Executor'),
       theme: t('rankThemes.High-level discipline'),
       icon: Zap,
@@ -137,6 +131,7 @@ export default function Header({
     },
     {
       range: "61-70",
+      key: "Master of Habits",
       title: t('rankTitles.Master of Habits'),
       theme: t('rankThemes.Habits are now second nature'),
       icon: Star,
@@ -147,6 +142,7 @@ export default function Header({
     },
     {
       range: "71-80",
+      key: "Sovereign of Will",
       title: t('rankTitles.Sovereign of Will'),
       theme: t('rankThemes.Unshakeable determination'),
       icon: Shield,
@@ -157,6 +153,7 @@ export default function Header({
     },
     {
       range: "81-90",
+      key: "Ruler of Self",
       title: t('rankTitles.Ruler of Self'),
       theme: t('rankThemes.Complete self-mastery'),
       icon: Swords,
@@ -167,6 +164,7 @@ export default function Header({
     },
     {
       range: "91-99",
+      key: "Monarch's Equal",
       title: t("rankTitles.Monarch's Equal"),
       theme: t('rankThemes.Among the elite few'),
       icon: Crown,
@@ -177,6 +175,7 @@ export default function Header({
     },
     {
       range: "100+",
+      key: "Shadow Monarch",
       title: t('rankTitles.Shadow Monarch'),
       theme: t('rankThemes.Absolute discipline, unlimited potential'),
       icon: Crown,
@@ -342,7 +341,7 @@ export default function Header({
                     onClick={() => setShowRanksModal(true)}
                     className="text-[10px] font-bold uppercase tracking-wider text-sl-red border border-sl-red/30 px-2 py-0.5 cursor-pointer hover:bg-sl-red/10 transition-colors"
                   >
-                    {user.level_progress.rank_title}
+                    {t(`rankTitles.${user.level_progress.rank_title}`)}
                   </button>
                 </div>
                 <div className="flex items-center gap-3 mt-2">
@@ -476,7 +475,10 @@ export default function Header({
             </Tooltip>
 
             <span className="text-sm font-bold uppercase tracking-wider text-sl-silver min-w-40 text-center">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+              {currentDate.toLocaleDateString(
+                i18n.language.startsWith('vi') ? 'vi-VN' : 'en-US',
+                { month: 'long' }
+              )} {currentDate.getFullYear()}
             </span>
 
             <Tooltip>
@@ -593,7 +595,7 @@ export default function Header({
           <div className="relative z-10 flex-1 overflow-y-auto p-4">
             <div className="space-y-2">
               {rankData.map((rank) => {
-                const isCurrentRank = user?.level_progress.rank_title === rank.title;
+                const isCurrentRank = user?.level_progress.rank_title === rank.key;
                 const currentLevel = user?.level_progress.level || 1;
                 const rankMinLevel = parseInt(rank.range.split('-')[0].replace('+', ''));
                 const isPastRank = currentLevel > rankMinLevel + (rank.range.includes('+') ? 0 : parseInt(rank.range.split('-')[1]) - rankMinLevel);
