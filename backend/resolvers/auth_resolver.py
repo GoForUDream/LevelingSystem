@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db
 from services.auth_service import AuthService
@@ -119,6 +120,7 @@ async def get_me(
         avatar_url=current_user.avatar_url,
         google_id=current_user.google_id,
         is_guest=current_user.is_guest,
+        language=current_user.language,
         total_exp=current_user.total_exp,
         level=current_user.level,
         is_active=current_user.is_active,
@@ -126,6 +128,26 @@ async def get_me(
         updated_at=current_user.updated_at,
         level_progress=LevelProgress(**progress),
     )
+
+
+class UserSettings(BaseModel):
+    language: str
+
+
+@router.patch("/settings")
+async def update_settings(
+    settings: UserSettings,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update user preferences (language, etc.)"""
+    allowed_languages = {"en", "vi"}
+    if settings.language not in allowed_languages:
+        raise HTTPException(status_code=400, detail="Unsupported language")
+    repository = UserRepository(db)
+    service = UserService(repository)
+    await service.update_user(current_user.id, {"language": settings.language})
+    return {"language": settings.language}
 
 
 @router.post("/logout")

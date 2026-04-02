@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Ghost } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import AppTitle from '@/components/AppTitle'
 import GuestWarningModal from '@/components/GuestWarningModal'
 
 export default function LoginPage() {
   const { login, loginAsGuest } = useAuth()
+  const { t } = useTranslation()
   const [showGuestWarning, setShowGuestWarning] = useState(false)
 
   const handleGuestConfirm = async () => {
@@ -18,15 +20,15 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-12 flex flex-col items-center">
           <AppTitle className="h-16 mb-4" />
-          <p className="text-sl-silver-muted">Level up your productivity</p>
+          <p className="text-sl-silver-muted">{t('auth.tagline')}</p>
         </div>
 
         <div className="bg-sl-gray border border-sl-gray-light rounded-2xl p-8">
           <h2 className="text-xl font-semibold text-sl-silver text-center mb-2">
-            Welcome back
+            {t('auth.welcomeBack')}
           </h2>
           <p className="text-sl-silver-muted text-center text-sm mb-8">
-            Sign in to continue to your dashboard
+            {t('auth.signInSubtitle')}
           </p>
 
           <button
@@ -39,12 +41,12 @@ export default function LoginPage() {
               <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
               <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
-            Continue with Google
+            {t('auth.continueWithGoogle')}
           </button>
 
           <div className="relative flex items-center my-6">
             <div className="flex-1 border-t border-sl-gray-light" />
-            <span className="px-3 text-xs text-sl-silver-dark">or</span>
+            <span className="px-3 text-xs text-sl-silver-dark">{t('auth.or')}</span>
             <div className="flex-1 border-t border-sl-gray-light" />
           </div>
 
@@ -53,16 +55,16 @@ export default function LoginPage() {
             className="w-full flex items-center justify-center gap-3 border border-sl-gray-light text-sl-silver-muted hover:text-sl-silver hover:border-sl-silver/50 font-medium py-3 px-4 rounded-xl transition-all duration-200"
           >
             <Ghost size={18} />
-            Continue as Guest
+            {t('auth.continueAsGuest')}
           </button>
 
           <p className="text-sl-silver-dark text-xs text-center mt-6">
-            By signing in, you agree to our Terms of Service and Privacy Policy
+            {t('auth.terms')}
           </p>
         </div>
 
         <p className="text-sl-silver-dark text-sm text-center mt-8">
-          New here? Sign in to create your account automatically.
+          {t('auth.newHere')}
         </p>
       </div>
 

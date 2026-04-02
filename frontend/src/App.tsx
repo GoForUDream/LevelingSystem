@@ -8,6 +8,7 @@ import CalendarPage from '@/pages/CalendarPage'
 import AchievementsPage from '@/pages/AchievementsPage'
 import GoalsPage from '@/pages/GoalsPage'
 import StatsPage from '@/pages/StatsPage'
+import SettingsPage from '@/pages/SettingsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
@@ -111,6 +112,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <StatsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
           </ProtectedRoute>
         }
       />

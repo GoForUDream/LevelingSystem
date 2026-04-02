@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { API_URL } from "@/lib/utils";
@@ -42,6 +43,7 @@ export default function TaskModal({
   editTask,
 }: TaskModalProps) {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [importance, setImportance] = useState("MEDIUM");
@@ -106,7 +108,7 @@ export default function TaskModal({
     e.preventDefault();
 
     if (!title.trim()) {
-      toast.error("Title is required");
+      toast.error(t('tasks.titleRequired'));
       return;
     }
 
@@ -153,7 +155,7 @@ export default function TaskModal({
 
         onTaskSaved();
         onClose();
-        toast.success("Quest updated!");
+        toast.success(t('tasks.questUpdated'));
       } else {
         // Create new task
         const dueDate = new Date(selectedDate);
@@ -203,13 +205,13 @@ export default function TaskModal({
         const selectedExp = rankLevels.find(
           (l) => l.value === importance
         )?.exp;
-        toast.success("Quest accepted!", {
-          description: `Complete it to earn ${selectedExp} EXP`,
+        toast.success(t('tasks.questAccepted'), {
+          description: t('tasks.questAcceptedDesc', { exp: selectedExp }),
         });
       }
     } catch {
-      toast.error(isEditMode ? "Failed to update quest" : "Failed to create quest", {
-        description: "Please try again.",
+      toast.error(isEditMode ? t('tasks.updateFailed') : t('tasks.createFailed'), {
+        description: t('common.tryAgain'),
       });
     } finally {
       setIsSubmitting(false);
@@ -233,7 +235,7 @@ export default function TaskModal({
       <DialogContent className="bg-sl-black border border-sl-blue/30 sm:max-w-md shadow-[0_0_30px_rgba(0,163,255,0.2)]">
         <DialogHeader>
           <DialogTitle className="text-sl-blue text-glow-blue font-bold uppercase tracking-wider">
-            {isEditMode ? "Edit Quest" : "New Quest"}
+            {isEditMode ? t('tasks.editQuest') : t('tasks.newQuest')}
           </DialogTitle>
           <DialogDescription className="text-sl-silver-muted text-xs tracking-wide">
             {displayDate.toLocaleDateString("en-US", {
@@ -248,7 +250,7 @@ export default function TaskModal({
           {/* Title */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted mb-2">
-              Quest Name
+              {t('tasks.questName')}
             </label>
             {isEditMode ? (
               <input
@@ -274,13 +276,13 @@ export default function TaskModal({
           {/* Description */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted mb-2">
-              Details{" "}
-              <span className="text-sl-silver-dark font-normal">(optional)</span>
+              {t('tasks.details')}{" "}
+              <span className="text-sl-silver-dark font-normal">({t('common.optional')})</span>
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add more details..."
+              placeholder={t('tasks.detailsPlaceholder')}
               rows={3}
               className="w-full bg-sl-gray border border-sl-gray-muted px-4 py-3 text-sl-silver placeholder-sl-silver-dark focus:outline-none focus:border-sl-blue focus:shadow-[0_0_10px_rgba(0,163,255,0.3)] transition-all resize-none"
             />
@@ -289,7 +291,7 @@ export default function TaskModal({
           {/* Importance */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted mb-2">
-              Rank
+              {t('tasks.rank')}
             </label>
             <div className="grid grid-cols-5 gap-1">
               {rankLevels.map((level) => (
@@ -340,7 +342,7 @@ export default function TaskModal({
                   className="accent-sl-blue w-4 h-4"
                 />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted">
-                  Repeat this quest
+                  {t('tasks.repeatQuest')}
                 </span>
               </label>
 
@@ -348,18 +350,23 @@ export default function TaskModal({
                 <div className="mt-3 p-3 bg-sl-gray border border-sl-gray-muted space-y-3">
                   {/* Frequency picker */}
                   <div className="grid grid-cols-4 gap-1">
-                    {(["DAILY", "WEEKLY", "MONTHLY", "CUSTOM"] as const).map((type) => (
+                    {([
+                      { value: "DAILY", label: t('tasks.recurrence.daily') },
+                      { value: "WEEKLY", label: t('tasks.recurrence.weekly') },
+                      { value: "MONTHLY", label: t('tasks.recurrence.monthly') },
+                      { value: "CUSTOM", label: t('tasks.recurrence.custom') },
+                    ] as const).map(({ value, label }) => (
                       <button
-                        key={type}
+                        key={value}
                         type="button"
-                        onClick={() => setRecurrenceType(type)}
+                        onClick={() => setRecurrenceType(value)}
                         className={`py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                          recurrenceType === type
+                          recurrenceType === value
                             ? "bg-sl-blue text-white border-transparent"
                             : "bg-sl-gray text-sl-silver-muted border-sl-gray-muted hover:border-sl-silver-muted"
                         }`}
                       >
-                        {type}
+                        {label}
                       </button>
                     ))}
                   </div>
@@ -367,9 +374,9 @@ export default function TaskModal({
                   {/* WEEKLY: day-of-week toggles */}
                   {recurrenceType === "WEEKLY" && (
                     <div>
-                      <span className="text-[10px] text-sl-silver-muted block mb-1.5">Repeat on</span>
+                      <span className="text-[10px] text-sl-silver-muted block mb-1.5">{t('tasks.recurrence.repeatOn')}</span>
                       <div className="flex gap-1">
-                        {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map((label, idx) => (
+                        {[t('tasks.days.mon'), t('tasks.days.tue'), t('tasks.days.wed'), t('tasks.days.thu'), t('tasks.days.fri'), t('tasks.days.sat'), t('tasks.days.sun')].map((label, idx) => (
                           <button
                             key={idx}
                             type="button"
@@ -396,7 +403,7 @@ export default function TaskModal({
                   {/* MONTHLY: calendar day grid */}
                   {recurrenceType === "MONTHLY" && (
                     <div>
-                      <span className="text-[10px] text-sl-silver-muted block mb-1.5">Repeat on days</span>
+                      <span className="text-[10px] text-sl-silver-muted block mb-1.5">{t('tasks.recurrence.repeatOnDays')}</span>
                       <div className="grid grid-cols-7 gap-1">
                         {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
                           <button
@@ -434,7 +441,7 @@ export default function TaskModal({
                             : "bg-sl-gray-light text-sl-silver-muted border-sl-gray-muted hover:border-sl-silver-muted"
                         }`}
                       >
-                        Last day of month
+                        {t('tasks.recurrence.lastDayOfMonth')}
                       </button>
                     </div>
                   )}
@@ -442,7 +449,7 @@ export default function TaskModal({
                   {/* CUSTOM: interval input */}
                   {recurrenceType === "CUSTOM" && (
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-sl-silver-muted">Every</span>
+                      <span className="text-[10px] text-sl-silver-muted">{t('tasks.recurrence.every')}</span>
                       <input
                         type="number"
                         min={1}
@@ -451,7 +458,7 @@ export default function TaskModal({
                         onChange={(e) => setCustomInterval(Number(e.target.value))}
                         className="w-16 bg-sl-gray-light border border-sl-gray-muted text-sl-silver text-xs px-2 py-1 focus:outline-none focus:border-sl-blue"
                       />
-                      <span className="text-[10px] text-sl-silver-muted">days</span>
+                      <span className="text-[10px] text-sl-silver-muted">{t('tasks.recurrence.days')}</span>
                     </div>
                   )}
                 </div>
@@ -463,8 +470,8 @@ export default function TaskModal({
           {goals.length > 0 && (
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted mb-2">
-                Link to Goal{" "}
-                <span className="text-sl-silver-dark font-normal">(optional)</span>
+                {t('tasks.linkToGoal')}{" "}
+                <span className="text-sl-silver-dark font-normal">({t('common.optional')})</span>
               </label>
               <select
                 value={goalId ?? ""}
@@ -473,7 +480,7 @@ export default function TaskModal({
                 }
                 className="w-full bg-sl-gray border border-sl-gray-muted px-4 py-3 text-sl-silver focus:outline-none focus:border-sl-blue focus:shadow-[0_0_10px_rgba(0,163,255,0.3)] transition-all appearance-none"
               >
-                <option value="">None</option>
+                <option value="">{t('tasks.noGoal')}</option>
                 {goals.map((g) => (
                   <option key={g.id} value={g.id}>
                     [{g.rank}] {g.title}
@@ -483,7 +490,7 @@ export default function TaskModal({
               {goalId && (
                 <div className="mt-2 flex items-center gap-2">
                   <span className={`text-[10px] font-bold uppercase tracking-wider ${RANK_THEME_BY_LETTER[goals.find((g) => g.id === goalId)?.rank ?? "C"].textColor}`}>
-                    {goals.find((g) => g.id === goalId)?.rank}-Rank
+                    {t('tasks.rankLabel', { rank: goals.find((g) => g.id === goalId)?.rank })}
                   </span>
                   <span className="text-[10px] text-sl-silver-muted">
                     {goals.find((g) => g.id === goalId)?.title}
@@ -500,14 +507,14 @@ export default function TaskModal({
               onClick={onClose}
               className="flex-1"
             >
-              Cancel
+              {t('common.cancel')}
             </SecondaryButton>
             <PrimaryButton
               type="submit"
               isLoading={isSubmitting}
               className="flex-1"
             >
-              {isEditMode ? "Save Changes" : "Accept Quest"}
+              {isEditMode ? t('tasks.saveChanges') : t('tasks.acceptQuest')}
             </PrimaryButton>
           </div>
         </form>

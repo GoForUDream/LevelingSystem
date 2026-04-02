@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo, useLayoutEffect } from "react";
+import { useTranslation } from "react-i18next";
 import Header from "@/components/Header";
 import TaskModal from "@/components/CreateTaskModal";
 import BadgeUnlockModal from "@/components/BadgeUnlockModal";
@@ -22,6 +23,7 @@ const MAX_LOADED_MONTHS = 12;
 
 export default function CalendarPage() {
   const { token, refreshUser, user } = useAuth();
+  const { t } = useTranslation();
 
   // Calculate earliest allowed month based on account creation date
   const earliestMonth: MonthKey | null = useMemo(() => {
@@ -266,21 +268,21 @@ export default function CalendarPage() {
         const data = await response.json();
         await refreshTasks();
         await refreshUser();
-        toast.success("Task completed!", {
-          description: `+${expValue} EXP earned`,
+        toast.success(t('tasks.completed'), {
+          description: t('tasks.completedDesc', { exp: expValue }),
         });
         if (data.new_badges && data.new_badges.length > 0) {
           setBadgeQueue((prev) => [...prev, ...data.new_badges]);
         }
       } else {
         const error = await response.json();
-        toast.error("Failed to complete task", {
-          description: error.detail || "Please try again.",
+        toast.error(t('tasks.completeFailed'), {
+          description: error.detail || t('common.tryAgain'),
         });
       }
     } catch {
-      toast.error("Failed to complete task", {
-        description: "Please try again.",
+      toast.error(t('tasks.completeFailed'), {
+        description: t('common.tryAgain'),
       });
     } finally {
       setCompletingTaskId(null);
@@ -325,23 +327,23 @@ export default function CalendarPage() {
         setCancelModalTask(null);
 
         if (skipOnly) {
-          toast.error("Quest skipped", {
-            description: `-${penalty} EXP penalty. Next occurrence created.`,
+          toast.error(t('tasks.questSkipped'), {
+            description: t('tasks.questSkippedDesc', { penalty }),
           });
         } else {
-          toast.error("Quest cancelled", {
-            description: `-${penalty} EXP penalty`,
+          toast.error(t('tasks.questCancelled'), {
+            description: t('tasks.questCancelledDesc', { penalty }),
           });
         }
       } else {
         const error = await response.json();
-        toast.error("Failed to cancel quest", {
-          description: error.detail || "Please try again.",
+        toast.error(t('tasks.cancelFailed'), {
+          description: error.detail || t('common.tryAgain'),
         });
       }
     } catch {
-      toast.error("Failed to cancel quest", {
-        description: "Please try again.",
+      toast.error(t('tasks.cancelFailed'), {
+        description: t('common.tryAgain'),
       });
     } finally {
       setCancellingTaskId(null);
@@ -707,13 +709,13 @@ export default function CalendarPage() {
                 <div className="relative z-10 flex-1 p-4 overflow-y-auto">
                   {/* Add Task Button - Always on top */}
                   {isPast(day) ? (
-                    <DisabledButton className="mb-3">+ New Quest</DisabledButton>
+                    <DisabledButton className="mb-3">{t('calendar.newQuest')}</DisabledButton>
                   ) : (
                     <AddButton
                       onClick={() => handleAddTask(day)}
                       className="mb-3"
                     >
-                      + New Quest
+                      {t('calendar.newQuest')}
                     </AddButton>
                   )}
 

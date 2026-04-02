@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ interface GuestWarningModalProps {
 }
 
 export default function GuestWarningModal({ open, onConfirm, onCancel }: GuestWarningModalProps) {
+  const { t } = useTranslation()
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
       <DialogContent className="bg-sl-black border border-amber-400/30 sm:max-w-sm shadow-[0_0_30px_rgba(251,191,36,0.15)]">
@@ -22,7 +24,7 @@ export default function GuestWarningModal({ open, onConfirm, onCancel }: GuestWa
           <div className="flex items-center gap-3 mb-1">
             <AlertTriangle size={20} className="text-amber-400 shrink-0" />
             <DialogTitle className="text-amber-400 font-bold uppercase tracking-wider">
-              Guest Account
+              {t('guestWarning.title')}
             </DialogTitle>
           </div>
           <DialogDescription asChild>
@@ -35,17 +37,17 @@ export default function GuestWarningModal({ open, onConfirm, onCancel }: GuestWa
                 <span className="text-amber-400 font-semibold">your account cannot be recovered</span>.
               </p>
               <p className="text-sl-silver-muted">
-                You can link a Google account anytime from the menu to keep your progress safe.
+                {t('guestWarning.linkAnytime')}
               </p>
             </div>
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-3 pt-2">
           <GhostButton onClick={onCancel} className="flex-1">
-            Back
+            {t('guestWarning.back')}
           </GhostButton>
           <PrimaryButton onClick={onConfirm} className="flex-1">
-            Continue as Guest
+            {t('guestWarning.continue')}
           </PrimaryButton>
         </div>
       </DialogContent>

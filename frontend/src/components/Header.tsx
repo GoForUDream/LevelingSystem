@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import AppTitle from "@/components/AppTitle";
-import { Menu, Trophy, Target, LogOut, ChevronLeft, ChevronRight, BarChart3, Crown, Swords, Shield, Flame, Star, Sparkles, Zap, Link, User } from "lucide-react";
+import { Menu, Trophy, Target, LogOut, ChevronLeft, ChevronRight, BarChart3, Crown, Swords, Shield, Flame, Star, Sparkles, Zap, Link as LinkIcon, User, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,14 +60,15 @@ export default function Header({
   const { user, token, logout, linkGoogleAccount, isGuest } = useAuth();
   const streak = useStreak(token, user?.total_exp);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showRanksModal, setShowRanksModal] = useState(false);
 
   const rankData = [
     {
       range: "1-5",
-      title: "Awakened One",
-      theme: "Just discovered their potential",
+      title: t('rankTitles.Awakened One'),
+      theme: t('rankThemes.Just discovered their potential'),
       icon: Sparkles,
       color: "text-slate-400",
       borderColor: "border-slate-400/30",
@@ -75,8 +77,8 @@ export default function Header({
     },
     {
       range: "6-10",
-      title: "Beginner Warrior",
-      theme: "Starting the journey",
+      title: t('rankTitles.Beginner Warrior'),
+      theme: t('rankThemes.Starting the journey'),
       icon: Shield,
       color: "text-emerald-400",
       borderColor: "border-emerald-400/30",
@@ -85,8 +87,8 @@ export default function Header({
     },
     {
       range: "11-20",
-      title: "Task Slayer",
-      theme: "Learning to conquer daily challenges",
+      title: t('rankTitles.Task Slayer'),
+      theme: t('rankThemes.Learning to conquer daily challenges'),
       icon: Swords,
       color: "text-sky-400",
       borderColor: "border-sky-400/30",
@@ -95,8 +97,8 @@ export default function Header({
     },
     {
       range: "21-30",
-      title: "Dungeon Crawler",
-      theme: "Consistently tackling goals",
+      title: t('rankTitles.Dungeon Crawler'),
+      theme: t('rankThemes.Consistently tackling goals'),
       icon: Flame,
       color: "text-orange-400",
       borderColor: "border-orange-400/30",
@@ -105,8 +107,8 @@ export default function Header({
     },
     {
       range: "31-40",
-      title: "Goal Hunter",
-      theme: "Actively pursuing objectives",
+      title: t('rankTitles.Goal Hunter'),
+      theme: t('rankThemes.Actively pursuing objectives'),
       icon: Target,
       color: "text-rose-400",
       borderColor: "border-rose-400/30",
@@ -115,8 +117,8 @@ export default function Header({
     },
     {
       range: "41-50",
-      title: "Elite Achiever",
-      theme: "Proven track record",
+      title: t('rankTitles.Elite Achiever'),
+      theme: t('rankThemes.Proven track record'),
       icon: Trophy,
       color: "text-amber-400",
       borderColor: "border-amber-400/30",
@@ -125,8 +127,8 @@ export default function Header({
     },
     {
       range: "51-60",
-      title: "S-Rank Executor",
-      theme: "High-level discipline",
+      title: t('rankTitles.S-Rank Executor'),
+      theme: t('rankThemes.High-level discipline'),
       icon: Zap,
       color: "text-sl-blue",
       borderColor: "border-sl-blue/30",
@@ -135,8 +137,8 @@ export default function Header({
     },
     {
       range: "61-70",
-      title: "Master of Habits",
-      theme: "Habits are now second nature",
+      title: t('rankTitles.Master of Habits'),
+      theme: t('rankThemes.Habits are now second nature'),
       icon: Star,
       color: "text-violet-400",
       borderColor: "border-violet-400/30",
@@ -145,8 +147,8 @@ export default function Header({
     },
     {
       range: "71-80",
-      title: "Sovereign of Will",
-      theme: "Unshakeable determination",
+      title: t('rankTitles.Sovereign of Will'),
+      theme: t('rankThemes.Unshakeable determination'),
       icon: Shield,
       color: "text-sl-purple",
       borderColor: "border-sl-purple/30",
@@ -155,8 +157,8 @@ export default function Header({
     },
     {
       range: "81-90",
-      title: "Ruler of Self",
-      theme: "Complete self-mastery",
+      title: t('rankTitles.Ruler of Self'),
+      theme: t('rankThemes.Complete self-mastery'),
       icon: Swords,
       color: "text-fuchsia-400",
       borderColor: "border-fuchsia-400/30",
@@ -165,8 +167,8 @@ export default function Header({
     },
     {
       range: "91-99",
-      title: "Monarch's Equal",
-      theme: "Among the elite few",
+      title: t("rankTitles.Monarch's Equal"),
+      theme: t('rankThemes.Among the elite few'),
       icon: Crown,
       color: "text-yellow-300",
       borderColor: "border-yellow-300/30",
@@ -175,8 +177,8 @@ export default function Header({
     },
     {
       range: "100+",
-      title: "Shadow Monarch",
-      theme: "Absolute discipline, unlimited potential",
+      title: t('rankTitles.Shadow Monarch'),
+      theme: t('rankThemes.Absolute discipline, unlimited potential'),
       icon: Crown,
       color: "text-sl-red",
       borderColor: "border-sl-red/50",
@@ -258,21 +260,27 @@ export default function Header({
                 className="text-sl-silver hover:text-sl-blue hover:bg-sl-blue/5 cursor-pointer text-xs font-bold uppercase tracking-wider"
               >
                 <Target size={16} />
-                Goals
+                {t('header.goals')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => navigate("/achievements")}
                 className="text-sl-silver hover:text-sl-blue hover:bg-sl-blue/5 cursor-pointer text-xs font-bold uppercase tracking-wider"
               >
                 <Trophy size={16} />
-                Achievements
+                {t('header.achievements')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => navigate("/stats")}
                 className="text-sl-silver hover:text-sl-blue hover:bg-sl-blue/5 cursor-pointer text-xs font-bold uppercase tracking-wider"
               >
                 <BarChart3 size={16} />
-                Stats
+                {t('header.stats')}
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-sl-silver hover:text-sl-blue hover:bg-sl-blue/5 cursor-pointer text-xs font-bold uppercase tracking-wider">
+                <Link to="/settings">
+                  <Settings size={16} />
+                  {t('header.settings')}
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-sl-gray-muted" />
               {isGuest && (
@@ -281,8 +289,8 @@ export default function Header({
                     onClick={linkGoogleAccount}
                     className="text-amber-400 hover:text-amber-400 hover:bg-amber-400/5 cursor-pointer text-xs font-bold uppercase tracking-wider"
                   >
-                    <Link size={16} />
-                    Link Google Account
+                    <LinkIcon size={16} />
+                    {t('header.linkGoogle')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-sl-gray-muted" />
                 </>
@@ -292,7 +300,7 @@ export default function Header({
                 className="text-sl-red hover:text-sl-red hover:bg-sl-red/5 cursor-pointer text-xs font-bold uppercase tracking-wider"
               >
                 <LogOut size={16} />
-                Logout
+                {t('header.logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -415,20 +423,20 @@ export default function Header({
                           <div className="text-xs space-y-1 py-0.5">
                             <div className="flex items-center gap-2">
                               <Flame size={12} className={flameColor} />
-                              <span>Current streak: <span className="font-bold text-sl-silver">{currentStreak} days</span></span>
+                              <span>{t('header.streak.current', { count: currentStreak })}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Star size={12} className="text-yellow-400" />
-                              <span>Best streak: <span className="font-bold text-sl-silver">{longestStreak} days</span></span>
+                              <span>{t('header.streak.best', { count: longestStreak })}</span>
                             </div>
                             {isAtRisk && active && (
                               <div className="text-amber-400 font-semibold pt-0.5 border-t border-amber-400/20">
-                                ⚠ Complete a task today to keep it!
+                                {t('header.streak.atRisk')}
                               </div>
                             )}
                             {!active && (
                               <div className="text-sl-silver-muted pt-0.5">
-                                Complete a task to start your streak
+                                {t('header.streak.start')}
                               </div>
                             )}
                           </div>
@@ -449,7 +457,7 @@ export default function Header({
 
         {/* Right - Navigation */}
         <div className="flex items-center gap-2 flex-1 justify-end">
-          <GhostButton onClick={onToday}>Today</GhostButton>
+          <GhostButton onClick={onToday}>{t('header.today')}</GhostButton>
 
           <div className="flex items-center gap-1 ml-4">
             <Tooltip>
@@ -463,7 +471,7 @@ export default function Header({
                 </IconButton>
               </TooltipTrigger>
               <TooltipContent>
-                {disablePrevMonth ? "Account start" : "Previous Month"}
+                {disablePrevMonth ? t('header.accountStart') : t('header.prevMonth')}
               </TooltipContent>
             </Tooltip>
 
@@ -477,7 +485,7 @@ export default function Header({
                   <ChevronRight size={16} />
                 </IconButton>
               </TooltipTrigger>
-              <TooltipContent>Next Month</TooltipContent>
+              <TooltipContent>{t('header.nextMonth')}</TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -488,12 +496,12 @@ export default function Header({
         <DialogContent className="bg-sl-black border border-sl-red/30 sm:max-w-sm shadow-[0_0_30px_rgba(230,57,70,0.2)]">
           <DialogHeader>
             <DialogTitle className="text-sl-red font-bold uppercase tracking-wider">
-              Confirm Logout
+              {t('header.logoutModal.title')}
             </DialogTitle>
             <DialogDescription className="text-sl-silver-muted text-sm pt-2">
               {isGuest
-                ? "Warning: As a guest, logging out means you will lose access to this account permanently unless you link a Google account first."
-                : "Are you sure you want to logout? Your progress is saved, but you'll need to login again to continue your quests."}
+                ? t('header.logoutModal.guestWarning')
+                : t('header.logoutModal.normalWarning')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 pt-4">
@@ -501,7 +509,7 @@ export default function Header({
               onClick={() => setShowLogoutModal(false)}
               className="flex-1"
             >
-              Stay
+              {t('header.logoutModal.stay')}
             </PrimaryButton>
             <DangerButton
               onClick={() => {
@@ -510,7 +518,7 @@ export default function Header({
               }}
               className="flex-1"
             >
-              Logout
+              {t('header.logoutModal.confirm')}
             </DangerButton>
           </div>
         </DialogContent>
@@ -554,10 +562,10 @@ export default function Header({
               </div>
               <div>
                 <DialogTitle className="text-sl-blue font-bold uppercase tracking-[0.15em]" style={{ textShadow: '0 0 20px rgba(0, 163, 255, 0.5)' }}>
-                  Rank Progression
+                  {t('header.ranks.title')}
                 </DialogTitle>
                 <DialogDescription className="text-sl-silver-muted text-xs pt-0.5">
-                  Complete quests to earn EXP and ascend
+                  {t('header.ranks.subtitle')}
                 </DialogDescription>
               </div>
             </div>
@@ -638,12 +646,12 @@ export default function Header({
                                 boxShadow: `0 0 10px ${rank.glowColor}`,
                               }}
                             >
-                              Current
+                              {t('header.ranks.current')}
                             </span>
                           )}
                           {isPastRank && !isCurrentRank && (
                             <span className="text-[9px] font-bold uppercase tracking-wider text-sl-silver-dark px-2 py-0.5 bg-sl-gray-muted/30">
-                              Achieved
+                              {t('header.ranks.achieved')}
                             </span>
                           )}
                         </div>
@@ -680,7 +688,7 @@ export default function Header({
           {/* Footer */}
           <div className="relative z-10 p-4 border-t border-sl-blue/20 text-center">
             <p className="text-[10px] text-sl-silver-dark uppercase tracking-wider">
-              "I alone level up"
+              {t('header.ranks.quote')}
             </p>
           </div>
         </DialogContent>

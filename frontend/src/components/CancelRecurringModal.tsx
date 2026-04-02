@@ -1,4 +1,5 @@
 import { X, SkipForward, Ban } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface CancelRecurringModalProps {
   isOpen: boolean
@@ -19,6 +20,8 @@ export default function CancelRecurringModal({
   expPenalty,
   isLoading,
 }: CancelRecurringModalProps) {
+  const { t } = useTranslation()
+
   if (!isOpen) return null
 
   return (
@@ -34,7 +37,7 @@ export default function CancelRecurringModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-sl-blue/20">
           <h2 className="text-sm font-bold uppercase tracking-wider text-sl-blue">
-            Cancel Recurring Quest
+            {t('cancelRecurring.title')}
           </h2>
           <button
             onClick={onClose}
@@ -50,7 +53,7 @@ export default function CancelRecurringModal({
             "{taskTitle}"
           </p>
           <p className="text-xs text-sl-silver-muted mb-6">
-            This is a recurring quest. How would you like to cancel it?
+            {t('cancelRecurring.description')}
           </p>
 
           {/* Options */}
@@ -65,13 +68,13 @@ export default function CancelRecurringModal({
                 <SkipForward size={20} className="text-sl-blue shrink-0 mt-0.5" />
                 <div className="text-left">
                   <div className="text-sm font-bold text-sl-silver group-hover:text-sl-blue transition-colors">
-                    Skip This Occurrence
+                    {t('cancelRecurring.skipOnce')}
                   </div>
                   <div className="text-xs text-sl-silver-muted mt-1">
-                    Cancel today's quest but continue the series tomorrow
+                    {t('cancelRecurring.skipDesc')}
                   </div>
                   <div className="text-xs text-sl-red mt-2">
-                    -{expPenalty} EXP penalty
+                    {t('cancelRecurring.penalty', { penalty: expPenalty })}
                   </div>
                 </div>
               </div>
@@ -87,13 +90,13 @@ export default function CancelRecurringModal({
                 <Ban size={20} className="text-sl-red shrink-0 mt-0.5" />
                 <div className="text-left">
                   <div className="text-sm font-bold text-sl-silver group-hover:text-sl-red transition-colors">
-                    Cancel Entire Series
+                    {t('cancelRecurring.cancelAll')}
                   </div>
                   <div className="text-xs text-sl-silver-muted mt-1">
-                    Stop this recurring quest permanently
+                    {t('cancelRecurring.cancelAllDesc')}
                   </div>
                   <div className="text-xs text-sl-red mt-2">
-                    -{expPenalty} EXP penalty
+                    {t('cancelRecurring.penalty', { penalty: expPenalty })}
                   </div>
                 </div>
               </div>

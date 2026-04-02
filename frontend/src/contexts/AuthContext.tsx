@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { API_URL } from '@/lib/utils'
+import i18n from '@/i18n'
 
 interface LevelProgress {
   level: number
@@ -17,6 +18,7 @@ interface User {
   name: string
   avatar_url: string | null
   is_guest: boolean
+  language: string
   total_exp: number
   level: number
   level_progress: LevelProgress
@@ -116,6 +118,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const userData = await response.json()
         setUser(userData)
+        // Sync i18next to the user's saved language preference
+        if (userData.language && userData.language !== i18n.language) {
+          i18n.changeLanguage(userData.language)
+          localStorage.setItem('sl_language', userData.language)
+        }
         syncTimezone()
       } else {
         logout()

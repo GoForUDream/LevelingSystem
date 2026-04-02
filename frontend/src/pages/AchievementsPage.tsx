@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ChevronLeft, Lock, Trophy } from "lucide-react";
 import { ranks, categoryIcons, badgeProgress } from "@/constants/achievements";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,6 +67,7 @@ const floatingParticles = [
 export default function AchievementsPage() {
   const navigate = useNavigate();
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [stats, setStats] = useState<AchievementStats | null>(null);
@@ -168,7 +170,7 @@ export default function AchievementsPage() {
           >
             <ChevronLeft size={16} className="relative -top-px" />
             <span className="text-xs font-bold uppercase tracking-wider">
-              Back
+              {t('common.back')}
             </span>
           </button>
 
@@ -176,12 +178,12 @@ export default function AchievementsPage() {
             <div className="flex items-center gap-3">
               <Trophy size={20} className="text-sl-purple" />
               <h1 className="text-lg font-bold uppercase tracking-[0.2em] text-sl-purple glow-purple-intense" style={{ textShadow: '0 0 10px rgba(123, 44, 191, 0.8), 0 0 20px rgba(123, 44, 191, 0.4)' }}>
-                Achievements
+                {t('achievements.title')}
               </h1>
               <Trophy size={20} className="text-sl-purple" />
             </div>
             <div className="text-[9px] uppercase tracking-[0.3em] text-sl-silver-muted mt-0.5">
-              Hunter Badge Collection
+              {t('achievements.subtitle')}
             </div>
           </div>
 
@@ -194,7 +196,7 @@ export default function AchievementsPage() {
         {/* Summary */}
         <div className="text-center">
           <p className="text-sl-silver-muted text-sm">
-            <span className="text-sl-blue font-bold">{unlockedCount}</span> / 48 badges unlocked — prove your worth, Hunter.
+            {t('achievements.summary', { unlocked: unlockedCount })}
           </p>
         </div>
 
@@ -288,11 +290,11 @@ export default function AchievementsPage() {
                     </TooltipTrigger>
                     <TooltipContent side="top" className="bg-sl-gray! border-sl-gray-muted! text-sl-silver! p-3 max-w-50">
                       {isUnlocked ? (
-                        <p className="text-xs font-bold text-sl-blue">Unlocked!</p>
+                        <p className="text-xs font-bold text-sl-blue">{t('achievements.unlocked')}</p>
                       ) : (
                         <div className="space-y-2">
                           <p className="text-xs font-medium">
-                            {Math.min(current, threshold)} / {threshold} {progress?.label}
+                            {t('achievements.progressDetail', { current: Math.min(current, threshold), threshold, label: progress?.label })}
                           </p>
                           <div className="w-full h-1.5 bg-sl-gray-muted/50 overflow-hidden">
                             <div
@@ -300,7 +302,7 @@ export default function AchievementsPage() {
                               style={{ width: `${percent}%` }}
                             />
                           </div>
-                          <p className="text-[10px] text-sl-silver-muted">{percent}% complete</p>
+                          <p className="text-[10px] text-sl-silver-muted">{t('achievements.percentComplete', { percent })}</p>
                         </div>
                       )}
                     </TooltipContent>

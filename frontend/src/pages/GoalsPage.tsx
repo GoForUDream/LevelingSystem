@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { API_URL } from "@/lib/utils";
@@ -80,21 +81,22 @@ const priorityStyles: Record<
   },
 };
 
-function getDaysRemaining(deadline: string | null): string | null {
+function getDaysRemaining(deadline: string | null): { key: string; diff?: number } | null {
   if (!deadline) return null;
   const now = new Date();
   const target = new Date(deadline);
   const diff = Math.ceil(
     (target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
   );
-  if (diff < 0) return "Overdue";
-  if (diff === 0) return "Due today";
-  return `${diff}d remaining`;
+  if (diff < 0) return { key: "overdue" };
+  if (diff === 0) return { key: "dueToday" };
+  return { key: "daysRemaining", diff };
 }
 
 export default function GoalsPage() {
   const navigate = useNavigate();
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -110,11 +112,11 @@ export default function GoalsPage() {
       const data = await res.json();
       setGoals(data);
     } catch {
-      toast.error("Failed to load goals");
+      toast.error(t('goals.loadFailed'));
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, t]);
 
   useEffect(() => {
     fetchGoals();
@@ -125,8 +127,10 @@ export default function GoalsPage() {
     if (goal && !goal.is_done) {
       const undoneTasks = goal.tasks.filter((t) => t.status !== "COMPLETED");
       if (undoneTasks.length > 0) {
-        toast.error("Complete all tasks first", {
-          description: `${undoneTasks.length} task${undoneTasks.length > 1 ? "s" : ""} still incomplete`,
+        toast.error(t('goals.completeTasksFirst'), {
+          description: undoneTasks.length === 1
+            ? t('goals.tasksIncomplete_one', { count: undoneTasks.length })
+            : t('goals.tasksIncomplete_other', { count: undoneTasks.length }),
         });
         return;
       }
@@ -142,11 +146,11 @@ export default function GoalsPage() {
       if (data.new_badges && data.new_badges.length > 0) {
         for (const badgeId of data.new_badges) {
           const name = badgeIdToName[badgeId] || badgeId;
-          toast.success(`Badge Unlocked: ${name}!`);
+          toast.success(t('goals.badgeUnlocked', { name }));
         }
       }
     } catch {
-      toast.error("Failed to toggle goal");
+      toast.error(t('goals.toggleFailed'));
     }
   };
 
@@ -158,9 +162,9 @@ export default function GoalsPage() {
       });
       if (!res.ok) throw new Error();
       fetchGoals();
-      toast.success("Goal deleted");
+      toast.success(t('goals.deleted'));
     } catch {
-      toast.error("Failed to delete goal");
+      toast.error(t('goals.deleteFailed'));
     }
   };
 
@@ -185,14 +189,14 @@ export default function GoalsPage() {
           >
             <ChevronLeft size={16} className="relative -top-px" />
             <span className="text-xs font-bold uppercase tracking-wider">
-              Back
+              {t('common.back')}
             </span>
           </button>
 
           <div className="flex items-center gap-3">
             <Target size={20} className="text-sl-blue" />
             <h1 className="text-lg font-bold uppercase tracking-[0.15em] text-sl-blue text-glow-blue">
-              Goals
+              {t('goals.title')}
             </h1>
           </div>
 
@@ -213,7 +217,7 @@ export default function GoalsPage() {
               className="w-auto! px-8 py-6 border-sl-blue/20 flex items-center gap-3"
             >
               <Plus size={18} />
-              New Goal
+              {t('goals.newGoal')}
             </AddButton>
           </div>
         </div>
@@ -248,7 +252,7 @@ export default function GoalsPage() {
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border ${style.border} ${style.color}`}
                     >
-                      {goal.rank}-Rank
+                      {t('tasks.rankLabel', { rank: goal.rank })}
                     </span>
                     <div className="flex items-center gap-1">
                       <Tooltip>
@@ -265,7 +269,7 @@ export default function GoalsPage() {
                           </button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {goal.is_done ? "Mark Incomplete" : "Mark Complete"}
+                          {goal.is_done ? t('goals.markIncomplete') : t('goals.markComplete')}
                         </TooltipContent>
                       </Tooltip>
                       <Tooltip>
@@ -300,13 +304,17 @@ export default function GoalsPage() {
                   {daysLeft && (
                     <div
                       className={`flex items-center gap-1.5 mt-2 text-[11px] ${
-                        daysLeft === "Overdue"
+                        daysLeft.key === "overdue"
                           ? "text-sl-red"
                           : "text-sl-silver-muted"
                       }`}
                     >
                       <Flag size={11} />
-                      {daysLeft}
+                      {daysLeft.key === "overdue"
+                        ? t('goals.overdue')
+                        : daysLeft.key === "dueToday"
+                        ? t('goals.dueToday')
+                        : t('goals.daysRemaining', { days: daysLeft.diff })}
                     </div>
                   )}
                 </div>
@@ -315,7 +323,7 @@ export default function GoalsPage() {
                 <div className="shrink-0 px-5 py-4 border-b border-sl-gray-light/50">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted">
-                      Progress
+                      {t('goals.progress')}
                     </span>
                     <span className={`text-sm font-bold ${style.color}`}>
                       {progress}%
@@ -353,12 +361,12 @@ export default function GoalsPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <TrendingUp size={12} className="text-sl-silver-muted" />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-sl-silver-muted">
-                      Milestones ({completedTasks}/{totalTasks})
+                      {t('goals.milestones')} ({completedTasks}/{totalTasks})
                     </span>
                   </div>
                   {totalTasks === 0 ? (
                     <p className="text-xs text-sl-silver-dark italic">
-                      No tasks linked yet. Link tasks from the task editor.
+                      {t('goals.noTasks')}
                     </p>
                   ) : (
                     <div className="space-y-2">

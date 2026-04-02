@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, BarChart3, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
@@ -18,13 +19,6 @@ import {
 } from '@/components/stats';
 import { useStats } from '@/hooks/useStats';
 import type { Period } from '@/types/stats';
-
-const PERIOD_LABELS: Record<Period, string> = {
-  '7d': 'Last 7 Days',
-  '30d': 'Last 30 Days',
-  '90d': 'Last 90 Days',
-  all: 'All Time',
-};
 
 // Pre-computed particle positions for stable rendering
 const STATS_PARTICLES = [
@@ -52,8 +46,16 @@ const STATS_PARTICLES = [
 
 export default function StatsPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [period, setPeriod] = useState<Period>('30d');
   const { stats, loading, error } = useStats(period);
+
+  const PERIOD_LABELS: Record<Period, string> = {
+    '7d': t('stats.last7Days'),
+    '30d': t('stats.last30Days'),
+    '90d': t('stats.last90Days'),
+    all: t('stats.allTime'),
+  };
 
   return (
     <div className="min-h-screen bg-sl-black relative overflow-hidden">
@@ -123,19 +125,19 @@ export default function StatsPage() {
             className="flex items-center gap-1 text-sl-silver-muted hover:text-sl-blue transition-all cursor-pointer"
           >
             <ChevronLeft size={16} className="relative -top-px" />
-            <span className="text-xs font-bold uppercase tracking-wider">Back</span>
+            <span className="text-xs font-bold uppercase tracking-wider">{t('common.back')}</span>
           </button>
 
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-3">
               <BarChart3 size={20} className="text-sl-blue" />
               <h1 className="text-lg font-bold uppercase tracking-[0.2em] text-sl-blue text-glow-blue-intense">
-                Hunter Analytics
+                {t('stats.title')}
               </h1>
               <BarChart3 size={20} className="text-sl-blue" />
             </div>
             <div className="text-[9px] uppercase tracking-[0.3em] text-sl-silver-muted mt-0.5">
-              System Data Interface
+              {t('stats.subtitle')}
             </div>
           </div>
 
@@ -223,15 +225,14 @@ export default function StatsPage() {
             {/* Account Info Footer */}
             <div className="text-center pt-4 border-t border-sl-gray-muted/30">
               <p className="text-xs text-sl-silver-muted">
-                Hunter since{' '}
-                <span className="text-sl-silver">
-                  {new Date(stats.account_created_at).toLocaleDateString('en-US', {
+                {t('stats.hunterSince', {
+                  date: new Date(stats.account_created_at).toLocaleDateString('en-US', {
                     month: 'long',
                     day: 'numeric',
                     year: 'numeric',
-                  })}
-                </span>{' '}
-                ({stats.account_age_days} days)
+                  }),
+                  days: stats.account_age_days,
+                })}
               </p>
             </div>
           </div>

@@ -13,6 +13,7 @@ class UserUpdate(BaseModel):
     name: str | None = None
     avatar_url: str | None = None
     is_active: bool | None = None
+    language: str | None = None
 
 
 class LevelProgress(BaseModel):
@@ -32,6 +33,7 @@ class UserResponse(BaseModel):
     avatar_url: str | None
     google_id: str | None
     is_guest: bool
+    language: str
     total_exp: int
     level: int
     is_active: bool
