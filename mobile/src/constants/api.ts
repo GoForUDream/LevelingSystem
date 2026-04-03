@@ -3,3 +3,7 @@
 // For Android emulator use "http://10.0.2.2:8000"
 // For iOS simulator use "http://localhost:8000"
 export const API_URL = "http://localhost:8000"
+
+// Must match the Google OAuth client ID in backend/.env
+// Register the app redirect URI (levelingsystem://auth) in Google Cloud Console
+export const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? ""

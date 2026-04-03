@@ -9,7 +9,8 @@ from services.user_service import UserService
 from schemas.user import UserWithProgress, LevelProgress
 from middleware.auth_middleware import get_current_user
 from models.user import User
-from config import FRONTEND_URL
+import httpx
+from config import FRONTEND_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -128,6 +129,60 @@ async def get_me(
         updated_at=current_user.updated_at,
         level_progress=LevelProgress(**progress),
     )
+
+
+class MobileAuthRequest(BaseModel):
+    code: str
+    redirect_uri: str
+
+
+@router.post("/mobile")
+async def mobile_auth(
+    body: MobileAuthRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Handle Google OAuth for mobile apps — accepts code + redirect_uri, returns JWT."""
+    try:
+        async with httpx.AsyncClient() as client:
+            token_res = await client.post(
+                auth_service.GOOGLE_TOKEN_URL,
+                data={
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "code": body.code,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": body.redirect_uri,
+                },
+            )
+            token_res.raise_for_status()
+            tokens = token_res.json()
+
+        access_token = tokens.get("access_token")
+        if not access_token:
+            raise HTTPException(status_code=400, detail="No access token from Google")
+
+        google_user = await auth_service.get_google_user_info(access_token)
+        google_id = google_user.get("id")
+        email = google_user.get("email")
+        name = google_user.get("name")
+        if not google_id or not email or not name:
+            raise HTTPException(status_code=400, detail="Missing user info from Google")
+
+        repository = UserRepository(db)
+        service = UserService(repository)
+        user = await service.get_or_create_by_google(
+            google_id=google_id,
+            email=email,
+            name=name,
+            avatar_url=google_user.get("picture"),
+        )
+        jwt_token = auth_service.create_access_token(user.id, user.email)
+        return {"token": jwt_token}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class UserSettings(BaseModel):

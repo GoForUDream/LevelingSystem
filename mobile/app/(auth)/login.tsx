@@ -1,8 +1,86 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { useState, useCallback } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native'
 import { useTranslation } from 'react-i18next'
+import * as WebBrowser from 'expo-web-browser'
+import * as AuthSession from 'expo-auth-session'
+import { useAuth } from '../../src/contexts/AuthContext'
+import { API_URL, GOOGLE_CLIENT_ID } from '../../src/constants/api'
+
+WebBrowser.maybeCompleteAuthSession()
+
+const GOOGLE_AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth'
+const GOOGLE_DISCOVERY = {
+  authorizationEndpoint: GOOGLE_AUTH_ENDPOINT,
+  tokenEndpoint: 'https://oauth2.googleapis.com/token',
+}
 
 export default function LoginScreen() {
   const { t } = useTranslation()
+  const { setToken } = useAuth()
+  const [isGuestLoading, setIsGuestLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+  const redirectUri = AuthSession.makeRedirectUri({ scheme: 'levelingsystem', path: 'auth' })
+
+  const [request, response, promptAsync] = AuthSession.useAuthRequest(
+    {
+      clientId: GOOGLE_CLIENT_ID,
+      scopes: ['openid', 'email', 'profile'],
+      redirectUri,
+    },
+    GOOGLE_DISCOVERY,
+  )
+
+  const handleGoogleResponse = useCallback(
+    async (res: AuthSession.AuthSessionResult) => {
+      if (res.type !== 'success') return
+      setIsGoogleLoading(true)
+      try {
+        const { code } = res.params
+        const apiRes = await fetch(`${API_URL}/api/auth/mobile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, redirect_uri: redirectUri }),
+        })
+        if (!apiRes.ok) {
+          const err = await apiRes.json()
+          Alert.alert('Error', err.detail ?? 'Google login failed')
+          return
+        }
+        const { token } = await apiRes.json()
+        await setToken(token)
+      } catch {
+        Alert.alert('Error', 'Could not connect to server')
+      } finally {
+        setIsGoogleLoading(false)
+      }
+    },
+    [redirectUri, setToken],
+  )
+
+  const handleGoogleLogin = useCallback(async () => {
+    if (!request) return
+    setIsGoogleLoading(true)
+    const res = await promptAsync()
+    await handleGoogleResponse(res)
+  }, [request, promptAsync, handleGoogleResponse])
+
+  const handleGuestLogin = useCallback(async () => {
+    setIsGuestLoading(true)
+    try {
+      const res = await fetch(`${API_URL}/api/auth/guest`, { method: 'POST' })
+      if (!res.ok) {
+        Alert.alert('Error', 'Guest login failed')
+        return
+      }
+      const { token } = await res.json()
+      await setToken(token)
+    } catch {
+      Alert.alert('Error', 'Could not connect to server')
+    } finally {
+      setIsGuestLoading(false)
+    }
+  }, [setToken])
 
   return (
     <View style={styles.container}>
@@ -14,15 +92,32 @@ export default function LoginScreen() {
 
         <View style={styles.divider} />
 
-        {/* Google login — will integrate OAuth via expo-web-browser */}
-        <TouchableOpacity style={styles.googleButton} activeOpacity={0.8}>
-          <Text style={styles.googleButtonText}>{t('auth.continueWithGoogle')}</Text>
+        <TouchableOpacity
+          style={[styles.googleButton, (isGoogleLoading || !request) && styles.disabled]}
+          activeOpacity={0.8}
+          onPress={handleGoogleLogin}
+          disabled={isGoogleLoading || !request}
+        >
+          {isGoogleLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.googleButtonText}>{t('auth.continueWithGoogle')}</Text>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.or}>{t('auth.or')}</Text>
 
-        <TouchableOpacity style={styles.guestButton} activeOpacity={0.8}>
-          <Text style={styles.guestButtonText}>{t('auth.continueAsGuest')}</Text>
+        <TouchableOpacity
+          style={[styles.guestButton, isGuestLoading && styles.disabled]}
+          activeOpacity={0.8}
+          onPress={handleGuestLogin}
+          disabled={isGuestLoading}
+        >
+          {isGuestLoading ? (
+            <ActivityIndicator color="#9CA3AF" />
+          ) : (
+            <Text style={styles.guestButtonText}>{t('auth.continueAsGuest')}</Text>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.terms}>{t('auth.terms')}</Text>
@@ -73,6 +168,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#00A3FF',
     paddingVertical: 14,
     alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
   },
   googleButtonText: {
     color: '#fff',
@@ -94,6 +191,8 @@ const styles = StyleSheet.create({
     borderColor: '#374151',
     paddingVertical: 14,
     alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
   },
   guestButtonText: {
     color: '#9CA3AF',
@@ -108,5 +207,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 24,
     lineHeight: 16,
+  },
+  disabled: {
+    opacity: 0.5,
   },
 })
