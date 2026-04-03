@@ -1,0 +1,200 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "back": "Back",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "retry": "Retry",
+    "loading": "Loading...",
+    "tryAgain": "Please try again.",
+    "optional": "optional"
+  },
+  "auth": {
+    "tagline": "Level up your productivity",
+    "welcomeBack": "Welcome back",
+    "signInSubtitle": "Sign in to continue to your dashboard",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "continueAsGuest": "Continue as Guest",
+    "terms": "By signing in, you agree to our Terms of Service and Privacy Policy",
+    "newHere": "New here? Sign in to create your account automatically."
+  },
+  "guestWarning": {
+    "title": "Guest Account",
+    "deviceOnly": "Your progress is stored on <strong>this device only</strong>.",
+    "noRecovery": "If you clear your browser data or switch devices, <strong>your account cannot be recovered</strong>.",
+    "linkAnytime": "You can link a Google account anytime from the menu to keep your progress safe.",
+    "back": "Back",
+    "continue": "Continue as Guest"
+  },
+  "header": {
+    "today": "Today",
+    "prevMonth": "Previous Month",
+    "nextMonth": "Next Month",
+    "accountStart": "Account start",
+    "goals": "Goals",
+    "achievements": "Achievements",
+    "stats": "Stats",
+    "settings": "Settings",
+    "linkGoogle": "Link Google Account",
+    "logout": "Logout",
+    "streak": {
+      "current": "Current streak: {{count}} days",
+      "best": "Best streak: {{count}} days",
+      "atRisk": "⚠ Complete a task today to keep it!",
+      "start": "Complete a task to start your streak"
+    },
+    "logoutModal": {
+      "title": "Confirm Logout",
+      "guestWarning": "Warning: As a guest, logging out means you will lose access to this account permanently unless you link a Google account first.",
+      "normalWarning": "Are you sure you want to logout? Your progress is saved, but you'll need to login again to continue your quests.",
+      "stay": "Stay",
+      "confirm": "Logout"
+    },
+    "ranks": {
+      "title": "Rank Progression",
+      "subtitle": "Complete quests to earn EXP and ascend",
+      "current": "Current",
+      "achieved": "Achieved",
+      "quote": "\"I alone level up\""
+    }
+  },
+  "calendar": {
+    "newQuest": "+ New Quest",
+    "completed": "{{done}}/{{total}}"
+  },
+  "tasks": {
+    "newQuest": "New Quest",
+    "editQuest": "Edit Quest",
+    "questName": "Quest Name",
+    "questNamePlaceholder": "Search presets or type a custom quest name...",
+    "details": "Details",
+    "detailsPlaceholder": "Add more details...",
+    "rank": "Rank",
+    "repeatQuest": "Repeat this quest",
+    "linkToGoal": "Link to Goal",
+    "noGoal": "None",
+    "rankLabel": "{{rank}}-Rank",
+    "recurrence": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "custom": "Custom",
+      "repeatOn": "Repeat on",
+      "repeatOnDays": "Repeat on days",
+      "lastDayOfMonth": "Last day of month",
+      "every": "Every",
+      "days": "days"
+    },
+    "days": {
+      "mon": "MON",
+      "tue": "TUE",
+      "wed": "WED",
+      "thu": "THU",
+      "fri": "FRI",
+      "sat": "SAT",
+      "sun": "SUN"
+    },
+    "acceptQuest": "Accept Quest",
+    "saveChanges": "Save Changes",
+    "completed": "Task completed!",
+    "completedDesc": "+{{exp}} EXP earned",
+    "completeFailed": "Failed to complete task",
+    "questUpdated": "Quest updated!",
+    "questAccepted": "Quest accepted!",
+    "questAcceptedDesc": "Complete it to earn {{exp}} EXP",
+    "updateFailed": "Failed to update quest",
+    "createFailed": "Failed to create quest",
+    "questSkipped": "Quest skipped",
+    "questSkippedDesc": "-{{penalty}} EXP penalty. Next occurrence created.",
+    "questCancelled": "Quest cancelled",
+    "questCancelledDesc": "-{{penalty}} EXP penalty",
+    "cancelFailed": "Failed to cancel quest",
+    "titleRequired": "Title is required"
+  },
+  "cancelRecurring": {
+    "title": "Cancel Recurring Quest",
+    "description": "This is a recurring quest. How would you like to cancel it?",
+    "skipOnce": "Skip This Occurrence",
+    "skipDesc": "Cancel today's quest but continue the series tomorrow",
+    "cancelAll": "Cancel Entire Series",
+    "cancelAllDesc": "Stop this recurring quest permanently",
+    "penalty": "-{{penalty}} EXP penalty"
+  },
+  "goals": {
+    "title": "Goals",
+    "newGoal": "New Goal",
+    "loadFailed": "Failed to load goals",
+    "completeTasksFirst": "Complete all tasks first",
+    "tasksIncomplete_one": "{{count}} task still incomplete",
+    "tasksIncomplete_other": "{{count}} tasks still incomplete",
+    "badgeUnlocked": "Badge Unlocked: {{name}}!",
+    "toggleFailed": "Failed to toggle goal",
+    "deleted": "Goal deleted",
+    "deleteFailed": "Failed to delete goal",
+    "markIncomplete": "Mark Incomplete",
+    "markComplete": "Mark Complete",
+    "progress": "Progress",
+    "milestones": "Milestones",
+    "noTasks": "No tasks linked yet. Link tasks from the task editor.",
+    "overdue": "Overdue",
+    "dueToday": "Due today",
+    "daysRemaining": "{{days}}d remaining"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "subtitle": "Hunter Badge Collection",
+    "summary": "{{unlocked}} / 48 badges unlocked — prove your worth, Hunter.",
+    "unlocked": "Unlocked!",
+    "progressDetail": "{{current}} / {{threshold}} {{label}}",
+    "percentComplete": "{{percent}}% complete"
+  },
+  "stats": {
+    "title": "Hunter Analytics",
+    "subtitle": "System Data Interface",
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "last90Days": "Last 90 Days",
+    "allTime": "All Time",
+    "hunterSince": "Hunter since {{date}} ({{days}} days)"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageDesc": "Choose your preferred display language",
+    "english": "English",
+    "vietnamese": "Tiếng Việt",
+    "saved": "Settings saved",
+    "saveFailed": "Failed to save settings"
+  },
+  "rankTitles": {
+    "Awakened One": "Awakened One",
+    "Beginner Warrior": "Beginner Warrior",
+    "Task Slayer": "Task Slayer",
+    "Dungeon Crawler": "Dungeon Crawler",
+    "Goal Hunter": "Goal Hunter",
+    "Elite Achiever": "Elite Achiever",
+    "S-Rank Executor": "S-Rank Executor",
+    "Master of Habits": "Master of Habits",
+    "Sovereign of Will": "Sovereign of Will",
+    "Ruler of Self": "Ruler of Self",
+    "Monarch's Equal": "Monarch's Equal",
+    "Shadow Monarch": "Shadow Monarch"
+  },
+  "rankThemes": {
+    "Just discovered their potential": "Just discovered their potential",
+    "Starting the journey": "Starting the journey",
+    "Learning to conquer daily challenges": "Learning to conquer daily challenges",
+    "Consistently tackling goals": "Consistently tackling goals",
+    "Actively pursuing objectives": "Actively pursuing objectives",
+    "Proven track record": "Proven track record",
+    "High-level discipline": "High-level discipline",
+    "Habits are now second nature": "Habits are now second nature",
+    "Unshakeable determination": "Unshakeable determination",
+    "Complete self-mastery": "Complete self-mastery",
+    "Among the elite few": "Among the elite few",
+    "Absolute discipline, unlimited potential": "Absolute discipline, unlimited potential"
+  }
+}

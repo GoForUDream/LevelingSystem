@@ -1,0 +1,200 @@
+{
+  "common": {
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "back": "Quay lại",
+    "close": "Đóng",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "retry": "Thử lại",
+    "loading": "Đang tải...",
+    "tryAgain": "Vui lòng thử lại.",
+    "optional": "tùy chọn"
+  },
+  "auth": {
+    "tagline": "Nâng cấp năng suất của bạn",
+    "welcomeBack": "Chào mừng trở lại",
+    "signInSubtitle": "Đăng nhập để tiếp tục hành trình",
+    "continueWithGoogle": "Tiếp tục với Google",
+    "or": "hoặc",
+    "continueAsGuest": "Tiếp tục với tư cách Khách",
+    "terms": "Bằng cách đăng nhập, bạn đồng ý với Điều khoản dịch vụ và Chính sách bảo mật của chúng tôi",
+    "newHere": "Lần đầu đến đây? Đăng nhập để tự động tạo tài khoản."
+  },
+  "guestWarning": {
+    "title": "Tài Khoản Khách",
+    "deviceOnly": "Tiến trình của bạn chỉ được lưu trên <strong>thiết bị này</strong>.",
+    "noRecovery": "Nếu bạn xóa dữ liệu trình duyệt hoặc đổi thiết bị, <strong>tài khoản sẽ không thể khôi phục</strong>.",
+    "linkAnytime": "Bạn có thể liên kết tài khoản Google bất cứ lúc nào từ menu để bảo toàn tiến trình.",
+    "back": "Quay lại",
+    "continue": "Tiếp tục với tư cách Khách"
+  },
+  "header": {
+    "today": "Hôm Nay",
+    "prevMonth": "Tháng Trước",
+    "nextMonth": "Tháng Sau",
+    "accountStart": "Ngày tạo tài khoản",
+    "goals": "Mục Tiêu",
+    "achievements": "Thành Tích",
+    "stats": "Thống Kê",
+    "settings": "Cài Đặt",
+    "linkGoogle": "Liên kết tài khoản Google",
+    "logout": "Đăng Xuất",
+    "streak": {
+      "current": "Chuỗi hiện tại: {{count}} ngày",
+      "best": "Chuỗi tốt nhất: {{count}} ngày",
+      "atRisk": "⚠ Hoàn thành nhiệm vụ hôm nay để duy trì chuỗi!",
+      "start": "Hoàn thành một nhiệm vụ để bắt đầu chuỗi của bạn"
+    },
+    "logoutModal": {
+      "title": "Xác nhận Đăng Xuất",
+      "guestWarning": "Cảnh báo: Với tư cách khách, đăng xuất đồng nghĩa với việc bạn sẽ mất quyền truy cập vĩnh viễn trừ khi bạn liên kết tài khoản Google trước.",
+      "normalWarning": "Bạn có chắc muốn đăng xuất? Tiến trình của bạn đã được lưu, nhưng bạn sẽ cần đăng nhập lại để tiếp tục.",
+      "stay": "Ở lại",
+      "confirm": "Đăng Xuất"
+    },
+    "ranks": {
+      "title": "Bảng Xếp Hạng",
+      "subtitle": "Hoàn thành nhiệm vụ để nhận EXP và thăng hạng",
+      "current": "Hiện tại",
+      "achieved": "Đã đạt",
+      "quote": "\"Chỉ mình ta thăng cấp\""
+    }
+  },
+  "calendar": {
+    "newQuest": "+ Nhiệm Vụ Mới",
+    "completed": "{{done}}/{{total}}"
+  },
+  "tasks": {
+    "newQuest": "Nhiệm Vụ Mới",
+    "editQuest": "Chỉnh Sửa Nhiệm Vụ",
+    "questName": "Tên Nhiệm Vụ",
+    "questNamePlaceholder": "Tìm kiếm hoặc nhập tên nhiệm vụ...",
+    "details": "Chi Tiết",
+    "detailsPlaceholder": "Thêm mô tả...",
+    "rank": "Hạng",
+    "repeatQuest": "Lặp lại nhiệm vụ này",
+    "linkToGoal": "Liên kết với Mục Tiêu",
+    "noGoal": "Không có",
+    "rankLabel": "Hạng {{rank}}",
+    "recurrence": {
+      "daily": "Hàng ngày",
+      "weekly": "Hàng tuần",
+      "monthly": "Hàng tháng",
+      "custom": "Tùy chỉnh",
+      "repeatOn": "Lặp vào",
+      "repeatOnDays": "Lặp vào các ngày",
+      "lastDayOfMonth": "Ngày cuối tháng",
+      "every": "Mỗi",
+      "days": "ngày"
+    },
+    "days": {
+      "mon": "T2",
+      "tue": "T3",
+      "wed": "T4",
+      "thu": "T5",
+      "fri": "T6",
+      "sat": "T7",
+      "sun": "CN"
+    },
+    "acceptQuest": "Nhận Nhiệm Vụ",
+    "saveChanges": "Lưu Thay Đổi",
+    "completed": "Hoàn thành nhiệm vụ!",
+    "completedDesc": "+{{exp}} EXP nhận được",
+    "completeFailed": "Không thể hoàn thành nhiệm vụ",
+    "questUpdated": "Đã cập nhật nhiệm vụ!",
+    "questAccepted": "Đã nhận nhiệm vụ!",
+    "questAcceptedDesc": "Hoàn thành để nhận {{exp}} EXP",
+    "updateFailed": "Cập nhật nhiệm vụ thất bại",
+    "createFailed": "Tạo nhiệm vụ thất bại",
+    "questSkipped": "Đã bỏ qua nhiệm vụ",
+    "questSkippedDesc": "-{{penalty}} EXP phạt. Lần tiếp theo đã được tạo.",
+    "questCancelled": "Đã hủy nhiệm vụ",
+    "questCancelledDesc": "-{{penalty}} EXP phạt",
+    "cancelFailed": "Hủy nhiệm vụ thất bại",
+    "titleRequired": "Tên nhiệm vụ là bắt buộc"
+  },
+  "cancelRecurring": {
+    "title": "Hủy Nhiệm Vụ Lặp Lại",
+    "description": "Đây là nhiệm vụ lặp lại. Bạn muốn hủy như thế nào?",
+    "skipOnce": "Bỏ qua lần này",
+    "skipDesc": "Hủy nhiệm vụ hôm nay nhưng vẫn tiếp tục chuỗi vào ngày mai",
+    "cancelAll": "Hủy toàn bộ chuỗi",
+    "cancelAllDesc": "Dừng vĩnh viễn nhiệm vụ lặp lại này",
+    "penalty": "-{{penalty}} EXP phạt"
+  },
+  "goals": {
+    "title": "Mục Tiêu",
+    "newGoal": "Mục Tiêu Mới",
+    "loadFailed": "Không thể tải mục tiêu",
+    "completeTasksFirst": "Hoàn thành tất cả nhiệm vụ trước",
+    "tasksIncomplete_one": "{{count}} nhiệm vụ chưa hoàn thành",
+    "tasksIncomplete_other": "{{count}} nhiệm vụ chưa hoàn thành",
+    "badgeUnlocked": "Mở khóa Huy hiệu: {{name}}!",
+    "toggleFailed": "Không thể cập nhật mục tiêu",
+    "deleted": "Đã xóa mục tiêu",
+    "deleteFailed": "Xóa mục tiêu thất bại",
+    "markIncomplete": "Đánh dấu chưa hoàn thành",
+    "markComplete": "Đánh dấu hoàn thành",
+    "progress": "Tiến Độ",
+    "milestones": "Các Mốc",
+    "noTasks": "Chưa có nhiệm vụ nào. Liên kết nhiệm vụ từ trình chỉnh sửa.",
+    "overdue": "Quá hạn",
+    "dueToday": "Hôm nay đến hạn",
+    "daysRemaining": "Còn {{days}} ngày"
+  },
+  "achievements": {
+    "title": "Thành Tích",
+    "subtitle": "Bộ Sưu Tập Huy Hiệu Hunter",
+    "summary": "{{unlocked}} / 48 huy hiệu đã mở — chứng minh bản thân, Hunter.",
+    "unlocked": "Đã mở khóa!",
+    "progressDetail": "{{current}} / {{threshold}} {{label}}",
+    "percentComplete": "{{percent}}% hoàn thành"
+  },
+  "stats": {
+    "title": "Phân Tích Hunter",
+    "subtitle": "Giao Diện Dữ Liệu Hệ Thống",
+    "last7Days": "7 Ngày Qua",
+    "last30Days": "30 Ngày Qua",
+    "last90Days": "90 Ngày Qua",
+    "allTime": "Toàn Thời Gian",
+    "hunterSince": "Hunter từ {{date}} ({{days}} ngày)"
+  },
+  "settings": {
+    "title": "Cài Đặt",
+    "language": "Ngôn Ngữ",
+    "languageDesc": "Chọn ngôn ngữ hiển thị ưa thích",
+    "english": "English",
+    "vietnamese": "Tiếng Việt",
+    "saved": "Đã lưu cài đặt",
+    "saveFailed": "Lưu cài đặt thất bại"
+  },
+  "rankTitles": {
+    "Awakened One": "Kẻ Thức Tỉnh",
+    "Beginner Warrior": "Chiến Binh Tập Sự",
+    "Task Slayer": "Tử Thần Nhiệm Vụ",
+    "Dungeon Crawler": "Kẻ Xâm Nhập Hầm Tối",
+    "Goal Hunter": "Thợ Săn Hạng E",
+    "Elite Achiever": "Thợ Săn Tinh Nhuệ",
+    "S-Rank Executor": "Ác Ma Hạng S",
+    "Master of Habits": "Thiên Tài Kỷ Luật",
+    "Sovereign of Will": "Bá Vương Ý Chí",
+    "Ruler of Self": "Chúa Tể Bản Thân",
+    "Monarch's Equal": "Sánh Bước Vương Giả",
+    "Shadow Monarch": "Quân Vương Bóng Tối"
+  },
+  "rankThemes": {
+    "Just discovered their potential": "Sức mạnh tiềm ẩn vừa được đánh thức",
+    "Starting the journey": "Bước chân đầu tiên trên con đường huyền thoại",
+    "Learning to conquer daily challenges": "Rèn giũa bản thân qua từng trận chiến nhỏ",
+    "Consistently tackling goals": "Không lùi bước trước bất kỳ nhiệm vụ nào",
+    "Actively pursuing objectives": "Săn lùng mục tiêu không ngừng nghỉ",
+    "Proven track record": "Thực lực đã được thử thách và chứng minh",
+    "High-level discipline": "Kỷ luật thép — vượt qua giới hạn con người",
+    "Habits are now second nature": "Thói quen đã hòa vào máu thịt",
+    "Unshakeable determination": "Ý chí không gì có thể lay chuyển",
+    "Complete self-mastery": "Tuyệt đối làm chủ bản thân và số phận",
+    "Among the elite few": "Đứng ngang hàng những kẻ mạnh nhất thế giới",
+    "Absolute discipline, unlimited potential": "Kỷ luật tuyệt đối — tiềm năng vô hạn, không ai sánh bằng"
+  }
+}
