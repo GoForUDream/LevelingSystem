@@ -9,6 +9,7 @@ export default function LoginPage() {
   const { login, loginAsGuest } = useAuth()
   const { t } = useTranslation()
   const [showGuestWarning, setShowGuestWarning] = useState(false)
+  const allowGuestLogin = import.meta.env.VITE_ALLOW_GUEST_LOGIN !== 'false'
 
   const handleGuestConfirm = async () => {
     setShowGuestWarning(false)
@@ -44,19 +45,23 @@ export default function LoginPage() {
             {t('auth.continueWithGoogle')}
           </button>
 
-          <div className="relative flex items-center my-6">
-            <div className="flex-1 border-t border-sl-gray-light" />
-            <span className="px-3 text-xs text-sl-silver-dark">{t('auth.or')}</span>
-            <div className="flex-1 border-t border-sl-gray-light" />
-          </div>
+          {allowGuestLogin && (
+            <>
+              <div className="relative flex items-center my-6">
+                <div className="flex-1 border-t border-sl-gray-light" />
+                <span className="px-3 text-xs text-sl-silver-dark">{t('auth.or')}</span>
+                <div className="flex-1 border-t border-sl-gray-light" />
+              </div>
 
-          <button
-            onClick={() => setShowGuestWarning(true)}
-            className="w-full flex items-center justify-center gap-3 border border-sl-gray-light text-sl-silver-muted hover:text-sl-silver hover:border-sl-silver/50 font-medium py-3 px-4 rounded-xl transition-all duration-200"
-          >
-            <Ghost size={18} />
-            {t('auth.continueAsGuest')}
-          </button>
+              <button
+                onClick={() => setShowGuestWarning(true)}
+                className="w-full flex items-center justify-center gap-3 border border-sl-gray-light text-sl-silver-muted hover:text-sl-silver hover:border-sl-silver/50 font-medium py-3 px-4 rounded-xl transition-all duration-200"
+              >
+                <Ghost size={18} />
+                {t('auth.continueAsGuest')}
+              </button>
+            </>
+          )}
 
           <p className="text-sl-silver-dark text-xs text-center mt-6">
             {t('auth.terms')}
@@ -68,11 +73,13 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <GuestWarningModal
-        open={showGuestWarning}
-        onConfirm={handleGuestConfirm}
-        onCancel={() => setShowGuestWarning(false)}
-      />
+      {allowGuestLogin && (
+        <GuestWarningModal
+          open={showGuestWarning}
+          onConfirm={handleGuestConfirm}
+          onCancel={() => setShowGuestWarning(false)}
+        />
+      )}
     </div>
   )
 }

@@ -97,24 +97,35 @@ async def delete_goal(
 async def toggle_goal(
     goal_id: int,
     current_user: User = Depends(get_current_user),
-    service: GoalService = Depends(get_goal_service),
-    achievement_service: AchievementService = Depends(get_achievement_service),
+    db: AsyncSession = Depends(get_db),
 ):
-    goal = await service.get_goal(goal_id)
+    goal_repository = GoalRepository(db, auto_commit=False)
+    achievement_repository = AchievementRepository(db, auto_commit=False)
+    service = GoalService(goal_repository)
+    achievement_service = AchievementService(achievement_repository)
+
+    goal = await goal_repository.get_by_id_for_update(goal_id)
     if not goal or goal.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Goal not found")
     was_done = goal.is_done
-    updated = await service.toggle_done(goal_id)
+
+    try:
+        updated = await service.toggle_done(goal_id)
+        if updated is None:
+            raise HTTPException(status_code=404, detail="Goal not found")
+        new_badges: list[str] = []
+        if not was_done and updated.is_done:
+            new_badges = await achievement_service.on_goal_completed(current_user.id)
+        elif was_done and not updated.is_done:
+            await achievement_service.on_goal_uncompleted(current_user.id)
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+
     tasks = await service.get_tasks_for_goal(goal_id)
     resp = GoalResponse.model_validate(updated, from_attributes=True)
     resp.tasks = [TaskResponse.model_validate(t, from_attributes=True) for t in tasks]
     resp_data = resp.model_dump()
-
-    new_badges: list[str] = []
-    if not was_done and updated.is_done:
-        new_badges = await achievement_service.on_goal_completed(current_user.id)
-    elif was_done and not updated.is_done:
-        await achievement_service.on_goal_uncompleted(current_user.id)
-
     resp_data["new_badges"] = new_badges
     return resp_data

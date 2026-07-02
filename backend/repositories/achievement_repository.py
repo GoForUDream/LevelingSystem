@@ -1,12 +1,20 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.sql import func
 from models.achievement import UserAchievementStats, UserAchievement
 
 
 class AchievementRepository:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, auto_commit: bool = True):
         self.db = db
+        self.auto_commit = auto_commit
+
+    async def _finish_write(self):
+        if self.auto_commit:
+            await self.db.commit()
+        else:
+            await self.db.flush()
 
     async def get_or_create_stats(self, user_id: int) -> UserAchievementStats:
         result = await self.db.execute(
@@ -16,7 +24,7 @@ class AchievementRepository:
         if stats is None:
             stats = UserAchievementStats(user_id=user_id)
             self.db.add(stats)
-            await self.db.commit()
+            await self._finish_write()
             await self.db.refresh(stats)
         return stats
 
@@ -27,7 +35,7 @@ class AchievementRepository:
             .where(UserAchievementStats.user_id == user_id)
             .values(**data)
         )
-        await self.db.commit()
+        await self._finish_write()
         result = await self.db.execute(
             select(UserAchievementStats).where(UserAchievementStats.user_id == user_id)
         )
@@ -47,9 +55,13 @@ class AchievementRepository:
         )
         return list(result.scalars().all())
 
-    async def unlock_badge(self, user_id: int, badge_id: str) -> UserAchievement:
-        achievement = UserAchievement(user_id=user_id, badge_id=badge_id)
-        self.db.add(achievement)
-        await self.db.commit()
-        await self.db.refresh(achievement)
-        return achievement
+    async def unlock_badge(self, user_id: int, badge_id: str) -> bool:
+        stmt = (
+            insert(UserAchievement)
+            .values(user_id=user_id, badge_id=badge_id)
+            .on_conflict_do_nothing(index_elements=["user_id", "badge_id"])
+            .returning(UserAchievement.id)
+        )
+        result = await self.db.execute(stmt)
+        await self._finish_write()
+        return result.scalar_one_or_none() is not None

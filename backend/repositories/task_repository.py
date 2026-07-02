@@ -6,17 +6,30 @@ from datetime import datetime
 
 
 class TaskRepository:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, auto_commit: bool = True):
         self.db = db
+        self.auto_commit = auto_commit
+
+    async def _finish_write(self):
+        if self.auto_commit:
+            await self.db.commit()
+        else:
+            await self.db.flush()
 
     async def create(self, task: Task) -> Task:
         self.db.add(task)
-        await self.db.commit()
+        await self._finish_write()
         await self.db.refresh(task)
         return task
 
     async def get_by_id(self, task_id: int) -> Task | None:
         result = await self.db.execute(select(Task).where(Task.id == task_id))
+        return result.scalar_one_or_none()
+
+    async def get_by_id_for_update(self, task_id: int) -> Task | None:
+        result = await self.db.execute(
+            select(Task).where(Task.id == task_id).with_for_update()
+        )
         return result.scalar_one_or_none()
 
     async def get_all(self, user_id: int | None = None) -> list[Task]:
@@ -48,10 +61,12 @@ class TaskRepository:
     async def update(self, task_id: int, data: dict) -> Task | None:
         data["updated_at"] = func.now()
         await self.db.execute(update(Task).where(Task.id == task_id).values(**data))
-        await self.db.commit()
+        await self._finish_write()
         return await self.get_by_id(task_id)
 
     async def delete(self, task_id: int) -> bool:
-        result = await self.db.execute(delete(Task).where(Task.id == task_id))
-        await self.db.commit()
-        return result.rowcount > 0
+        result = await self.db.execute(
+            delete(Task).where(Task.id == task_id).returning(Task.id)
+        )
+        await self._finish_write()
+        return result.scalar_one_or_none() is not None

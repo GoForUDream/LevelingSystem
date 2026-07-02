@@ -15,3 +15,11 @@ JWT_EXPIRATION_HOURS = 24 * 7  # 1 week
 
 # Frontend
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+# Personal-use access controls
+ALLOWED_EMAILS = {
+    email.strip().lower()
+    for email in os.getenv("ALLOWED_EMAILS", "").split(",")
+    if email.strip()
+}
+ALLOW_GUEST_LOGIN = os.getenv("ALLOW_GUEST_LOGIN", "true").lower() == "true"

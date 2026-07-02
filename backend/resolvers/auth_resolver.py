@@ -10,11 +10,22 @@ from schemas.user import UserWithProgress, LevelProgress
 from middleware.auth_middleware import get_current_user
 from models.user import User
 import httpx
-from config import FRONTEND_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from config import (
+    ALLOWED_EMAILS,
+    ALLOW_GUEST_LOGIN,
+    FRONTEND_URL,
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 auth_service = AuthService()
+
+
+def ensure_email_allowed(email: str) -> None:
+    if ALLOWED_EMAILS and email.lower() not in ALLOWED_EMAILS:
+        raise HTTPException(status_code=403, detail="This app is restricted to its owner")
 
 
 @router.get("/login")
@@ -27,6 +38,8 @@ async def login():
 @router.post("/guest")
 async def guest_login(db: AsyncSession = Depends(get_db)):
     """Create a guest account and return a permanent JWT."""
+    if not ALLOW_GUEST_LOGIN:
+        raise HTTPException(status_code=403, detail="Guest login is disabled")
     repository = UserRepository(db)
     service = UserService(repository)
     user = await service.create_guest_user()
@@ -65,6 +78,7 @@ async def callback(
         name = google_user.get("name")
         if not google_id or not email or not name:
             raise ValueError("Missing required user info from Google")
+        ensure_email_allowed(email)
 
         repository = UserRepository(db)
         service = UserService(repository)
@@ -167,6 +181,7 @@ async def mobile_auth(
         name = google_user.get("name")
         if not google_id or not email or not name:
             raise HTTPException(status_code=400, detail="Missing user info from Google")
+        ensure_email_allowed(email)
 
         repository = UserRepository(db)
         service = UserService(repository)

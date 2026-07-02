@@ -39,7 +39,9 @@ class UserService:
                     update_data["avatar_url"] = avatar_url
                 if name:
                     update_data["name"] = name
-                user = await self.repository.update(user.id, update_data)
+                updated_user = await self.repository.update(user.id, update_data)
+                if updated_user is not None:
+                    user = updated_user
             return user
 
         user = User(
@@ -95,11 +97,11 @@ class UserService:
         return await self.repository.update(user_id, update_data)
 
     async def add_exp(self, user_id: int, exp: int) -> User | None:
-        user = await self.repository.get_by_id(user_id)
+        user = await self.repository.get_by_id_for_update(user_id)
         if not user:
             return None
 
-        new_total_exp = user.total_exp + exp
+        new_total_exp = max(0, user.total_exp + exp)
         new_level = get_level_from_exp(new_total_exp)
 
         return await self.repository.update(

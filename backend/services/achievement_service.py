@@ -135,7 +135,10 @@ class AchievementService:
                 if badge_id in already_unlocked:
                     continue
                 if current_value >= badge["threshold"]:
-                    await self.repository.unlock_badge(user_id, badge_id)
+                    unlocked = await self.repository.unlock_badge(user_id, badge_id)
+                    if not unlocked:
+                        continue
+                    already_unlocked.add(badge_id)
                     newly_unlocked.append(badge_id)
                     logger.info(
                         f"User {user_id} unlocked badge '{badge_id}' "

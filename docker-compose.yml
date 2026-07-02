@@ -2,14 +2,49 @@ services:
   db:
     image: postgres:16-alpine
     container_name: leveling_db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: leveling
       POSTGRES_PASSWORD: leveling123
       POSTGRES_DB: leveling_system
-    ports:
-      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leveling -d leveling_system"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: leveling_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://leveling:leveling123@db:5432/leveling_system
+      FRONTEND_URL: http://localhost:5173
+      GOOGLE_REDIRECT_URI: http://localhost:5173/api/auth/callback
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      JWT_SECRET: ${JWT_SECRET:-change-this-local-secret}
+      ALLOW_GUEST_LOGIN: "true"
+      ALLOWED_EMAILS: ""
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ""
+        VITE_ALLOW_GUEST_LOGIN: "true"
+    container_name: leveling_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

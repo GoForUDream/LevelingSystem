@@ -64,7 +64,7 @@ async def mark_overdue_tasks():
         )
 
         # Spawn next occurrences for recurring tasks
-        task_service = TaskService(TaskRepository(db))
+        task_service = TaskService(TaskRepository(db, auto_commit=False))
         recurring_count = 0
         for task in overdue_tasks:
             if task.is_recurring:
@@ -123,7 +123,7 @@ async def check_perfect_days(db, today_start):
     if not users:
         return
 
-    achievement_service = AchievementService(AchievementRepository(db))
+    achievement_service = AchievementService(AchievementRepository(db, auto_commit=False))
     utc_now = datetime.now(timezone.utc).replace(tzinfo=None)
 
     for user in users:
@@ -161,3 +161,5 @@ async def check_perfect_days(db, today_start):
                 f"User {user.id}: perfect day on {yesterday_date}! ({len(yesterday_tasks)} tasks all completed). "
                 f"New badges: {new_badges}"
             )
+
+    await db.commit()

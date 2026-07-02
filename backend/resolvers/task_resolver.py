@@ -10,6 +10,7 @@ from services.achievement_service import AchievementService
 from schemas.task import TaskCreate, TaskUpdate, TaskResponse
 from middleware.auth_middleware import get_current_user
 from models.user import User
+from models.task import TaskStatus
 from datetime import datetime
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
@@ -105,22 +106,41 @@ async def complete_task(
     local_hour: int | None = None,
     local_date: str | None = None,
     current_user: User = Depends(get_current_user),
-    service: TaskService = Depends(get_task_service),
-    user_service: UserService = Depends(get_user_service),
-    achievement_service: AchievementService = Depends(get_achievement_service),
+    db: AsyncSession = Depends(get_db),
 ):
-    task = await service.get_task(task_id)
+    task_repository = TaskRepository(db, auto_commit=False)
+    user_repository = UserRepository(db, auto_commit=False)
+    achievement_repository = AchievementRepository(db, auto_commit=False)
+    service = TaskService(task_repository)
+    user_service = UserService(user_repository)
+    achievement_service = AchievementService(achievement_repository)
+
+    task = await task_repository.get_by_id_for_update(task_id)
     if not task or task.user_id != current_user.id:
+        await db.rollback()
         raise HTTPException(status_code=404, detail="Task not found")
-    if task.status == "COMPLETED":
-        raise HTTPException(status_code=400, detail="Task already completed")
-    updated = await service.complete_task(task_id)
-    # Add EXP to user
-    await user_service.add_exp(current_user.id, updated.exp_earned)
-    # Track achievement (use local_hour/local_date for time-based achievements)
-    new_badges = await achievement_service.on_task_completed(
-        current_user.id, task.created_at, updated.completed_at, local_hour, local_date
-    )
+    if task.status == TaskStatus.COMPLETED:
+        task_data = TaskResponse.model_validate(task, from_attributes=True).model_dump()
+        task_data["new_badges"] = []
+        await db.rollback()
+        return task_data
+    if task.status in {TaskStatus.CANCELLED, TaskStatus.FAILED, TaskStatus.OVERDUE}:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Cannot complete a {task.status.value.lower()} task")
+
+    try:
+        updated = await service.complete_task(task_id)
+        if updated is None or updated.completed_at is None:
+            raise HTTPException(status_code=400, detail="Task could not be completed")
+        await user_service.add_exp(current_user.id, updated.exp_earned or 0)
+        new_badges = await achievement_service.on_task_completed(
+            current_user.id, task.created_at, updated.completed_at, local_hour, local_date
+        )
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+
     task_data = TaskResponse.model_validate(updated, from_attributes=True).model_dump()
     task_data["new_badges"] = new_badges
     return task_data
@@ -131,20 +151,39 @@ async def cancel_task(
     task_id: int,
     skip_only: bool = False,
     current_user: User = Depends(get_current_user),
-    service: TaskService = Depends(get_task_service),
-    user_service: UserService = Depends(get_user_service),
+    db: AsyncSession = Depends(get_db),
 ):
-    task = await service.get_task(task_id)
+    task_repository = TaskRepository(db, auto_commit=False)
+    user_repository = UserRepository(db, auto_commit=False)
+    service = TaskService(task_repository)
+    user_service = UserService(user_repository)
+
+    task = await task_repository.get_by_id_for_update(task_id)
     if not task or task.user_id != current_user.id:
+        await db.rollback()
         raise HTTPException(status_code=404, detail="Task not found")
-    if task.status == "COMPLETED":
+    if task.status == TaskStatus.CANCELLED:
+        task_data = TaskResponse.model_validate(task, from_attributes=True).model_dump()
+        await db.rollback()
+        return task_data
+    if task.status == TaskStatus.COMPLETED:
+        await db.rollback()
         raise HTTPException(status_code=400, detail="Cannot cancel a completed task")
-    if task.status == "CANCELLED":
-        raise HTTPException(status_code=400, detail="Task already cancelled")
-    updated = await service.cancel_task(task_id, skip_only=skip_only)
-    # Deduct 20% EXP penalty from user
-    if updated.exp_penalty:
-        await user_service.add_exp(current_user.id, -updated.exp_penalty)
+    if task.status in {TaskStatus.FAILED, TaskStatus.OVERDUE}:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Cannot cancel a {task.status.value.lower()} task")
+
+    try:
+        updated = await service.cancel_task(task_id, skip_only=skip_only)
+        if updated is None:
+            raise HTTPException(status_code=400, detail="Task could not be cancelled")
+        if updated.exp_penalty:
+            await user_service.add_exp(current_user.id, -updated.exp_penalty)
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+
     return updated
 
 
@@ -152,12 +191,36 @@ async def cancel_task(
 async def fail_task(
     task_id: int,
     current_user: User = Depends(get_current_user),
-    service: TaskService = Depends(get_task_service),
+    db: AsyncSession = Depends(get_db),
 ):
-    task = await service.get_task(task_id)
+    task_repository = TaskRepository(db, auto_commit=False)
+    user_repository = UserRepository(db, auto_commit=False)
+    service = TaskService(task_repository)
+    user_service = UserService(user_repository)
+
+    task = await task_repository.get_by_id_for_update(task_id)
     if not task or task.user_id != current_user.id:
+        await db.rollback()
         raise HTTPException(status_code=404, detail="Task not found")
-    updated = await service.fail_task(task_id)
+    if task.status == TaskStatus.FAILED:
+        task_data = TaskResponse.model_validate(task, from_attributes=True).model_dump()
+        await db.rollback()
+        return task_data
+    if task.status in {TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.OVERDUE}:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Cannot fail a {task.status.value.lower()} task")
+
+    try:
+        updated = await service.fail_task(task_id)
+        if updated is None:
+            raise HTTPException(status_code=400, detail="Task could not be failed")
+        if updated.exp_penalty:
+            await user_service.add_exp(current_user.id, -updated.exp_penalty)
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+
     return updated
 
 

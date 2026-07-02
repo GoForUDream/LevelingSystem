@@ -11,6 +11,7 @@ from resolvers.goal_resolver import router as goal_router
 from resolvers.achievement_resolver import router as achievement_router
 from resolvers.stats_resolver import router as stats_router
 from jobs.overdue_checker import mark_overdue_tasks
+from config import FRONTEND_URL
 import logging
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ app = FastAPI(title="Leveling System API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
