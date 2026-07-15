@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import date
 from typing import Literal
 
@@ -46,6 +46,7 @@ class PeriodComparison(BaseModel):
 
 
 class StatsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     # Account info
     account_created_at: date
     account_age_days: int
@@ -68,6 +69,3 @@ class StatsResponse(BaseModel):
     # Comparisons (null if insufficient data)
     monthly_comparison: PeriodComparison | None
     yearly_comparison: PeriodComparison | None
-
-    class Config:
-        from_attributes = True

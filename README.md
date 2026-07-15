@@ -1,150 +1,56 @@
 # Leveling System
 
-A personal productivity app inspired by RPG progression. Create tasks and goals, complete them for EXP, level up, and unlock achievements over time.
+An RPG-inspired productivity app for planning tasks and goals, earning EXP, leveling up, tracking streaks, and unlocking achievement badges.
 
-The app is intended to run locally through Docker for personal use.
+## Stack
 
-## What It Includes
+- React, TypeScript, Vite, and Tailwind CSS
+- FastAPI and async SQLAlchemy
+- PostgreSQL with Alembic migrations
+- Docker Compose with separate web, API, scheduler, and database services
 
-- Calendar-based task planning
-- Task priorities, recurring tasks, overdue handling, and EXP penalties
-- Goals linked to tasks
-- Levels, ranks, and achievement badges
-- Stats and activity charts
-- Google OAuth or guest login
+## Local Setup
 
-## Tech Stack
+Requirements: Docker Desktop and optional Google OAuth credentials.
 
-- Frontend: React, TypeScript, Vite, Tailwind CSS
-- Backend: FastAPI, SQLAlchemy async, APScheduler
-- Database: PostgreSQL
-- Runtime: Docker Compose
-
-## Prerequisites
-
-- Docker Desktop
-- Google OAuth credentials, only if you want Google login
-
-## Environment Setup
-
-Copy the Docker env example:
-
-```bash
-copy .env.docker.example .env.docker
-```
-
-Edit `.env.docker`:
-
-```env
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-JWT_SECRET=replace-with-a-long-random-secret
-```
-
-For guest-only local use, Google credentials can stay empty.
-
-## Google OAuth Setup
-
-In Google Cloud Console, configure the OAuth client as a Web application.
-
-Authorized JavaScript origin:
-
-```text
-http://localhost:5173
-```
-
-Authorized redirect URI:
-
-```text
-http://localhost:5173/api/auth/callback
-```
-
-The app uses Nginx to proxy `/api/*` from the frontend container to the backend container, so the OAuth callback uses port `5173`.
-
-## Run The App
-
-From the repository root:
-
-```bash
+```powershell
+Copy-Item .env.docker.example .env.docker
 docker compose --env-file .env.docker up -d --build
 ```
 
-Open:
+Open `http://localhost:5173`.
+
+For Google login, configure these exact Google OAuth values:
 
 ```text
-http://localhost:5173
+Authorized origin: http://localhost:5173
+Redirect URI:     http://localhost:5173/api/auth/callback
 ```
 
-The running services are:
+Guest login is enabled by default only for local development. Set a long random `JWT_SECRET` in `.env.docker` before keeping real data.
 
-- `leveling_frontend`: serves the web app on `localhost:5173`
-- `leveling_backend`: FastAPI backend inside the Docker network
-- `leveling_db`: PostgreSQL database with persistent Docker volume storage
+## Operations
 
-## Stop The App
-
-```bash
-docker compose --env-file .env.docker down
-```
-
-This stops containers but keeps database data in the Docker volume.
-
-## Restart After Env Changes
-
-If `.env.docker` changes:
-
-```bash
-docker compose --env-file .env.docker up -d --no-build
-```
-
-If source code or Dockerfiles change:
-
-```bash
-docker compose --env-file .env.docker up -d --build
-```
-
-## Auto Start On Windows
-
-The compose services use `restart: unless-stopped`.
-
-To start the app automatically after reboot:
-
-1. Open Docker Desktop.
-2. Go to Settings -> General.
-3. Enable "Start Docker Desktop when you sign in".
-4. Start the app once with `docker compose --env-file .env.docker up -d --build`.
-
-After that, Docker should restart the containers when Docker Desktop starts.
-
-## Useful Commands
-
-View status:
-
-```bash
+```powershell
+# Status
 docker compose --env-file .env.docker ps
-```
 
-View backend logs:
+# Logs
+docker compose --env-file .env.docker logs -f backend scheduler
 
-```bash
-docker logs -f leveling_backend
-```
+# Restart after environment-only changes
+docker compose --env-file .env.docker up -d --no-build
 
-View frontend logs:
-
-```bash
-docker logs -f leveling_frontend
-```
-
-Rebuild from scratch:
-
-```bash
+# Stop while preserving database data
 docker compose --env-file .env.docker down
-docker compose --env-file .env.docker up -d --build
 ```
 
-## Notes
+Database migrations run automatically before the API starts. The dedicated scheduler performs an overdue catch-up on startup and then runs at midnight UTC.
 
-- The backend runs an overdue-task checker on startup and at midnight UTC.
-- PostgreSQL data is stored in the `postgres_data` Docker volume.
-- `.env.docker` is ignored by Git and should not be committed.
+## Production
+
+Start from `.env.production.example`, use HTTPS, keep guest login disabled unless it is intentionally offered, and place the frontend/API behind one trusted same-origin reverse proxy.
+
+Sites can host the web surface, but the current Python API, PostgreSQL database, and scheduler still require an external container host or a future migration to the Sites Worker and D1 runtime.
+
+Production changes are recorded in [`docs/change-logs`](docs/change-logs).

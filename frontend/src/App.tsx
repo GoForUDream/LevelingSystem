@@ -1,27 +1,32 @@
-import { useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { Toaster } from '@/components/ui/sonner'
-import LoginPage from '@/pages/LoginPage'
-import AuthCallback from '@/pages/AuthCallback'
-import CalendarPage from '@/pages/CalendarPage'
-import AchievementsPage from '@/pages/AchievementsPage'
-import GoalsPage from '@/pages/GoalsPage'
-import StatsPage from '@/pages/StatsPage'
-import SettingsPage from '@/pages/SettingsPage'
+
+const LoginPage = lazy(() => import('@/pages/LoginPage'))
+const AuthCallback = lazy(() => import('@/pages/AuthCallback'))
+const CalendarPage = lazy(() => import('@/pages/CalendarPage'))
+const AchievementsPage = lazy(() => import('@/pages/AchievementsPage'))
+const GoalsPage = lazy(() => import('@/pages/GoalsPage'))
+const StatsPage = lazy(() => import('@/pages/StatsPage'))
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-sl-black flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-sl-gray-light border-t-sl-blue rounded-full animate-spin mx-auto mb-4 glow-blue-sm" />
+        <p className="text-sl-silver-muted">Loading...</p>
+      </div>
+    </div>
+  )
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-sl-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-sl-gray-light border-t-sl-blue rounded-full animate-spin mx-auto mb-4 glow-blue-sm"></div>
-          <p className="text-sl-silver-muted">Loading...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (!user) {
@@ -35,14 +40,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-sl-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-sl-gray-light border-t-sl-blue rounded-full animate-spin mx-auto mb-4 glow-blue-sm"></div>
-          <p className="text-sl-silver-muted">Loading...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (user) {
@@ -73,7 +71,8 @@ function AppRoutes() {
   useDayChangeReload()
 
   return (
-    <Routes>
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes>
       <Route
         path="/login"
         element={
@@ -123,7 +122,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-    </Routes>
+      </Routes>
+    </Suspense>
   )
 }
 

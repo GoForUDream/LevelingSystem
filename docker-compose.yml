@@ -4,13 +4,13 @@ services:
     container_name: leveling_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: leveling
-      POSTGRES_PASSWORD: leveling123
-      POSTGRES_DB: leveling_system
+      POSTGRES_USER: ${POSTGRES_USER:-leveling}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-leveling123}
+      POSTGRES_DB: ${POSTGRES_DB:-leveling_system}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U leveling -d leveling_system"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,16 +21,44 @@ services:
     container_name: leveling_backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql+asyncpg://leveling:leveling123@db:5432/leveling_system
-      FRONTEND_URL: http://localhost:5173
-      GOOGLE_REDIRECT_URI: http://localhost:5173/api/auth/callback
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://leveling:leveling123@db:5432/leveling_system}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      TRUST_PROXY_HEADERS: "true"
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:5173/api/auth/callback}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       JWT_SECRET: ${JWT_SECRET:-change-this-local-secret}
-      ALLOW_GUEST_LOGIN: "true"
-      ALLOWED_EMAILS: ""
+      ALLOW_GUEST_LOGIN: ${ALLOW_GUEST_LOGIN:-true}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
     depends_on:
       db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scheduler:
+    build:
+      context: ./backend
+    container_name: leveling_scheduler
+    restart: unless-stopped
+    command: ["python", "-m", "jobs.scheduler_runner"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://leveling:leveling123@db:5432/leveling_system}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:5173/api/auth/callback}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      JWT_SECRET: ${JWT_SECRET:-change-this-local-secret}
+    depends_on:
+      backend:
         condition: service_healthy
 
   frontend:
@@ -38,13 +66,14 @@ services:
       context: ./frontend
       args:
         VITE_API_URL: ""
-        VITE_ALLOW_GUEST_LOGIN: "true"
+        VITE_ALLOW_GUEST_LOGIN: ${ALLOW_GUEST_LOGIN:-true}
     container_name: leveling_frontend
     restart: unless-stopped
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:

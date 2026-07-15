@@ -1,4 +1,4 @@
-from sqlalchemy import String, Text, Integer, Boolean, DateTime, Enum as SQLEnum
+from sqlalchemy import String, Text, Integer, Boolean, DateTime, Enum as SQLEnum, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from db.database import Base
@@ -16,9 +16,12 @@ class GoalRank(str, enum.Enum):
 
 class Goal(Base):
     __tablename__ = "goals"
+    __table_args__ = (Index("ix_goals_user_created", "user_id", "created_at"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)

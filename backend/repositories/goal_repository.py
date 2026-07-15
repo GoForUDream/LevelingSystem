@@ -26,6 +26,12 @@ class GoalRepository:
         result = await self.db.execute(select(Goal).where(Goal.id == goal_id))
         return result.scalar_one_or_none()
 
+    async def get_by_id_for_user(self, goal_id: int, user_id: int) -> Goal | None:
+        result = await self.db.execute(
+            select(Goal).where(Goal.id == goal_id, Goal.user_id == user_id)
+        )
+        return result.scalar_one_or_none()
+
     async def get_by_id_for_update(self, goal_id: int) -> Goal | None:
         result = await self.db.execute(
             select(Goal).where(Goal.id == goal_id).with_for_update()
@@ -40,12 +46,27 @@ class GoalRepository:
         )
         return list(result.scalars().all())
 
-    async def get_tasks_for_goal(self, goal_id: int) -> list[Task]:
+    async def get_tasks_for_goal(self, goal_id: int, user_id: int) -> list[Task]:
         """Get tasks for a goal, excluding overdue and cancelled tasks."""
         result = await self.db.execute(
             select(Task)
             .where(
                 Task.goal_id == goal_id,
+                Task.user_id == user_id,
+                Task.status.notin_([TaskStatus.OVERDUE, TaskStatus.CANCELLED]),
+            )
+            .order_by(Task.created_at.asc())
+        )
+        return list(result.scalars().all())
+
+    async def get_tasks_for_goals(self, goal_ids: list[int], user_id: int) -> list[Task]:
+        if not goal_ids:
+            return []
+        result = await self.db.execute(
+            select(Task)
+            .where(
+                Task.goal_id.in_(goal_ids),
+                Task.user_id == user_id,
                 Task.status.notin_([TaskStatus.OVERDUE, TaskStatus.CANCELLED]),
             )
             .order_by(Task.created_at.asc())

@@ -33,120 +33,98 @@ interface AuthContextType {
   login: () => void
   loginAsGuest: () => Promise<void>
   linkGoogleAccount: () => Promise<void>
-  logout: () => void
-  setToken: (token: string) => void
-  refreshUser: () => Promise<void>
+  logout: () => Promise<void>
+  refreshUser: () => Promise<boolean>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+async function sessionFetch(path: string, init?: RequestInit) {
+  return fetch(`${API_URL}${path}`, { ...init, credentials: 'include' })
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setTokenState] = useState<string | null>(() =>
-    localStorage.getItem('token')
-  )
   const [isLoading, setIsLoading] = useState(true)
 
-  const setToken = (newToken: string) => {
-    localStorage.setItem('token', newToken)
-    setTokenState(newToken)
-  }
-
-  const logout = () => {
+  const clearSession = useCallback(() => {
     localStorage.removeItem('token')
-    setTokenState(null)
     setUser(null)
-  }
+  }, [])
+
+  const syncTimezone = useCallback(async () => {
+    const timezoneOffset = -new Date().getTimezoneOffset()
+    try {
+      await sessionFetch(`/api/auth/timezone?timezone_offset=${timezoneOffset}`, {
+        method: 'PATCH',
+      })
+    } catch (error) {
+      console.error('Failed to sync timezone:', error)
+    }
+  }, [])
+
+  const fetchUser = useCallback(async (): Promise<boolean> => {
+    try {
+      const response = await sessionFetch('/api/auth/me')
+      if (!response.ok) {
+        clearSession()
+        return false
+      }
+
+      const userData: User = await response.json()
+      setUser(userData)
+      if (userData.language && userData.language !== i18n.language) {
+        await i18n.changeLanguage(userData.language)
+        localStorage.setItem('sl_language', userData.language)
+      }
+      void syncTimezone()
+      return true
+    } catch (error) {
+      console.error('Failed to fetch user:', error)
+      clearSession()
+      return false
+    } finally {
+      setIsLoading(false)
+    }
+  }, [clearSession, syncTimezone])
+
+  useEffect(() => {
+    // Session discovery is the external synchronization owned by this provider.
+    void fetchUser()
+  }, [fetchUser])
 
   const login = () => {
     window.location.href = `${API_URL}/api/auth/login`
   }
 
   const loginAsGuest = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/auth/guest`, { method: 'POST' })
-      if (!response.ok) throw new Error('Failed to create guest account')
-      const data = await response.json()
-      setToken(data.token)
-    } catch (error) {
-      console.error('Guest login failed:', error)
-    }
+    const response = await sessionFetch('/api/auth/guest', { method: 'POST' })
+    if (!response.ok) throw new Error('Failed to create guest account')
+    await fetchUser()
   }
 
   const linkGoogleAccount = async () => {
-    if (!token) return
+    const response = await sessionFetch('/api/auth/link-google')
+    if (!response.ok) throw new Error('Failed to get link URL')
+    const data = await response.json()
+    window.location.href = data.url
+  }
+
+  const logout = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/link-google`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!response.ok) throw new Error('Failed to get link URL')
-      const data = await response.json()
-      window.location.href = data.url
-    } catch (error) {
-      console.error('Link Google Account failed:', error)
+      await sessionFetch('/api/auth/logout', { method: 'POST' })
+    } finally {
+      clearSession()
     }
   }
 
-  const syncTimezone = useCallback(async () => {
-    if (!token) return
-    const timezoneOffset = -new Date().getTimezoneOffset()
-    try {
-      await fetch(`${API_URL}/api/auth/timezone?timezone_offset=${timezoneOffset}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-    } catch (error) {
-      console.error('Failed to sync timezone:', error)
-    }
-  }, [token])
-
-  const fetchUser = useCallback(async () => {
-    if (!token) {
-      setIsLoading(false)
-      return
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (response.ok) {
-        const userData = await response.json()
-        setUser(userData)
-        // Sync i18next to the user's saved language preference
-        if (userData.language && userData.language !== i18n.language) {
-          i18n.changeLanguage(userData.language)
-          localStorage.setItem('sl_language', userData.language)
-        }
-        syncTimezone()
-      } else {
-        logout()
-      }
-    } catch (error) {
-      console.error('Failed to fetch user:', error)
-      logout()
-    } finally {
-      setIsLoading(false)
-    }
-  }, [token, syncTimezone])
-
-  const refreshUser = useCallback(async () => {
-    await fetchUser()
-  }, [fetchUser])
-
-  useEffect(() => {
-    fetchUser()
-  }, [fetchUser])
-
   const isGuest = user?.is_guest ?? false
+  const token = user ? 'cookie-session' : null
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, isGuest, login, loginAsGuest, linkGoogleAccount, logout, setToken, refreshUser }}>
+    <AuthContext.Provider
+      value={{ user, token, isLoading, isGuest, login, loginAsGuest, linkGoogleAccount, logout, refreshUser: fetchUser }}
+    >
       {children}
     </AuthContext.Provider>
   )

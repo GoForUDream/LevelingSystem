@@ -8,6 +8,10 @@ export function cn(...inputs: ClassValue[]) {
 // API Configuration
 export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000"
 
+export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  return fetch(input, { ...init, credentials: init.credentials ?? "include" })
+}
+
 // Date Constants
 export const DAY_NAMES = [
   "Sunday",

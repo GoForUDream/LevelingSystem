@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { API_URL } from '@/lib/utils'
+import { API_URL, apiFetch } from '@/lib/utils'
 
 interface StreakData {
   currentStreak: number
@@ -21,7 +21,7 @@ export function useStreak(token: string | null, userExp: number | undefined): St
 
     async function fetchStreak() {
       try {
-        const res = await fetch(`${API_URL}/api/achievements`, {
+        const res = await apiFetch(`${API_URL}/api/achievements`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok || cancelled) return

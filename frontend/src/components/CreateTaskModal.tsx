@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { API_URL } from "@/lib/utils";
+import { API_URL, apiFetch } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -61,7 +61,7 @@ export default function TaskModal({
   // Fetch goals list when modal opens
   useEffect(() => {
     if (isOpen && token) {
-      fetch(`${API_URL}/api/goals`, {
+      apiFetch(`${API_URL}/api/goals`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -117,7 +117,7 @@ export default function TaskModal({
     try {
       if (isEditMode) {
         // Update existing task
-        const response = await fetch(`${API_URL}/api/tasks/${editTask.id}`, {
+        const response = await apiFetch(`${API_URL}/api/tasks/${editTask.id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -182,7 +182,7 @@ export default function TaskModal({
             }
         }
 
-        const response = await fetch(`${API_URL}/api/tasks`, {
+        const response = await apiFetch(`${API_URL}/api/tasks`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

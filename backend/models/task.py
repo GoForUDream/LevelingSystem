@@ -1,4 +1,4 @@
-from sqlalchemy import String, Text, Integer, Boolean, DateTime, Enum as SQLEnum
+from sqlalchemy import String, Text, Integer, Boolean, DateTime, Enum as SQLEnum, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from db.database import Base
@@ -34,9 +34,18 @@ class RecurrenceType(str, enum.Enum):
 
 class Task(Base):
     __tablename__ = "tasks"
+    __table_args__ = (
+        Index("ix_tasks_user_due", "user_id", "due_date"),
+        Index("ix_tasks_user_status", "user_id", "status"),
+        Index("ix_tasks_user_completed", "user_id", "completed_at"),
+        Index("ix_tasks_user_failed", "user_id", "failed_at"),
+        Index("ix_tasks_goal_id", "goal_id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -62,7 +71,9 @@ class Task(Base):
 
     category_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     project_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    goal_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    goal_id: Mapped[int | None] = mapped_column(
+        ForeignKey("goals.id", ondelete="SET NULL"), nullable=True
+    )
 
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

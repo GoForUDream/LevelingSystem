@@ -1,12 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from datetime import datetime
 from models.task import TaskStatus, TaskImportance, RecurrenceType
 
 
 class TaskCreate(BaseModel):
-    title: str
-    description: str | None = None
-    status: TaskStatus = TaskStatus.TODO
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=4000)
     importance: TaskImportance = TaskImportance.MEDIUM
     due_date: datetime | None = None
     category_id: int | None = None
@@ -15,14 +15,37 @@ class TaskCreate(BaseModel):
     is_recurring: bool = False
     recurrence_type: RecurrenceType | None = None
     recurrence_days: list[int] | None = None
-    recurrence_interval: int | None = None
+    recurrence_interval: int | None = Field(default=None, ge=1, le=365)
     recurrence_end_date: datetime | None = None
+
+    @model_validator(mode="after")
+    def validate_recurrence(self):
+        if not self.is_recurring:
+            return self
+        if self.recurrence_type is None:
+            raise ValueError("recurrence_type is required for recurring tasks")
+        if self.recurrence_type in {RecurrenceType.WEEKLY, RecurrenceType.MONTHLY}:
+            if not self.recurrence_days:
+                raise ValueError("recurrence_days is required for this recurrence type")
+        if self.recurrence_type == RecurrenceType.WEEKLY and any(
+            day < 0 or day > 6 for day in self.recurrence_days or []
+        ):
+            raise ValueError("weekly recurrence days must be between 0 and 6")
+        if self.recurrence_type == RecurrenceType.MONTHLY and any(
+            day not in {-1, *range(1, 32)} for day in self.recurrence_days or []
+        ):
+            raise ValueError("monthly recurrence days must be -1 or between 1 and 31")
+        if self.recurrence_type == RecurrenceType.CUSTOM and self.recurrence_interval is None:
+            raise ValueError("recurrence_interval is required for custom recurrence")
+        if self.recurrence_end_date and self.due_date and self.recurrence_end_date < self.due_date:
+            raise ValueError("recurrence_end_date cannot be before due_date")
+        return self
 
 
 class TaskUpdate(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    status: TaskStatus | None = None
+    model_config = ConfigDict(extra="forbid")
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=4000)
     importance: TaskImportance | None = None
     due_date: datetime | None = None
     category_id: int | None = None
@@ -31,10 +54,11 @@ class TaskUpdate(BaseModel):
     is_recurring: bool | None = None
     recurrence_type: RecurrenceType | None = None
     recurrence_days: list[int] | None = None
-    recurrence_interval: int | None = None
+    recurrence_interval: int | None = Field(default=None, ge=1, le=365)
 
 
 class TaskResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     title: str
@@ -63,6 +87,3 @@ class TaskResponse(BaseModel):
     recurrence_end_date: datetime | None
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True

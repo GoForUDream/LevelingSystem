@@ -1,53 +1,41 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from db.database import init_db
+from fastapi.responses import JSONResponse
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from db.database import check_database
 from resolvers.task_resolver import router as task_router
-from resolvers.user_resolver import router as user_router
 from resolvers.auth_resolver import router as auth_router
 from resolvers.goal_resolver import router as goal_router
 from resolvers.achievement_resolver import router as achievement_router
 from resolvers.stats_resolver import router as stats_router
-from jobs.overdue_checker import mark_overdue_tasks
-from config import FRONTEND_URL
+from middleware.rate_limit import AuthRateLimitMiddleware
+from config import ALLOWED_HOSTS, CORS_ORIGINS, IS_PRODUCTION, validate_config
 import logging
 
 logger = logging.getLogger(__name__)
 
-scheduler = AsyncIOScheduler()
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await init_db()
-
-    # Run overdue checker once on startup to catch any missed runs
-    await mark_overdue_tasks()
-    logger.info("Startup overdue check complete.")
-
-    # Run overdue checker every day at midnight UTC
-    scheduler.add_job(
-        mark_overdue_tasks,
-        trigger=CronTrigger(hour=0, minute=0),
-        id="overdue_checker",
-        replace_existing=True,
-    )
-    scheduler.start()
-    logger.info("Scheduler started — overdue checker registered for midnight UTC.")
-
+    validate_config()
+    await check_database()
     yield
 
-    scheduler.shutdown()
-    logger.info("Scheduler shut down.")
 
+app = FastAPI(
+    title="Leveling System API",
+    lifespan=lifespan,
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+    openapi_url=None if IS_PRODUCTION else "/openapi.json",
+)
 
-app = FastAPI(title="Leveling System API", lifespan=lifespan)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
+app.add_middleware(AuthRateLimitMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -55,7 +43,6 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(task_router)
-app.include_router(user_router)
 app.include_router(goal_router)
 app.include_router(achievement_router)
 app.include_router(stats_router)
@@ -64,3 +51,17 @@ app.include_router(stats_router)
 @app.get("/api/info")
 def get_info():
     return {"name": "Leveling System", "version": "1.0.0"}
+
+
+@app.get("/api/health/live", include_in_schema=False)
+def health_live():
+    return {"status": "ok"}
+
+
+@app.get("/api/health/ready", include_in_schema=False)
+async def health_ready():
+    try:
+        await check_database()
+        return {"status": "ready"}
+    except Exception:
+        return JSONResponse(status_code=503, content={"status": "unavailable"})

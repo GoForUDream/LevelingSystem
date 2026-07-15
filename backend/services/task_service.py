@@ -38,7 +38,7 @@ class TaskService:
             user_id=user_id,
             title=data.title,
             description=data.description,
-            status=data.status,
+            status=TaskStatus.TODO,
             importance=data.importance,
             exp_value=self._calculate_exp_value(data.importance),
             due_date=due_date,

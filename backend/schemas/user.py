@@ -1,17 +1,17 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 
 
 class UserCreate(BaseModel):
     email: str | None = None
-    name: str
-    avatar_url: str | None = None
+    name: str = Field(min_length=1, max_length=255)
+    avatar_url: str | None = Field(default=None, max_length=2048)
     google_id: str | None = None
 
 
 class UserUpdate(BaseModel):
-    name: str | None = None
-    avatar_url: str | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    avatar_url: str | None = Field(default=None, max_length=2048)
     is_active: bool | None = None
     language: str | None = None
 
@@ -27,6 +27,7 @@ class LevelProgress(BaseModel):
 
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     email: str | None
     name: str
@@ -40,8 +41,6 @@ class UserResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
 
 
 class UserWithProgress(UserResponse):

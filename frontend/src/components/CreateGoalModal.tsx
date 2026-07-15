@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { API_URL } from "@/lib/utils";
+import { API_URL, apiFetch } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -143,7 +143,7 @@ export default function CreateGoalModal({
         : `${API_URL}/api/goals`;
       const method = isEditMode ? "PATCH" : "POST";
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",

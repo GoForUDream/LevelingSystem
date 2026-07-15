@@ -1,27 +1,35 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from datetime import datetime
 from models.goal import GoalRank
 from schemas.task import TaskResponse
 
 
 class GoalCreate(BaseModel):
-    title: str
-    description: str | None = None
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=4000)
     rank: GoalRank = GoalRank.C
     start_date: datetime
     end_date: datetime
 
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.end_date < self.start_date:
+            raise ValueError("end_date cannot be before start_date")
+        return self
+
 
 class GoalUpdate(BaseModel):
-    title: str | None = None
-    description: str | None = None
+    model_config = ConfigDict(extra="forbid")
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=4000)
     rank: GoalRank | None = None
     start_date: datetime | None = None
     end_date: datetime | None = None
-    is_done: bool | None = None
 
 
 class GoalResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     title: str
@@ -32,7 +40,4 @@ class GoalResponse(BaseModel):
     is_done: bool
     created_at: datetime
     updated_at: datetime
-    tasks: list[TaskResponse] = []
-
-    class Config:
-        from_attributes = True
+    tasks: list[TaskResponse] = Field(default_factory=list)

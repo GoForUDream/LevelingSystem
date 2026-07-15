@@ -23,6 +23,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_guest: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     language: Mapped[str] = mapped_column(String(10), nullable=False, default="en")
+    session_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()

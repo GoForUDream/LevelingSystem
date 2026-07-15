@@ -24,6 +24,12 @@ async def mark_overdue_tasks():
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     async with async_session() as db:
+        lock_result = await db.execute(select(func.pg_try_advisory_xact_lock(73194201)))
+        if not lock_result.scalar():
+            logger.info("Overdue check skipped because another scheduler owns the lock.")
+            await db.rollback()
+            return
+
         # Find incomplete tasks whose due date has passed
         result = await db.execute(
             select(Task).where(
@@ -37,6 +43,7 @@ async def mark_overdue_tasks():
         if not overdue_tasks:
             logger.info("Overdue check: no overdue tasks found.")
             await check_perfect_days(db, today_start)
+            await db.commit()
             return
 
         logger.info(f"Overdue check: found {len(overdue_tasks)} overdue task(s).")
@@ -103,11 +110,10 @@ async def mark_overdue_tasks():
                 f"new total: {new_total_exp}, level: {new_level}"
             )
 
-        await db.commit()
-        logger.info("Overdue check: complete.")
-
         # Check perfect days: for each user, if ALL tasks due yesterday are COMPLETED
         await check_perfect_days(db, today_start)
+        await db.commit()
+        logger.info("Overdue check: complete.")
 
 
 async def check_perfect_days(db, today_start):
@@ -161,5 +167,3 @@ async def check_perfect_days(db, today_start):
                 f"User {user.id}: perfect day on {yesterday_date}! ({len(yesterday_tasks)} tasks all completed). "
                 f"New badges: {new_badges}"
             )
-
-    await db.commit()

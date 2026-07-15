@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { StatsData, Period } from '@/types/stats';
-import { API_URL } from '@/lib/utils';
+import { API_URL, apiFetch } from '@/lib/utils';
 
 interface UseStatsResult {
   stats: StatsData | null;
@@ -37,7 +37,7 @@ export function useStats(period: Period): UseStatsResult {
     const timezoneOffset = -new Date().getTimezoneOffset();
 
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_URL}/api/stats?period=${period}&timezone_offset=${timezoneOffset}`,
         {
           headers: { Authorization: `Bearer ${token}` },

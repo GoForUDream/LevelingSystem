@@ -33,8 +33,11 @@ class GoalService:
     async def get_all_goals(self, user_id: int) -> list[Goal]:
         return await self.repository.get_all(user_id)
 
-    async def get_tasks_for_goal(self, goal_id: int):
-        return await self.repository.get_tasks_for_goal(goal_id)
+    async def get_tasks_for_goal(self, goal_id: int, user_id: int):
+        return await self.repository.get_tasks_for_goal(goal_id, user_id)
+
+    async def get_tasks_for_goals(self, goal_ids: list[int], user_id: int):
+        return await self.repository.get_tasks_for_goals(goal_ids, user_id)
 
     async def update_goal(self, goal_id: int, data: GoalUpdate) -> Goal | None:
         update_data = data.model_dump(exclude_unset=True)

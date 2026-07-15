@@ -39,11 +39,18 @@ async def get_goals(
     service: GoalService = Depends(get_goal_service),
 ):
     goals = await service.get_all_goals(current_user.id)
+    tasks = await service.get_tasks_for_goals([goal.id for goal in goals], current_user.id)
+    tasks_by_goal: dict[int, list] = {}
+    for task in tasks:
+        if task.goal_id is not None:
+            tasks_by_goal.setdefault(task.goal_id, []).append(task)
     result = []
     for goal in goals:
-        tasks = await service.get_tasks_for_goal(goal.id)
         resp = GoalResponse.model_validate(goal, from_attributes=True)
-        resp.tasks = [TaskResponse.model_validate(t, from_attributes=True) for t in tasks]
+        resp.tasks = [
+            TaskResponse.model_validate(t, from_attributes=True)
+            for t in tasks_by_goal.get(goal.id, [])
+        ]
         result.append(resp)
     return result
 
@@ -57,7 +64,7 @@ async def get_goal(
     goal = await service.get_goal(goal_id)
     if not goal or goal.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Goal not found")
-    tasks = await service.get_tasks_for_goal(goal_id)
+    tasks = await service.get_tasks_for_goal(goal_id, current_user.id)
     resp = GoalResponse.model_validate(goal, from_attributes=True)
     resp.tasks = [TaskResponse.model_validate(t, from_attributes=True) for t in tasks]
     return resp
@@ -74,7 +81,7 @@ async def update_goal(
     if not goal or goal.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Goal not found")
     updated = await service.update_goal(goal_id, data)
-    tasks = await service.get_tasks_for_goal(goal_id)
+    tasks = await service.get_tasks_for_goal(goal_id, current_user.id)
     resp = GoalResponse.model_validate(updated, from_attributes=True)
     resp.tasks = [TaskResponse.model_validate(t, from_attributes=True) for t in tasks]
     return resp
@@ -110,6 +117,12 @@ async def toggle_goal(
     was_done = goal.is_done
 
     try:
+        if not was_done:
+            goal_tasks = await service.get_tasks_for_goal(goal_id, current_user.id)
+            if any(task.status.value != "COMPLETED" for task in goal_tasks):
+                raise HTTPException(
+                    status_code=400, detail="Complete all goal tasks first"
+                )
         updated = await service.toggle_done(goal_id)
         if updated is None:
             raise HTTPException(status_code=404, detail="Goal not found")
@@ -123,7 +136,7 @@ async def toggle_goal(
         await db.rollback()
         raise
 
-    tasks = await service.get_tasks_for_goal(goal_id)
+    tasks = await service.get_tasks_for_goal(goal_id, current_user.id)
     resp = GoalResponse.model_validate(updated, from_attributes=True)
     resp.tasks = [TaskResponse.model_validate(t, from_attributes=True) for t in tasks]
     resp_data = resp.model_dump()

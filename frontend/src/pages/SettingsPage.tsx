@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ChevronLeft, Globe, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
-import { API_URL } from '@/lib/utils'
+import { API_URL, apiFetch } from '@/lib/utils'
 import i18n from '@/i18n'
 
 const LANGUAGES = [
@@ -30,7 +30,7 @@ export default function SettingsPage() {
 
       // Persist to DB if logged in
       if (token) {
-        const res = await fetch(`${API_URL}/api/auth/settings`, {
+        const res = await apiFetch(`${API_URL}/api/auth/settings`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { API_URL } from "@/lib/utils";
+import { API_URL, apiFetch } from "@/lib/utils";
 import {
   ChevronLeft,
   Target,
@@ -105,7 +105,7 @@ export default function GoalsPage() {
   const fetchGoals = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/api/goals`, {
+      const res = await apiFetch(`${API_URL}/api/goals`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error();
@@ -136,7 +136,7 @@ export default function GoalsPage() {
       }
     }
     try {
-      const res = await fetch(`${API_URL}/api/goals/${goalId}/toggle`, {
+      const res = await apiFetch(`${API_URL}/api/goals/${goalId}/toggle`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -156,7 +156,7 @@ export default function GoalsPage() {
 
   const handleDelete = async (goalId: number) => {
     try {
-      const res = await fetch(`${API_URL}/api/goals/${goalId}`, {
+      const res = await apiFetch(`${API_URL}/api/goals/${goalId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

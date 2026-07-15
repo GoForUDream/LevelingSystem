@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   API_URL,
+  apiFetch,
   DAY_NAMES,
   type MonthKey,
   monthKeyStr,
@@ -164,7 +165,7 @@ export default function CalendarPage() {
 
     try {
       const { start, end } = getMonthDateRange(mk);
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/tasks/range?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -197,7 +198,7 @@ export default function CalendarPage() {
     const { start, end } = getMonthDateRange(mk);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/tasks/range?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -257,7 +258,7 @@ export default function CalendarPage() {
       const now = new Date();
       const localHour = now.getHours();
       const localDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
-      const response = await fetch(`${API_URL}/api/tasks/${taskId}/complete?local_hour=${localHour}&local_date=${localDate}`, {
+      const response = await apiFetch(`${API_URL}/api/tasks/${taskId}/complete?local_hour=${localHour}&local_date=${localDate}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -310,7 +311,7 @@ export default function CalendarPage() {
 
     setCancellingTaskId(taskId);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/tasks/${taskId}/cancel?skip_only=${skipOnly}`,
         {
           method: "POST",

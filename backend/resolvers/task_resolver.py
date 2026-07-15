@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db
 from repositories.task_repository import TaskRepository
 from repositories.user_repository import UserRepository
 from repositories.achievement_repository import AchievementRepository
+from repositories.goal_repository import GoalRepository
 from services.task_service import TaskService
 from services.user_service import UserService
 from services.achievement_service import AchievementService
@@ -11,9 +12,16 @@ from schemas.task import TaskCreate, TaskUpdate, TaskResponse
 from middleware.auth_middleware import get_current_user
 from models.user import User
 from models.task import TaskStatus
-from datetime import datetime
+from datetime import datetime, date
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
+
+
+async def ensure_goal_owned(db: AsyncSession, goal_id: int | None, user_id: int) -> None:
+    if goal_id is None:
+        return
+    if await GoalRepository(db).get_by_id_for_user(goal_id, user_id) is None:
+        raise HTTPException(status_code=400, detail="Invalid goal")
 
 
 def get_task_service(db: AsyncSession = Depends(get_db)) -> TaskService:
@@ -35,8 +43,10 @@ def get_achievement_service(db: AsyncSession = Depends(get_db)) -> AchievementSe
 async def create_task(
     data: TaskCreate,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
     service: TaskService = Depends(get_task_service),
 ):
+    await ensure_goal_owned(db, data.goal_id, current_user.id)
     task = await service.create_task(data, current_user.id)
     return task
 
@@ -57,6 +67,10 @@ async def get_tasks_by_range(
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ):
+    if end_date < start_date:
+        raise HTTPException(status_code=400, detail="end_date cannot be before start_date")
+    if (end_date - start_date).days > 400:
+        raise HTTPException(status_code=400, detail="Date range cannot exceed 400 days")
     tasks = await service.get_tasks_by_date_range(current_user.id, start_date, end_date)
     return tasks
 
@@ -78,11 +92,21 @@ async def update_task(
     task_id: int,
     data: TaskUpdate,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
     service: TaskService = Depends(get_task_service),
 ):
     task = await service.get_task(task_id)
     if not task or task.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Task not found")
+    if task.status in {
+        TaskStatus.COMPLETED,
+        TaskStatus.CANCELLED,
+        TaskStatus.FAILED,
+        TaskStatus.OVERDUE,
+    }:
+        raise HTTPException(status_code=400, detail="Terminal tasks cannot be edited")
+    if "goal_id" in data.model_fields_set:
+        await ensure_goal_owned(db, data.goal_id, current_user.id)
     updated = await service.update_task(task_id, data)
     return updated
 
@@ -96,6 +120,12 @@ async def start_task(
     task = await service.get_task(task_id)
     if not task or task.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Task not found")
+    if task.status not in {
+        TaskStatus.TODO,
+        TaskStatus.ON_HOLD,
+        TaskStatus.RESCHEDULED,
+    }:
+        raise HTTPException(status_code=400, detail="Task cannot be started from its current status")
     updated = await service.start_task(task_id)
     return updated
 
@@ -103,8 +133,8 @@ async def start_task(
 @router.post("/{task_id}/complete")
 async def complete_task(
     task_id: int,
-    local_hour: int | None = None,
-    local_date: str | None = None,
+    local_hour: int | None = Query(default=None, ge=0, le=23),
+    local_date: date | None = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -134,7 +164,11 @@ async def complete_task(
             raise HTTPException(status_code=400, detail="Task could not be completed")
         await user_service.add_exp(current_user.id, updated.exp_earned or 0)
         new_badges = await achievement_service.on_task_completed(
-            current_user.id, task.created_at, updated.completed_at, local_hour, local_date
+            current_user.id,
+            task.created_at,
+            updated.completed_at,
+            local_hour,
+            local_date.isoformat() if local_date else None,
         )
         await db.commit()
     except Exception:
@@ -234,6 +268,13 @@ async def reschedule_task(
     task = await service.get_task(task_id)
     if not task or task.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Task not found")
+    if task.status in {
+        TaskStatus.COMPLETED,
+        TaskStatus.CANCELLED,
+        TaskStatus.FAILED,
+        TaskStatus.OVERDUE,
+    }:
+        raise HTTPException(status_code=400, detail="Terminal tasks cannot be rescheduled")
     updated = await service.reschedule_task(task_id, new_due_date)
     if not updated:
         raise HTTPException(status_code=400, detail="Max reschedules reached")

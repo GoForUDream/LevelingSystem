@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, DateTime, Date, UniqueConstraint
+from sqlalchemy import Integer, String, DateTime, Date, UniqueConstraint, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from db.database import Base
@@ -9,7 +9,9 @@ class UserAchievementStats(Base):
     __tablename__ = "user_achievement_stats"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
 
     total_tasks_completed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total_goals_completed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -33,10 +35,13 @@ class UserAchievement(Base):
     __tablename__ = "user_achievements"
     __table_args__ = (
         UniqueConstraint("user_id", "badge_id", name="uq_user_badge"),
+        Index("ix_user_achievements_user", "user_id"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     badge_id: Mapped[str] = mapped_column(String(50), nullable=False)
     unlocked_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()

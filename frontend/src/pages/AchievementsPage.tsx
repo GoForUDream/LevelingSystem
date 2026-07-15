@@ -5,7 +5,7 @@ import { ChevronLeft, Lock, Trophy } from "lucide-react";
 import { ranks, categoryIcons, badgeProgress } from "@/constants/achievements";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { API_URL } from "@/lib/utils";
+import { API_URL, apiFetch } from "@/lib/utils";
 
 interface UnlockedBadge {
   badge_id: string;
@@ -74,7 +74,7 @@ export default function AchievementsPage() {
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${API_URL}/api/achievements`, {
+    apiFetch(`${API_URL}/api/achievements`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())

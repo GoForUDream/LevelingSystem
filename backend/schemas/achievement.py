@@ -1,8 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime, date
 
 
 class AchievementStatsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     total_tasks_completed: int
     total_goals_completed: int
     early_bird_count: int
@@ -14,16 +15,13 @@ class AchievementStatsResponse(BaseModel):
     last_active_date: date | None
     longest_inactive_days: int
 
-    class Config:
-        from_attributes = True
 
 
 class UnlockedBadgeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     badge_id: str
     unlocked_at: datetime
 
-    class Config:
-        from_attributes = True
 
 
 class AchievementsResponse(BaseModel):
