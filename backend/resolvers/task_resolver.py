@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db
 from repositories.task_repository import TaskRepository
@@ -8,13 +8,33 @@ from repositories.goal_repository import GoalRepository
 from services.task_service import TaskService
 from services.user_service import UserService
 from services.achievement_service import AchievementService
-from schemas.task import TaskCreate, TaskUpdate, TaskResponse
+from schemas.task import TaskCreate, TaskPageResponse, TaskUpdate, TaskResponse
+from pagination import decode_cursor, encode_cursor
 from middleware.auth_middleware import get_current_user
 from models.user import User
 from models.task import TaskStatus
-from datetime import datetime, date
+from datetime import date, datetime, timezone
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
+LEGACY_RESULT_LIMIT = 1000
+
+
+def _parse_task_cursor(cursor: str | None, date_key: str) -> tuple[datetime, int] | None:
+    if cursor is None:
+        return None
+    try:
+        payload = decode_cursor(cursor, {date_key, "id"})
+        parsed_date = datetime.fromisoformat(str(payload[date_key]))
+        if parsed_date.tzinfo is not None:
+            parsed_date = parsed_date.astimezone(timezone.utc).replace(tzinfo=None)
+        return parsed_date, int(payload["id"])
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid cursor") from exc
+
+
+def _set_legacy_headers(response: Response, replacement: str) -> None:
+    response.headers["Deprecation"] = "true"
+    response.headers["Link"] = f'<{replacement}>; rel="successor-version"'
 
 
 async def ensure_goal_owned(db: AsyncSession, goal_id: int | None, user_id: int) -> None:
@@ -51,27 +71,107 @@ async def create_task(
     return task
 
 
-@router.get("", response_model=list[TaskResponse])
+@router.get("", response_model=list[TaskResponse], deprecated=True)
 async def get_tasks(
+    response: Response,
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ):
-    tasks = await service.get_all_tasks(current_user.id)
+    _set_legacy_headers(response, "/api/tasks/page")
+    tasks = await service.get_all_tasks(current_user.id, LEGACY_RESULT_LIMIT + 1)
+    if len(tasks) > LEGACY_RESULT_LIMIT:
+        raise HTTPException(
+            status_code=413,
+            detail="Task collection is too large; use /api/tasks/page",
+            headers={"Link": '</api/tasks/page>; rel="successor-version"'},
+        )
     return tasks
 
 
-@router.get("/range", response_model=list[TaskResponse])
-async def get_tasks_by_range(
+@router.get("/page", response_model=TaskPageResponse)
+async def get_task_page(
+    limit: int = Query(default=100, ge=1, le=200),
+    cursor: str | None = None,
+    current_user: User = Depends(get_current_user),
+    service: TaskService = Depends(get_task_service),
+):
+    parsed_cursor = _parse_task_cursor(cursor, "created_at")
+    tasks = await service.get_task_page(current_user.id, limit, parsed_cursor)
+    has_more = len(tasks) > limit
+    items = tasks[:limit]
+    next_cursor = None
+    if has_more and items:
+        last = items[-1]
+        next_cursor = encode_cursor(
+            {"created_at": last.created_at.isoformat(), "id": last.id}
+        )
+    serialized_items = [
+        TaskResponse.model_validate(item, from_attributes=True) for item in items
+    ]
+    return TaskPageResponse(
+        items=serialized_items, next_cursor=next_cursor, has_more=has_more
+    )
+
+
+@router.get("/range/page", response_model=TaskPageResponse)
+async def get_tasks_by_range_page(
     start_date: datetime,
     end_date: datetime,
+    limit: int = Query(default=100, ge=1, le=200),
+    cursor: str | None = None,
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ):
     if end_date < start_date:
         raise HTTPException(status_code=400, detail="end_date cannot be before start_date")
+    if (end_date - start_date).total_seconds() > 32 * 24 * 60 * 60:
+        raise HTTPException(status_code=400, detail="Date range cannot exceed 32 days")
+    parsed_cursor = _parse_task_cursor(cursor, "due_date")
+    tasks = await service.get_tasks_by_date_range(
+        current_user.id, start_date, end_date, limit, parsed_cursor
+    )
+    has_more = len(tasks) > limit
+    items = tasks[:limit]
+    next_cursor = None
+    if has_more and items:
+        last = items[-1]
+        if last.due_date is None:
+            raise HTTPException(
+                status_code=500, detail="Task range returned an invalid cursor row"
+            )
+        next_cursor = encode_cursor(
+            {"due_date": last.due_date.isoformat(), "id": last.id}
+        )
+    serialized_items = [
+        TaskResponse.model_validate(item, from_attributes=True) for item in items
+    ]
+    return TaskPageResponse(
+        items=serialized_items, next_cursor=next_cursor, has_more=has_more
+    )
+
+
+@router.get("/range", response_model=list[TaskResponse], deprecated=True)
+async def get_tasks_by_range(
+    response: Response,
+    start_date: datetime,
+    end_date: datetime,
+    current_user: User = Depends(get_current_user),
+    service: TaskService = Depends(get_task_service),
+):
+    _set_legacy_headers(response, "/api/tasks/range/page")
+    if end_date < start_date:
+        raise HTTPException(status_code=400, detail="end_date cannot be before start_date")
     if (end_date - start_date).days > 400:
         raise HTTPException(status_code=400, detail="Date range cannot exceed 400 days")
-    tasks = await service.get_tasks_by_date_range(current_user.id, start_date, end_date)
+    tasks = await service.get_tasks_by_date_range(
+        current_user.id, start_date, end_date, LEGACY_RESULT_LIMIT
+    )
+    if len(tasks) > LEGACY_RESULT_LIMIT:
+        raise HTTPException(
+            status_code=413,
+            detail="Task range is too large; use /api/tasks/range/page",
+            headers={"Link": '</api/tasks/range/page>; rel="successor-version"'},
+        )
     return tasks
 
 

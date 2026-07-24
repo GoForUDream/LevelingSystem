@@ -2,6 +2,8 @@
 
 An RPG-inspired productivity app for planning tasks and goals, earning EXP, leveling up, tracking streaks, and unlocking achievement badges.
 
+Task and goal timelines use bounded cursor pagination and virtualized calendar rendering so long-running accounts do not load their complete history into the browser.
+
 ## Stack
 
 - React, TypeScript, Vite, and Tailwind CSS

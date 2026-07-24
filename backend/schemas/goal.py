@@ -41,3 +41,38 @@ class GoalResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     tasks: list[TaskResponse] = Field(default_factory=list)
+
+
+class GoalSummaryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    title: str
+    description: str | None
+    rank: GoalRank
+    start_date: datetime
+    end_date: datetime
+    is_done: bool
+    created_at: datetime
+    updated_at: datetime
+    total_task_count: int
+    completed_task_count: int
+    incomplete_task_count: int
+
+
+class GoalPageResponse(BaseModel):
+    items: list[GoalSummaryResponse]
+    next_cursor: str | None = None
+    has_more: bool = False
+
+
+class GoalMilestoneResponse(BaseModel):
+    title: str
+    total_count: int
+    completed_count: int
+
+
+class GoalMilestonePageResponse(BaseModel):
+    items: list[GoalMilestoneResponse]
+    next_cursor: str | None = None
+    has_more: bool = False

@@ -16,7 +16,7 @@ class GoalRank(str, enum.Enum):
 
 class Goal(Base):
     __tablename__ = "goals"
-    __table_args__ = (Index("ix_goals_user_created", "user_id", "created_at"),)
+    __table_args__ = (Index("ix_goals_user_created_id", "user_id", "created_at", "id"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(

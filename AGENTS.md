@@ -30,6 +30,7 @@ Swagger is available at `http://localhost:8000/docs` in development and disabled
 
 ```powershell
 cd frontend
+npm run test
 npm run check
 npm run build
 npm audit --omit=dev
@@ -52,10 +53,14 @@ All datetimes are stored as naive UTC. Use `utc_now()` and `to_naive_utc()` from
 
 Frontend API calls use `apiFetch` or explicitly set `credentials: "include"`. The production browser/API setup must remain same-origin unless a complete cross-origin cookie and CSRF design is introduced.
 
+Calendar task reads use `/api/tasks/range/page`, a three-month rolling cache, and TanStack Virtual. General task and goal reads must use cursor-paginated endpoints. The legacy list endpoints are deprecated compatibility surfaces and reject collections above 1,000 records.
+
+Frontend pages should remain composition-focused. Put HTTP calls in `src/api`, reusable stateful behavior in `src/hooks`, shared domain types in `src/types`, and pure calculations in `src/lib` or `src/constants`.
+
 ## Change Rules
 
 - Add schema changes through Alembic; do not add startup `ALTER TABLE` statements.
 - Keep the backend, scheduler, and achievement updates transactionally consistent.
-- Run backend tests, `npm run check`, the production build, and production dependency audit before handoff.
+- Run backend tests, frontend tests, `npm run check`, the production build, and production dependency audit before handoff.
 - Update this file whenever commands or architecture change.
 - Record material production changes in `docs/change-logs/<timestamp>.md` with what changed, why, and verification results.

@@ -87,3 +87,9 @@ class TaskResponse(BaseModel):
     recurrence_end_date: datetime | None
     created_at: datetime
     updated_at: datetime
+
+
+class TaskPageResponse(BaseModel):
+    items: list[TaskResponse]
+    next_cursor: str | None = None
+    has_more: bool = False

@@ -35,11 +35,12 @@ class RecurrenceType(str, enum.Enum):
 class Task(Base):
     __tablename__ = "tasks"
     __table_args__ = (
-        Index("ix_tasks_user_due", "user_id", "due_date"),
+        Index("ix_tasks_user_due_id", "user_id", "due_date", "id"),
+        Index("ix_tasks_user_created_id", "user_id", "created_at", "id"),
         Index("ix_tasks_user_status", "user_id", "status"),
         Index("ix_tasks_user_completed", "user_id", "completed_at"),
         Index("ix_tasks_user_failed", "user_id", "failed_at"),
-        Index("ix_tasks_goal_id", "goal_id"),
+        Index("ix_tasks_goal_status_created_id", "goal_id", "status", "created_at", "id"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

@@ -57,13 +57,30 @@ class TaskService:
     async def get_task(self, task_id: int) -> Task | None:
         return await self.repository.get_by_id(task_id)
 
-    async def get_all_tasks(self, user_id: int | None = None) -> list[Task]:
-        return await self.repository.get_all(user_id)
+    async def get_all_tasks(
+        self, user_id: int | None = None, limit: int | None = None
+    ) -> list[Task]:
+        return await self.repository.get_all(user_id, limit)
+
+    async def get_task_page(
+        self,
+        user_id: int,
+        limit: int,
+        cursor: tuple[datetime, int] | None = None,
+    ) -> list[Task]:
+        return await self.repository.get_page(user_id, limit, cursor)
 
     async def get_tasks_by_date_range(
-        self, user_id: int, start_date: datetime, end_date: datetime
+        self,
+        user_id: int,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int | None = None,
+        cursor: tuple[datetime, int] | None = None,
     ) -> list[Task]:
-        return await self.repository.get_by_date_range(user_id, start_date, end_date)
+        return await self.repository.get_by_date_range(
+            user_id, start_date, end_date, limit, cursor
+        )
 
     async def update_task(self, task_id: int, data: TaskUpdate) -> Task | None:
         update_data = data.model_dump(exclude_unset=True)
