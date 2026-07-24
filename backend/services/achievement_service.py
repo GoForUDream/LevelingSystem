@@ -1,4 +1,4 @@
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timedelta
 from repositories.achievement_repository import AchievementRepository
 from constants.achievements import ACHIEVEMENT_THRESHOLDS, CATEGORY_TO_STAT_FIELD
 import logging
@@ -12,16 +12,16 @@ class AchievementService:
 
     async def on_task_completed(
         self, user_id: int, created_at: datetime, completed_at: datetime,
-        local_hour: int | None = None, local_date_str: str | None = None
+        timezone_offset: int = 0,
     ) -> list[str]:
-        stats = await self.repository.get_or_create_stats(user_id)
+        stats = await self.repository.get_or_create_stats(user_id, for_update=True)
 
         updates: dict = {
             "total_tasks_completed": stats.total_tasks_completed + 1,
         }
 
-        # Use local_hour if provided, otherwise fall back to UTC hour
-        hour = local_hour if local_hour is not None else completed_at.hour
+        local_completed = completed_at + timedelta(minutes=timezone_offset)
+        hour = local_completed.hour
 
         # Early bird: completed before 7 AM local time
         if hour < 7:
@@ -37,14 +37,10 @@ class AchievementService:
             c = created_at.replace(tzinfo=None) if created_at.tzinfo else created_at
             f = completed_at.replace(tzinfo=None) if completed_at.tzinfo else completed_at
             delta = (f - c).total_seconds()
-            if delta <= 1800:  # 30 minutes
+            if 0 <= delta <= 1800:  # 30 minutes
                 updates["instant_completions"] = stats.instant_completions + 1
 
-        # Streak logic - use local date if provided, otherwise fall back to UTC
-        if local_date_str:
-            today = date.fromisoformat(local_date_str)
-        else:
-            today = datetime.now(timezone.utc).date()
+        today = local_completed.date()
 
         current_streak = stats.current_streak
         longest_streak = stats.longest_streak
@@ -56,7 +52,7 @@ class AchievementService:
         elif stats.last_active_date == today:
             # Same day, no streak change
             pass
-        elif stats.last_active_date == today.fromordinal(today.toordinal() - 1):
+        elif stats.last_active_date == today - timedelta(days=1):
             # Yesterday — extend streak
             current_streak += 1
         else:
@@ -75,18 +71,25 @@ class AchievementService:
         updates["last_active_date"] = today
 
         updated_stats = await self.repository.update_stats(user_id, updates)
-        return await self._check_and_unlock(user_id, updated_stats)
+        categories = {"Tasks", "Streak", "Comeback"}
+        if "early_bird_count" in updates:
+            categories.add("Early Bird")
+        if "night_owl_count" in updates:
+            categories.add("Night Owl")
+        if "instant_completions" in updates:
+            categories.add("Speed")
+        return await self._check_and_unlock(user_id, updated_stats, categories)
 
     async def on_goal_completed(self, user_id: int) -> list[str]:
-        stats = await self.repository.get_or_create_stats(user_id)
+        stats = await self.repository.get_or_create_stats(user_id, for_update=True)
         updates = {
             "total_goals_completed": stats.total_goals_completed + 1,
         }
         updated_stats = await self.repository.update_stats(user_id, updates)
-        return await self._check_and_unlock(user_id, updated_stats)
+        return await self._check_and_unlock(user_id, updated_stats, {"Goals"})
 
     async def on_goal_uncompleted(self, user_id: int) -> None:
-        stats = await self.repository.get_or_create_stats(user_id)
+        stats = await self.repository.get_or_create_stats(user_id, for_update=True)
         new_count = max(0, stats.total_goals_completed - 1)
         await self.repository.update_stats(
             user_id, {"total_goals_completed": new_count}
@@ -97,7 +100,7 @@ class AchievementService:
         Record a perfect day for the user.
         Only increments if this date hasn't already been counted.
         """
-        stats = await self.repository.get_or_create_stats(user_id)
+        stats = await self.repository.get_or_create_stats(user_id, for_update=True)
 
         # Check if we already counted this date
         if stats.last_perfect_day_date == perfect_date:
@@ -109,9 +112,18 @@ class AchievementService:
             "last_perfect_day_date": perfect_date,
         }
         updated_stats = await self.repository.update_stats(user_id, updates)
-        return await self._check_and_unlock(user_id, updated_stats)
+        return await self._check_and_unlock(
+            user_id,
+            updated_stats,
+            {"Perfect Day"},
+        )
 
-    async def _check_and_unlock(self, user_id: int, stats) -> list[str]:
+    async def _check_and_unlock(
+        self,
+        user_id: int,
+        stats,
+        categories: set[str] | None = None,
+    ) -> list[str]:
         already_unlocked = await self.repository.get_unlocked_badge_ids(user_id)
         newly_unlocked: list[str] = []
 
@@ -127,6 +139,8 @@ class AchievementService:
         }
 
         for category, badges in ACHIEVEMENT_THRESHOLDS.items():
+            if categories is not None and category not in categories:
+                continue
             stat_field = CATEGORY_TO_STAT_FIELD[category]
             current_value = stat_values[stat_field]
 

@@ -9,6 +9,7 @@ import {
 import { badgeIdToName } from "@/constants/achievements"
 import { useAuth } from "@/contexts/AuthContext"
 import type { GoalSummary } from "@/types/goal"
+import { invalidateProgressQueries } from "@/lib/queryClient"
 
 export function useGoalsController() {
   const { token } = useAuth()
@@ -57,7 +58,7 @@ export function useGoalsController() {
     }
     try {
       const result = await toggleGoalRequest(token, goalId)
-      await fetchGoals()
+      await Promise.all([fetchGoals(), invalidateProgressQueries()])
       result.new_badges?.forEach((badgeId) => {
         toast.success(t("goals.badgeUnlocked", {
           name: badgeIdToName[badgeId] || badgeId,

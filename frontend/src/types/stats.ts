@@ -1,19 +1,24 @@
-// Shared stats types - single source of truth
-
-export interface DailyTaskStats {
+export interface TimelinePoint {
   date: string;
   completed: number;
+  failed: number;
   overdue: number;
   cancelled: number;
-  exp_earned: number;
+  net_exp: number;
 }
 
-export interface CompletionBreakdown {
+export interface OutcomeBreakdown {
   completed: number;
+  failed: number;
   overdue: number;
   cancelled: number;
-  in_progress: number;
+}
+
+export interface PendingSnapshot {
   todo: number;
+  in_progress: number;
+  on_hold: number;
+  rescheduled: number;
 }
 
 export interface TimeOfDayDistribution {
@@ -37,7 +42,7 @@ export interface ComparisonMetric {
 export interface PeriodComparison {
   period_label: string;
   tasks_completed: ComparisonMetric;
-  exp_earned: ComparisonMetric;
+  net_exp: ComparisonMetric;
   completion_rate: ComparisonMetric;
   average_daily_tasks: ComparisonMetric;
 }
@@ -45,12 +50,14 @@ export interface PeriodComparison {
 export interface StatsData {
   account_created_at: string;
   account_age_days: number;
-  daily_tasks: DailyTaskStats[];
-  completion_breakdown: CompletionBreakdown;
+  timeline_granularity: 'day' | 'month';
+  timeline: TimelinePoint[];
+  outcome_breakdown: OutcomeBreakdown;
+  pending_snapshot: PendingSnapshot;
   activity_heatmap: HeatmapDay[];
   time_of_day: TimeOfDayDistribution[];
   total_tasks_completed: number;
-  total_exp_earned: number;
+  net_exp_change: number;
   completion_rate: number;
   average_tasks_per_day: number;
   most_productive_hour: number | null;

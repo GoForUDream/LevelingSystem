@@ -9,13 +9,14 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { chartColors, tooltipStyle, axisStyle, gridStyle } from './ChartTheme';
-import type { DailyTaskStats } from '@/types/stats';
+import type { TimelinePoint } from '@/types/stats';
 
 interface ExpProgressChartProps {
-  data: DailyTaskStats[];
+  data: TimelinePoint[];
+  granularity: 'day' | 'month';
 }
 
-function ExpProgressChart({ data }: ExpProgressChartProps) {
+function ExpProgressChart({ data, granularity }: ExpProgressChartProps) {
   const { chartData, tickInterval } = useMemo(() => {
     const formatted = data.reduce<
       Array<{
@@ -27,11 +28,11 @@ function ExpProgressChart({ data }: ExpProgressChartProps) {
       const prevCumulative = i > 0 ? acc[i - 1].cumulativeExp : 0;
       acc.push({
         date: d.date,
-        displayDate: new Date(d.date).toLocaleDateString('en-US', {
+        displayDate: new Date(`${d.date}T00:00:00`).toLocaleDateString('en-US', {
           month: 'short',
-          day: 'numeric',
+          ...(granularity === 'day' ? { day: 'numeric' as const } : {}),
         }),
-        cumulativeExp: prevCumulative + d.exp_earned,
+        cumulativeExp: prevCumulative + d.net_exp,
       });
       return acc;
     }, []);
@@ -40,7 +41,7 @@ function ExpProgressChart({ data }: ExpProgressChartProps) {
       chartData: formatted,
       tickInterval: Math.ceil(formatted.length / 10),
     };
-  }, [data]);
+  }, [data, granularity]);
 
   return (
     <div
@@ -48,7 +49,7 @@ function ExpProgressChart({ data }: ExpProgressChartProps) {
       style={{ '--led-color': '#7B2CBF' } as React.CSSProperties}
     >
       <h3 className="text-sm font-bold uppercase tracking-wider text-sl-purple mb-4">
-        EXP Progress
+        Net EXP Progress
       </h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
@@ -76,8 +77,8 @@ function ExpProgressChart({ data }: ExpProgressChartProps) {
             />
             <Tooltip
               {...tooltipStyle}
-              formatter={(value) => [Number(value).toLocaleString(), 'Total EXP']}
-              labelFormatter={(label) => `Date: ${label}`}
+              formatter={(value) => [Number(value).toLocaleString(), 'Net EXP']}
+              labelFormatter={(label) => `Period: ${label}`}
             />
             <Area
               type="monotone"
@@ -85,6 +86,7 @@ function ExpProgressChart({ data }: ExpProgressChartProps) {
               stroke={chartColors.secondary}
               strokeWidth={2}
               fill="url(#expGradient)"
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>

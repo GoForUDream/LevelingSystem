@@ -15,6 +15,7 @@ import { TaskPresetCombobox } from "@/components/TaskPresetCombobox";
 import { RANK_THEME, RANK_THEME_BY_LETTER } from "@/constants/rankTheme";
 import { TaskImportance } from "@/types/task";
 import type { Task } from "@/components/TaskCard";
+import { invalidateProgressQueries } from "@/lib/queryClient";
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -153,6 +154,7 @@ export default function TaskModal({
           throw new Error("Failed to update task");
         }
 
+        await invalidateProgressQueries();
         onTaskSaved();
         onClose();
         toast.success(t('tasks.questUpdated'));
@@ -199,6 +201,7 @@ export default function TaskModal({
         setTitle("");
         setDescription("");
         setImportance("MEDIUM");
+        await invalidateProgressQueries();
         onTaskSaved();
         onClose();
 

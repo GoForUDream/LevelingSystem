@@ -29,6 +29,7 @@ import {
   localDateKey,
 } from "@/lib/calendarData"
 import { addMonths, monthKeyStr, type MonthKey } from "@/lib/utils"
+import { invalidateProgressQueries } from "@/lib/queryClient"
 
 export function useCalendarController() {
   const { token, refreshUser, user } = useAuth()
@@ -280,7 +281,7 @@ export function useCalendarController() {
     setCompletingTaskId(taskId)
     try {
       const data = await completeTaskRequest(token, taskId)
-      await Promise.all([refreshTasks(), refreshUser()])
+      await Promise.all([refreshTasks(), refreshUser(), invalidateProgressQueries()])
       toast.success(t("tasks.completed"), {
         description: t("tasks.completedDesc", { exp: expValue }),
       })
@@ -305,7 +306,7 @@ export function useCalendarController() {
     setCancellingTaskId(taskId)
     try {
       await cancelTaskRequest(token, taskId, skipOnly)
-      await Promise.all([refreshTasks(), refreshUser()])
+      await Promise.all([refreshTasks(), refreshUser(), invalidateProgressQueries()])
       setCancelModalTask(null)
       const penalty = Math.floor(task.exp_value / 5)
       toast.error(skipOnly ? t("tasks.questSkipped") : t("tasks.questCancelled"), {

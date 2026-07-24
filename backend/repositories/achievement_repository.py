@@ -16,17 +16,25 @@ class AchievementRepository:
         else:
             await self.db.flush()
 
-    async def get_or_create_stats(self, user_id: int) -> UserAchievementStats:
-        result = await self.db.execute(
-            select(UserAchievementStats).where(UserAchievementStats.user_id == user_id)
+    async def get_or_create_stats(
+        self,
+        user_id: int,
+        *,
+        for_update: bool = False,
+    ) -> UserAchievementStats:
+        await self.db.execute(
+            insert(UserAchievementStats)
+            .values(user_id=user_id)
+            .on_conflict_do_nothing(index_elements=["user_id"])
         )
-        stats = result.scalar_one_or_none()
-        if stats is None:
-            stats = UserAchievementStats(user_id=user_id)
-            self.db.add(stats)
-            await self._finish_write()
-            await self.db.refresh(stats)
-        return stats
+        await self._finish_write()
+        query = select(UserAchievementStats).where(
+            UserAchievementStats.user_id == user_id
+        )
+        if for_update:
+            query = query.with_for_update()
+        result = await self.db.execute(query)
+        return result.scalar_one()
 
     async def update_stats(self, user_id: int, data: dict) -> UserAchievementStats:
         data["updated_at"] = func.now()

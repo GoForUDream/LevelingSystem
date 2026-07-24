@@ -82,7 +82,12 @@ function TimeOfDayChart({ data, mostProductiveHour }: TimeOfDayChartProps) {
               formatter={(value) => [value as number, 'Tasks']}
               labelFormatter={(label) => `Time: ${label}`}
             />
-            <Bar dataKey="count" radius={[2, 2, 0, 0]} maxBarSize={20}>
+            <Bar
+              dataKey="count"
+              radius={[2, 2, 0, 0]}
+              maxBarSize={20}
+              isAnimationActive={false}
+            >
               {chartData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}

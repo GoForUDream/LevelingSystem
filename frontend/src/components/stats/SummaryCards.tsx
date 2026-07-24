@@ -3,7 +3,7 @@ import { CheckCircle, Zap, Target, Flame } from 'lucide-react';
 
 interface SummaryCardsProps {
   totalTasksCompleted: number;
-  totalExpEarned: number;
+  netExpChange: number;
   completionRate: number;
   currentStreak: number;
   longestStreak: number;
@@ -11,7 +11,7 @@ interface SummaryCardsProps {
 
 function SummaryCards({
   totalTasksCompleted,
-  totalExpEarned,
+  netExpChange,
   completionRate,
   currentStreak,
   longestStreak,
@@ -27,8 +27,8 @@ function SummaryCards({
         ledColor: '#00A3FF',
       },
       {
-        label: 'Total EXP',
-        value: totalExpEarned.toLocaleString(),
+        label: 'Net EXP',
+        value: netExpChange.toLocaleString(),
         icon: Zap,
         color: 'text-sl-purple',
         borderColor: 'border-sl-purple/30',
@@ -56,7 +56,7 @@ function SummaryCards({
         ledColor: currentStreak >= longestStreak && longestStreak > 0 ? '#E63946' : '#FF6B00',
       },
     ],
-    [totalTasksCompleted, totalExpEarned, completionRate, currentStreak, longestStreak]
+    [totalTasksCompleted, netExpChange, completionRate, currentStreak, longestStreak]
   );
 
   return (

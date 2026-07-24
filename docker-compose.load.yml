@@ -1,0 +1,92 @@
+name: leveling-system-load
+
+services:
+  load-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: load
+      POSTGRES_PASSWORD: load-only-password
+      POSTGRES_DB: leveling_load
+    volumes:
+      - leveling_load_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U load -d leveling_load"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  load-backend:
+    build:
+      context: ./backend
+    ports:
+      - "18000:8000"
+    command:
+      - sh
+      - -c
+      - alembic upgrade head && exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+    environment: &load-environment
+      DATABASE_URL: postgresql+asyncpg://load:load-only-password@load-db:5432/leveling_load
+      ENVIRONMENT: development
+      JWT_SECRET: load-test-secret-that-is-never-used-outside-this-stack
+      ALLOW_GUEST_LOGIN: "false"
+      ALLOWED_HOSTS: localhost,127.0.0.1,load-backend
+      DATABASE_POOL_SIZE: "5"
+      DATABASE_MAX_OVERFLOW: "5"
+      DATABASE_POOL_TIMEOUT: "10"
+    depends_on:
+      load-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/ready')"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  load-scheduler:
+    build:
+      context: ./backend
+    command: ["python", "-m", "jobs.scheduler_runner"]
+    environment:
+      <<: *load-environment
+      DATABASE_POOL_SIZE: "2"
+      DATABASE_MAX_OVERFLOW: "0"
+    depends_on:
+      load-backend:
+        condition: service_healthy
+
+  seed:
+    build:
+      context: ./backend
+    profiles: ["tools"]
+    command: ["python", "/load-tests/seed.py"]
+    environment:
+      <<: *load-environment
+      SEED_PROFILE: ${SEED_PROFILE:-smoke}
+      TOKEN_OUTPUT: /data/tokens.json
+      HEAVY_TASK_COUNT: ${HEAVY_TASK_COUNT:-5000000}
+    volumes:
+      - ./load-tests:/load-tests:ro
+      - ./load-tests/results:/data
+    depends_on:
+      load-backend:
+        condition: service_healthy
+
+  k6:
+    image: grafana/k6:latest
+    profiles: ["tools"]
+    environment:
+      BASE_URL: http://load-backend:8000
+      TEST_SCENARIO: ${TEST_SCENARIO:-stats}
+    volumes:
+      - ./load-tests:/scripts:ro
+      - ./load-tests/results:/data
+    command:
+      - run
+      - --summary-export=/data/summary.json
+      - /scripts/scenarios.js
+    depends_on:
+      load-backend:
+        condition: service_healthy
+
+volumes:
+  leveling_load_data:

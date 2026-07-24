@@ -1,4 +1,4 @@
-from sqlalchemy import String, Text, Integer, Boolean, DateTime, Enum as SQLEnum, ForeignKey, Index
+from sqlalchemy import String, Text, Integer, Boolean, DateTime, Enum as SQLEnum, ForeignKey, Index, text
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from db.database import Base
@@ -38,8 +38,32 @@ class Task(Base):
         Index("ix_tasks_user_due_id", "user_id", "due_date", "id"),
         Index("ix_tasks_user_created_id", "user_id", "created_at", "id"),
         Index("ix_tasks_user_status", "user_id", "status"),
-        Index("ix_tasks_user_completed", "user_id", "completed_at"),
-        Index("ix_tasks_user_failed", "user_id", "failed_at"),
+        Index(
+            "ix_tasks_stats_completed",
+            "user_id",
+            "completed_at",
+            postgresql_where=text("status = 'COMPLETED'"),
+        ),
+        Index(
+            "ix_tasks_stats_failed",
+            "user_id",
+            "failed_at",
+            postgresql_where=text("status IN ('FAILED', 'OVERDUE')"),
+        ),
+        Index(
+            "ix_tasks_stats_cancelled",
+            "user_id",
+            "cancelled_at",
+            postgresql_where=text("status = 'CANCELLED'"),
+        ),
+        Index(
+            "ix_tasks_overdue_claim",
+            "due_date",
+            "id",
+            postgresql_where=text(
+                "status IN ('TODO', 'IN_PROGRESS') AND is_exp_processed = FALSE"
+            ),
+        ),
         Index("ix_tasks_goal_status_created_id", "goal_id", "status", "created_at", "id"),
     )
 
@@ -79,6 +103,7 @@ class Task(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     failed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     is_recurring: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     recurrence_type: Mapped[str | None] = mapped_column(

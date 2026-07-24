@@ -3,7 +3,12 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import DeclarativeBase
 import os
 from dotenv import load_dotenv
-from config import DATABASE_ECHO
+from config import (
+    DATABASE_ECHO,
+    DATABASE_MAX_OVERFLOW,
+    DATABASE_POOL_SIZE,
+    DATABASE_POOL_TIMEOUT,
+)
 
 load_dotenv()
 
@@ -15,9 +20,9 @@ engine = create_async_engine(
     DATABASE_URL,
     echo=DATABASE_ECHO,
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
-    pool_timeout=30,
+    pool_size=DATABASE_POOL_SIZE,
+    max_overflow=DATABASE_MAX_OVERFLOW,
+    pool_timeout=DATABASE_POOL_TIMEOUT,
 )
 
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

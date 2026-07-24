@@ -2,7 +2,7 @@
 
 An RPG-inspired productivity app for planning tasks and goals, earning EXP, leveling up, tracking streaks, and unlocking achievement badges.
 
-Task and goal timelines use bounded cursor pagination and virtualized calendar rendering so long-running accounts do not load their complete history into the browser.
+Task and goal timelines use bounded cursor pagination and virtualized calendar rendering. Stats use bounded timelines, local-calendar timezone semantics, and cached client queries.
 
 ## Stack
 
@@ -47,7 +47,34 @@ docker compose --env-file .env.docker up -d --no-build
 docker compose --env-file .env.docker down
 ```
 
-Database migrations run automatically before the API starts. The dedicated scheduler performs an overdue catch-up on startup and then runs at midnight UTC.
+Database migrations run automatically before the API starts. The dedicated scheduler catches up on startup, checks overdue tasks every minute, and persists job health:
+
+```powershell
+Invoke-RestMethod http://localhost:5173/api/health/scheduler
+```
+
+## Load Testing
+
+Load tests use an isolated Compose project and database volume. Results are written to the ignored `load-tests/results` directory.
+
+```powershell
+# 100 users / 20,000 tasks, then 100 RPS Stats for five minutes
+.\load-tests\run.ps1 seed smoke
+.\load-tests\run.ps1 warm
+
+# 10,000 users / 2,000,000 tasks and scheduler/concurrency checks
+.\load-tests\run.ps1 seed capacity
+.\load-tests\run.ps1 scheduler
+.\load-tests\run.ps1 achievements
+
+# Other traffic profiles and cleanup
+.\load-tests\run.ps1 mixed
+.\load-tests\run.ps1 write
+.\load-tests\run.ps1 spike
+.\load-tests\run.ps1 cleanup
+```
+
+Local k6 results are a regression signal, not proof of cloud capacity.
 
 ## Production
 

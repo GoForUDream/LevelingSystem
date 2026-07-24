@@ -17,7 +17,7 @@ function getIntensityColor(intensity: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
+  const date = new Date(`${dateStr}T00:00:00`);
   return date.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
@@ -34,7 +34,7 @@ function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     let currentWeek: HeatmapDay[] = [];
 
     if (data.length > 0) {
-      const firstDate = new Date(data[0].date);
+      const firstDate = new Date(`${data[0].date}T00:00:00`);
       const dayOfWeek = firstDate.getDay();
 
       // Add empty days to align to Sunday
@@ -63,7 +63,7 @@ function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     weeksArr.forEach((week, weekIndex) => {
       for (const day of week) {
         if (day.date) {
-          const date = new Date(day.date);
+          const date = new Date(`${day.date}T00:00:00`);
           const month = date.getMonth();
           if (month !== lastMonth) {
             months.push({

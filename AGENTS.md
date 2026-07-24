@@ -15,6 +15,8 @@ docker compose --env-file .env.docker down
 
 The stack contains `db`, `backend`, `scheduler`, and `frontend`. Alembic migrations run before the backend starts. The scheduler is a separate process and must not be started inside a web worker.
 
+Scheduler state is available from `GET /api/health/scheduler`. Overdue work runs every minute in committed batches of 500; perfect-day work runs hourly.
+
 ### Backend
 
 ```powershell
@@ -37,6 +39,19 @@ npm audit --omit=dev
 npm run dev
 ```
 
+### Capacity checks
+
+```powershell
+.\load-tests\run.ps1 seed smoke
+.\load-tests\run.ps1 warm
+.\load-tests\run.ps1 seed capacity
+.\load-tests\run.ps1 scheduler
+.\load-tests\run.ps1 achievements
+.\load-tests\run.ps1 cleanup
+```
+
+`docker-compose.load.yml` uses the isolated `leveling-system-load` Compose project and never uses `postgres_data`. The 100 RPS profile runs four API workers with bounded per-worker pools. Keep generated tokens and summaries under ignored `load-tests/results`.
+
 ## Architecture
 
 Backend domains follow `resolvers -> services -> repositories -> models`. Keep HTTP concerns in resolvers, business rules in services, and SQL in repositories.
@@ -44,6 +59,7 @@ Backend domains follow `resolvers -> services -> repositories -> models`. Keep H
 - `db/migrations`: Alembic schema history
 - `jobs/scheduler_runner.py`: dedicated APScheduler process
 - `jobs/overdue_checker.py`: idempotent, database-locked overdue processing
+- `models/scheduler.py`: persisted job heartbeat and failure state
 - `middleware/auth_middleware.py`: HTTP-only cookie and mobile bearer authentication
 - `middleware/rate_limit.py`: public auth endpoint throttling
 
@@ -52,6 +68,8 @@ The browser uses an HTTP-only `leveling_session` cookie. Never put session JWTs 
 All datetimes are stored as naive UTC. Use `utc_now()` and `to_naive_utc()` from the domain services.
 
 Frontend API calls use `apiFetch` or explicitly set `credentials: "include"`. The production browser/API setup must remain same-origin unless a complete cross-origin cookie and CSRF design is introduced.
+
+Stats reads use outcome timestamps (`completed_at`, `failed_at`, `cancelled_at`), exact local-calendar boundaries, daily/monthly bounded timelines, and a 365-day heatmap. React Query owns the browser cache under `["stats", period, timezoneOffset]`; task and goal mutations invalidate the Stats prefix.
 
 Calendar task reads use `/api/tasks/range/page`, a three-month rolling cache, and TanStack Virtual. General task and goal reads must use cursor-paginated endpoints. The legacy list endpoints are deprecated compatibility surfaces and reject collections above 1,000 records.
 

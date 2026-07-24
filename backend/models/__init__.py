@@ -2,6 +2,7 @@ from models.task import Task, TaskStatus, TaskImportance
 from models.user import User
 from models.goal import Goal, GoalRank
 from models.achievement import UserAchievement, UserAchievementStats
+from models.scheduler import SchedulerState
 
 __all__ = [
     "Task",
@@ -12,4 +13,5 @@ __all__ = [
     "GoalRank",
     "UserAchievement",
     "UserAchievementStats",
+    "SchedulerState",
 ]

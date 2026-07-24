@@ -15,8 +15,8 @@ function ComparisonCard({ comparison }: ComparisonCardProps) {
         format: (v: number) => v.toLocaleString(),
       },
       {
-        label: 'EXP Earned',
-        ...comparison.exp_earned,
+        label: 'Net EXP',
+        ...comparison.net_exp,
         format: (v: number) => v.toLocaleString(),
       },
       {

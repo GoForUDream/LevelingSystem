@@ -10,19 +10,20 @@ import {
   Legend,
 } from 'recharts';
 import { chartColors, tooltipStyle, axisStyle, gridStyle } from './ChartTheme';
-import type { DailyTaskStats } from '@/types/stats';
+import type { TimelinePoint } from '@/types/stats';
 
 interface TasksOverTimeChartProps {
-  data: DailyTaskStats[];
+  data: TimelinePoint[];
+  granularity: 'day' | 'month';
 }
 
-function TasksOverTimeChart({ data }: TasksOverTimeChartProps) {
+function TasksOverTimeChart({ data, granularity }: TasksOverTimeChartProps) {
   const { chartData, tickInterval } = useMemo(() => {
     const formatted = data.map((d) => ({
       ...d,
-      displayDate: new Date(d.date).toLocaleDateString('en-US', {
+      displayDate: new Date(`${d.date}T00:00:00`).toLocaleDateString('en-US', {
         month: 'short',
-        day: 'numeric',
+        ...(granularity === 'day' ? { day: 'numeric' as const } : {}),
       }),
     }));
 
@@ -30,7 +31,7 @@ function TasksOverTimeChart({ data }: TasksOverTimeChartProps) {
       chartData: formatted,
       tickInterval: Math.ceil(formatted.length / 10),
     };
-  }, [data]);
+  }, [data, granularity]);
 
   return (
     <div
@@ -76,16 +77,25 @@ function TasksOverTimeChart({ data }: TasksOverTimeChartProps) {
               maxBarSize={30}
             />
             <Bar
+              dataKey="failed"
+              fill={chartColors.warning}
+              radius={[2, 2, 0, 0]}
+              maxBarSize={30}
+              isAnimationActive={false}
+            />
+            <Bar
               dataKey="overdue"
               fill={chartColors.danger}
               radius={[2, 2, 0, 0]}
               maxBarSize={30}
+              isAnimationActive={false}
             />
             <Bar
               dataKey="cancelled"
               fill={chartColors.muted}
               radius={[2, 2, 0, 0]}
               maxBarSize={30}
+              isAnimationActive={false}
             />
           </BarChart>
         </ResponsiveContainer>

@@ -1,356 +1,349 @@
-from datetime import datetime, date, timedelta, timezone
+import calendar
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Literal
-from repositories.stats_repository import StatsRepository
-from repositories.user_repository import UserRepository
-from repositories.achievement_repository import AchievementRepository
+
+from models.user import User
+from repositories.stats_repository import (
+    ComparisonAggregateRow,
+    HeatmapRow,
+    StatsRepository,
+    TimelineAggregateRow,
+)
 from schemas.stats import (
-    StatsResponse,
-    DailyTaskStats,
-    CompletionBreakdown,
-    TimeOfDayDistribution,
-    HeatmapDay,
     ComparisonMetric,
+    HeatmapDay,
+    OutcomeBreakdown,
+    PendingSnapshot,
     PeriodComparison,
+    StatsResponse,
+    TimelinePoint,
+    TimeOfDayDistribution,
 )
 
 
+Period = Literal["7d", "30d", "90d", "all"]
+Granularity = Literal["day", "month"]
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def add_months(value: date, months: int) -> date:
+    month_index = value.year * 12 + value.month - 1 + months
+    year, month_zero = divmod(month_index, 12)
+    month = month_zero + 1
+    day = min(value.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
+
+
 class StatsService:
-    def __init__(
-        self,
-        stats_repo: StatsRepository,
-        user_repo: UserRepository,
-        achievement_repo: AchievementRepository,
-    ):
+    def __init__(self, stats_repo: StatsRepository):
         self.stats_repo = stats_repo
-        self.user_repo = user_repo
-        self.achievement_repo = achievement_repo
 
     async def get_stats(
-        self, user_id: int, period: Literal["7d", "30d", "90d", "all"],
-        timezone_offset: int = 0
+        self,
+        user: User,
+        period: Period,
+        timezone_offset: int | None = None,
     ) -> StatsResponse:
-        # Get user for account age and timezone
-        user = await self.user_repo.get_by_id(user_id)
-        if not user:
-            raise ValueError("User not found")
+        offset_minutes = (
+            user.timezone_offset if timezone_offset is None else timezone_offset
+        )
+        offset = timedelta(minutes=offset_minutes)
+        now_utc = utc_now()
+        local_now = now_utc + offset
+        local_today = local_now.date()
+        account_local_date = (user.created_at + offset).date()
+        account_age_days = max(0, (local_today - account_local_date).days)
 
-        # Use user's stored timezone if no offset provided
-        tz_offset = timezone_offset if timezone_offset != 0 else user.timezone_offset
-
-        account_created = user.created_at.date()
-        utc_now = datetime.now(timezone.utc).replace(tzinfo=None)
-        today = utc_now.date()
-        account_age_days = (today - account_created).days
-
-        # Calculate date range from period
-        now = utc_now
-        if period == "7d":
-            start = now - timedelta(days=7)
-        elif period == "30d":
-            start = now - timedelta(days=30)
-        elif period == "90d":
-            start = now - timedelta(days=90)
-        else:  # all
-            start = datetime.combine(account_created, datetime.min.time())
-
-        end = now
-
-        # Fetch aggregated data from repository
-        daily_completed = await self.stats_repo.get_daily_stats(user_id, start, end)
-        daily_overdue = await self.stats_repo.get_overdue_by_date(user_id, start, end)
-        daily_cancelled = await self.stats_repo.get_cancelled_by_date(user_id, start, end)
-        hourly_dist = await self.stats_repo.get_hourly_distribution(user_id, start, end)
-        status_counts = await self.stats_repo.get_status_counts(user_id, start, end)
-        totals = await self.stats_repo.get_total_completed_and_exp(user_id, start, end)
-
-        # Build daily_tasks list - merge completed, overdue, cancelled by date
-        date_map: dict[date, dict] = {}
-
-        # Initialize all dates in the period
-        current = start.date() if isinstance(start, datetime) else start
-        end_date = end.date() if isinstance(end, datetime) else end
-        while current <= end_date:
-            date_map[current] = {"completed": 0, "overdue": 0, "cancelled": 0, "exp_earned": 0}
-            current += timedelta(days=1)
-
-        # Fill in completed data
-        for row in daily_completed:
-            d = row["date"]
-            if d in date_map:
-                date_map[d]["completed"] = row["completed"]
-                date_map[d]["exp_earned"] = row["exp_earned"]
-
-        # Fill in overdue data
-        for row in daily_overdue:
-            d = row["date"]
-            if d in date_map:
-                date_map[d]["overdue"] = row["overdue"]
-
-        # Fill in cancelled data
-        for row in daily_cancelled:
-            d = row["date"]
-            if d in date_map:
-                date_map[d]["cancelled"] = row["cancelled"]
-
-        daily_tasks = [
-            DailyTaskStats(
-                date=d,
-                completed=data["completed"],
-                overdue=data["overdue"],
-                cancelled=data["cancelled"],
-                exp_earned=data["exp_earned"],
+        granularity: Granularity = "month" if period == "all" else "day"
+        if period == "all":
+            local_start = datetime.combine(account_local_date, time.min)
+            period_days = account_age_days + 1
+        else:
+            day_count = int(period[:-1])
+            local_start = datetime.combine(
+                local_today - timedelta(days=day_count - 1),
+                time.min,
             )
-            for d, data in sorted(date_map.items())
-        ]
+            period_days = day_count
+        start_utc = local_start - offset
 
-        # Completion breakdown
-        completion_breakdown = CompletionBreakdown(
-            completed=status_counts["completed"],
-            overdue=status_counts["overdue"],
-            cancelled=status_counts["cancelled"],
-            in_progress=status_counts["in_progress"],
-            todo=status_counts["todo"],
+        timeline_rows, hourly_rows = await self.stats_repo.get_period_aggregates(
+            user.id,
+            start_utc,
+            now_utc,
+            offset_minutes,
+            granularity,
+        )
+        snapshot = await self.stats_repo.get_snapshot(user.id)
+
+        heatmap_local_start = datetime.combine(
+            local_today - timedelta(days=min(364, account_age_days)),
+            time.min,
+        )
+        heatmap_start_utc = heatmap_local_start - offset
+        heatmap_rows = await self.stats_repo.get_heatmap(
+            user.id,
+            heatmap_start_utc,
+            now_utc,
+            offset_minutes,
         )
 
-        # Time of day distribution - fill in all 24 hours
-        hourly_map = {h: 0 for h in range(24)}
-        for row in hourly_dist:
-            hourly_map[row["hour"]] = row["count"]
+        windows = self._comparison_windows(
+            local_now,
+            offset,
+            include_monthly=account_age_days >= 60,
+            include_yearly=account_age_days >= 365,
+        )
+        comparison_data = (
+            await self.stats_repo.get_comparison_windows(user.id, windows)
+            if windows
+            else {}
+        )
 
-        time_of_day = [
-            TimeOfDayDistribution(hour=h, count=hourly_map[h])
-            for h in range(24)
-        ]
-
-        # Build heatmap - last 365 days or account age, whichever is less
-        heatmap_days = min(365, account_age_days + 1)
-        heatmap_start = now - timedelta(days=heatmap_days)
-        heatmap_data = await self.stats_repo.get_daily_stats(user_id, heatmap_start, end)
-
-        # Find max count for intensity calculation
-        heatmap_counts = {row["date"]: row["completed"] for row in heatmap_data}
-        max_count = max(heatmap_counts.values()) if heatmap_counts else 1
-
-        activity_heatmap = []
-        current = heatmap_start.date() if isinstance(heatmap_start, datetime) else heatmap_start
-        while current <= end_date:
-            count = heatmap_counts.get(current, 0)
-            if count == 0:
-                intensity = 0
-            elif max_count > 0:
-                # Scale 1-4 based on relative activity
-                ratio = count / max_count
-                if ratio <= 0.25:
-                    intensity = 1
-                elif ratio <= 0.5:
-                    intensity = 2
-                elif ratio <= 0.75:
-                    intensity = 3
-                else:
-                    intensity = 4
-            else:
-                intensity = 0
-
-            activity_heatmap.append(
-                HeatmapDay(date=current, count=count, intensity=intensity)
+        timeline = self._build_timeline(
+            timeline_rows,
+            local_start.date(),
+            local_today,
+            granularity,
+        )
+        breakdown = self._build_breakdown(timeline)
+        total_finished = sum(
+            (
+                breakdown.completed,
+                breakdown.failed,
+                breakdown.overdue,
+                breakdown.cancelled,
             )
-            current += timedelta(days=1)
-
-        # Calculate summary metrics
-        total_tasks_completed = totals["total_completed"]
-        # Total EXP calculation:
-        # - "all" period: use user.total_exp (authoritative source)
-        # - other periods: calculate from tasks in that period
-        if period == "all":
-            total_exp_earned = user.total_exp
-        else:
-            total_exp_earned = await self.stats_repo.get_net_exp_in_period(user_id, start, end)
-
-        # Completion rate: completed / (completed + overdue + cancelled)
-        total_finished = (
-            status_counts["completed"]
-            + status_counts["overdue"]
-            + status_counts["cancelled"]
         )
         completion_rate = (
-            (status_counts["completed"] / total_finished * 100)
-            if total_finished > 0
-            else 0.0
+            breakdown.completed / total_finished * 100 if total_finished else 0.0
         )
+        net_exp_change = sum(point.net_exp for point in timeline)
 
-        # Average tasks per day
-        period_days = (end.date() - start.date()).days + 1 if isinstance(start, datetime) and isinstance(end, datetime) else 1
-        average_tasks_per_day = total_tasks_completed / period_days if period_days > 0 else 0.0
-
-        # Most productive hour
-        most_productive_hour = None
-        if hourly_dist:
-            max_hour_row = max(hourly_dist, key=lambda x: x["count"])
-            if max_hour_row["count"] > 0:
-                most_productive_hour = max_hour_row["hour"]
-
-        # Get streak data from achievement stats
-        achievement_stats = await self.achievement_repo.get_or_create_stats(user_id)
-        current_streak = achievement_stats.current_streak
-        longest_streak = achievement_stats.longest_streak
-
-        # Calculate comparisons
-        monthly_comparison = None
-        yearly_comparison = None
-
-        if account_age_days >= 60:
-            monthly_comparison = await self._calculate_monthly_comparison(user_id)
-
-        if account_age_days >= 365:
-            yearly_comparison = await self._calculate_yearly_comparison(user_id)
+        hourly_map = {hour: 0 for hour in range(24)}
+        for row in hourly_rows:
+            hourly_map[row["hour"]] = row["count"]
+        time_of_day = [
+            TimeOfDayDistribution(hour=hour, count=count)
+            for hour, count in hourly_map.items()
+        ]
+        most_productive_hour = (
+            max(hourly_map, key=lambda hour: hourly_map[hour])
+            if any(hourly_map.values())
+            else None
+        )
 
         return StatsResponse(
-            account_created_at=account_created,
+            account_created_at=account_local_date,
             account_age_days=account_age_days,
-            daily_tasks=daily_tasks,
-            completion_breakdown=completion_breakdown,
-            activity_heatmap=activity_heatmap,
+            timeline_granularity=granularity,
+            timeline=timeline,
+            outcome_breakdown=breakdown,
+            pending_snapshot=PendingSnapshot(
+                todo=snapshot["todo"],
+                in_progress=snapshot["in_progress"],
+                on_hold=snapshot["on_hold"],
+                rescheduled=snapshot["rescheduled"],
+            ),
+            activity_heatmap=self._build_heatmap(
+                heatmap_rows,
+                heatmap_local_start.date(),
+                local_today,
+            ),
             time_of_day=time_of_day,
-            total_tasks_completed=total_tasks_completed,
-            total_exp_earned=total_exp_earned,
+            total_tasks_completed=breakdown.completed,
+            net_exp_change=net_exp_change,
             completion_rate=round(completion_rate, 1),
-            average_tasks_per_day=round(average_tasks_per_day, 2),
+            average_tasks_per_day=round(
+                breakdown.completed / period_days if period_days else 0.0,
+                2,
+            ),
             most_productive_hour=most_productive_hour,
-            current_streak=current_streak,
-            longest_streak=longest_streak,
-            monthly_comparison=monthly_comparison,
-            yearly_comparison=yearly_comparison,
+            current_streak=snapshot["current_streak"],
+            longest_streak=snapshot["longest_streak"],
+            monthly_comparison=self._build_comparison(
+                "Monthly",
+                comparison_data,
+                "current_month",
+                "previous_month",
+                windows,
+            ),
+            yearly_comparison=self._build_comparison(
+                "Yearly",
+                comparison_data,
+                "current_year",
+                "previous_year",
+                windows,
+            ),
         )
 
-    async def _calculate_monthly_comparison(self, user_id: int) -> PeriodComparison:
-        """Compare this month (so far) vs last month (same period)."""
-        now = datetime.utcnow()
+    @staticmethod
+    def _build_timeline(
+        rows: list[TimelineAggregateRow],
+        start: date,
+        end: date,
+        granularity: Granularity,
+    ) -> list[TimelinePoint]:
+        buckets: dict[date, dict[str, int]] = {}
+        current = start.replace(day=1) if granularity == "month" else start
+        while current <= end:
+            buckets[current] = {
+                "completed": 0,
+                "failed": 0,
+                "overdue": 0,
+                "cancelled": 0,
+                "net_exp": 0,
+            }
+            current = (
+                add_months(current, 1)
+                if granularity == "month"
+                else current + timedelta(days=1)
+            )
 
-        # Current month: 1st of this month to today
-        current_start = datetime(now.year, now.month, 1)
-        current_end = now
-        current_days = (current_end.date() - current_start.date()).days + 1
+        for row in rows:
+            key = row["bucket"]
+            if key not in buckets:
+                continue
+            buckets[key][row["outcome"].lower()] = row["count"]
+            buckets[key]["net_exp"] += row["net_exp"]
 
-        # Previous month: 1st of last month to same day number (or end of month)
-        if now.month == 1:
-            prev_year = now.year - 1
-            prev_month = 12
-        else:
-            prev_year = now.year
-            prev_month = now.month - 1
+        return [
+            TimelinePoint(
+                date=bucket,
+                completed=values["completed"],
+                failed=values["failed"],
+                overdue=values["overdue"],
+                cancelled=values["cancelled"],
+                net_exp=values["net_exp"],
+            )
+            for bucket, values in sorted(buckets.items())
+        ]
 
-        prev_start = datetime(prev_year, prev_month, 1)
-        # Use same number of days into the month
-        prev_end = prev_start + timedelta(days=current_days - 1)
-
-        return await self._compare_periods(
-            user_id, current_start, current_end, prev_start, prev_end, "Monthly"
+    @staticmethod
+    def _build_breakdown(timeline: list[TimelinePoint]) -> OutcomeBreakdown:
+        return OutcomeBreakdown(
+            completed=sum(point.completed for point in timeline),
+            failed=sum(point.failed for point in timeline),
+            overdue=sum(point.overdue for point in timeline),
+            cancelled=sum(point.cancelled for point in timeline),
         )
 
-    async def _calculate_yearly_comparison(self, user_id: int) -> PeriodComparison:
-        """Compare this year (so far) vs same period last year."""
-        now = datetime.utcnow()
+    @staticmethod
+    def _build_heatmap(
+        rows: list[HeatmapRow],
+        start: date,
+        end: date,
+    ) -> list[HeatmapDay]:
+        counts = {row["date"]: row["count"] for row in rows}
+        maximum = max(counts.values(), default=0)
+        result: list[HeatmapDay] = []
+        current = start
+        while current <= end:
+            count = counts.get(current, 0)
+            intensity = 0 if count == 0 or maximum == 0 else min(
+                4,
+                max(1, (count * 4 + maximum - 1) // maximum),
+            )
+            result.append(HeatmapDay(date=current, count=count, intensity=intensity))
+            current += timedelta(days=1)
+        return result
 
-        # Current year: Jan 1 to today
-        current_start = datetime(now.year, 1, 1)
-        current_end = now
+    @staticmethod
+    def _comparison_windows(
+        local_now: datetime,
+        offset: timedelta,
+        include_monthly: bool,
+        include_yearly: bool,
+    ) -> dict[str, tuple[datetime, datetime]]:
+        windows: dict[str, tuple[datetime, datetime]] = {}
+        if include_monthly:
+            current_start = local_now.replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
+            previous_date = add_months(current_start.date(), -1)
+            previous_start = datetime.combine(previous_date, time.min)
+            elapsed = local_now - current_start
+            previous_month_end = datetime.combine(
+                add_months(previous_date, 1),
+                time.min,
+            ) - timedelta(microseconds=1)
+            previous_end = min(previous_start + elapsed, previous_month_end)
+            windows["current_month"] = (current_start - offset, local_now - offset)
+            windows["previous_month"] = (
+                previous_start - offset,
+                previous_end - offset,
+            )
 
-        # Previous year: Jan 1 to same day last year
-        prev_start = datetime(now.year - 1, 1, 1)
-        prev_end = datetime(now.year - 1, now.month, now.day, now.hour, now.minute, now.second)
+        if include_yearly:
+            current_start = local_now.replace(
+                month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+            )
+            previous_start = current_start.replace(year=current_start.year - 1)
+            elapsed = local_now - current_start
+            previous_year_end = current_start - timedelta(microseconds=1)
+            previous_end = min(previous_start + elapsed, previous_year_end)
+            windows["current_year"] = (current_start - offset, local_now - offset)
+            windows["previous_year"] = (
+                previous_start - offset,
+                previous_end - offset,
+            )
+        return windows
 
-        return await self._compare_periods(
-            user_id, current_start, current_end, prev_start, prev_end, "Yearly"
-        )
-
-    async def _compare_periods(
+    def _build_comparison(
         self,
-        user_id: int,
-        current_start: datetime,
-        current_end: datetime,
-        prev_start: datetime,
-        prev_end: datetime,
         label: str,
-    ) -> PeriodComparison:
-        # Get data for both periods
-        current_totals = await self.stats_repo.get_total_completed_and_exp(
-            user_id, current_start, current_end
-        )
-        prev_totals = await self.stats_repo.get_total_completed_and_exp(
-            user_id, prev_start, prev_end
-        )
-
-        current_status = await self.stats_repo.get_status_counts(
-            user_id, current_start, current_end
-        )
-        prev_status = await self.stats_repo.get_status_counts(
-            user_id, prev_start, prev_end
-        )
-
-        # Calculate days in each period
-        current_days = (current_end.date() - current_start.date()).days + 1
-        prev_days = (prev_end.date() - prev_start.date()).days + 1
-
-        # Tasks completed
-        tasks_completed = self._make_comparison_metric(
-            current_totals["total_completed"], prev_totals["total_completed"]
-        )
-
-        # EXP earned
-        exp_earned = self._make_comparison_metric(
-            current_totals["total_exp"], prev_totals["total_exp"]
-        )
-
-        # Completion rate
-        current_finished = (
-            current_status["completed"]
-            + current_status["overdue"]
-            + current_status["cancelled"]
-        )
-        prev_finished = (
-            prev_status["completed"]
-            + prev_status["overdue"]
-            + prev_status["cancelled"]
-        )
+        data: dict[str, ComparisonAggregateRow],
+        current_key: str,
+        previous_key: str,
+        windows: dict[str, tuple[datetime, datetime]],
+    ) -> PeriodComparison | None:
+        if current_key not in data or previous_key not in data:
+            return None
+        current = data[current_key]
+        previous = data[previous_key]
+        current_days = (windows[current_key][1].date() - windows[current_key][0].date()).days + 1
+        previous_days = (
+            windows[previous_key][1].date() - windows[previous_key][0].date()
+        ).days + 1
         current_rate = (
-            current_status["completed"] / current_finished * 100
-            if current_finished > 0
+            current["completed"] / current["finished"] * 100
+            if current["finished"]
             else 0
         )
-        prev_rate = (
-            prev_status["completed"] / prev_finished * 100 if prev_finished > 0 else 0
+        previous_rate = (
+            previous["completed"] / previous["finished"] * 100
+            if previous["finished"]
+            else 0
         )
-        completion_rate = self._make_comparison_metric(current_rate, prev_rate)
-
-        # Average daily tasks
-        current_avg = current_totals["total_completed"] / current_days if current_days > 0 else 0
-        prev_avg = prev_totals["total_completed"] / prev_days if prev_days > 0 else 0
-        average_daily_tasks = self._make_comparison_metric(current_avg, prev_avg)
-
         return PeriodComparison(
             period_label=label,
-            tasks_completed=tasks_completed,
-            exp_earned=exp_earned,
-            completion_rate=completion_rate,
-            average_daily_tasks=average_daily_tasks,
+            tasks_completed=self._metric(
+                current["completed"], previous["completed"]
+            ),
+            net_exp=self._metric(current["net_exp"], previous["net_exp"]),
+            completion_rate=self._metric(current_rate, previous_rate),
+            average_daily_tasks=self._metric(
+                current["completed"] / current_days,
+                previous["completed"] / previous_days,
+            ),
         )
 
-    def _make_comparison_metric(self, current: float, previous: float) -> ComparisonMetric:
-        if previous > 0:
-            change_percent = ((current - previous) / previous) * 100
-        else:
-            change_percent = 0.0 if current == 0 else 100.0
-
-        if change_percent > 0:
-            trend = "up"
-        elif change_percent < 0:
-            trend = "down"
-        else:
-            trend = "neutral"
-
+    @staticmethod
+    def _metric(current: float, previous: float) -> ComparisonMetric:
+        change = (
+            ((current - previous) / abs(previous)) * 100
+            if previous
+            else (100.0 if current else 0.0)
+        )
+        trend: Literal["up", "down", "neutral"] = (
+            "up" if change > 0 else "down" if change < 0 else "neutral"
+        )
         return ComparisonMetric(
             current=round(current, 2),
             previous=round(previous, 2),
-            change_percent=round(change_percent, 1),
+            change_percent=round(change, 1),
             trend=trend,
         )

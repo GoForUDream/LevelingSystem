@@ -48,7 +48,7 @@ export default function StatsPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [period, setPeriod] = useState<Period>('30d');
-  const { stats, loading, error } = useStats(period);
+  const { stats, loading, refreshing, error, refetch } = useStats(period);
 
   const PERIOD_LABELS: Record<Period, string> = {
     '7d': t('stats.last7Days'),
@@ -179,7 +179,7 @@ export default function StatsPage() {
           <div className="text-center py-12">
             <p className="text-sl-red">{error}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => void refetch()}
               className="mt-4 text-sm text-sl-blue hover:underline"
             >
               Retry
@@ -187,10 +187,15 @@ export default function StatsPage() {
           </div>
         ) : stats ? (
           <div className="space-y-6">
+            {refreshing && (
+              <div className="text-right text-[10px] uppercase tracking-wider text-sl-silver-muted">
+                Refreshing
+              </div>
+            )}
             {/* Summary Cards */}
             <SummaryCards
               totalTasksCompleted={stats.total_tasks_completed}
-              totalExpEarned={stats.total_exp_earned}
+              netExpChange={stats.net_exp_change}
               completionRate={stats.completion_rate}
               currentStreak={stats.current_streak}
               longestStreak={stats.longest_streak}
@@ -198,13 +203,19 @@ export default function StatsPage() {
 
             {/* Charts Grid - Row 1 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <TasksOverTimeChart data={stats.daily_tasks} />
-              <CompletionDonutChart data={stats.completion_breakdown} />
+              <TasksOverTimeChart
+                data={stats.timeline}
+                granularity={stats.timeline_granularity}
+              />
+              <CompletionDonutChart data={stats.outcome_breakdown} />
             </div>
 
             {/* Charts Grid - Row 2 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ExpProgressChart data={stats.daily_tasks} />
+              <ExpProgressChart
+                data={stats.timeline}
+                granularity={stats.timeline_granularity}
+              />
               <TimeOfDayChart
                 data={stats.time_of_day}
                 mostProductiveHour={stats.most_productive_hour}

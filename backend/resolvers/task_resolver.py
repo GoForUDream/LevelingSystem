@@ -267,8 +267,7 @@ async def complete_task(
             current_user.id,
             task.created_at,
             updated.completed_at,
-            local_hour,
-            local_date.isoformat() if local_date else None,
+            current_user.timezone_offset,
         )
         await db.commit()
     except Exception:

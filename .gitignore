@@ -37,6 +37,7 @@ npm-debug.log*
 coverage/
 .coverage
 htmlcov/
+load-tests/results/
 
 # TypeScript
 *.tsbuildinfo

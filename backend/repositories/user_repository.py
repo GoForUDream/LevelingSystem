@@ -27,7 +27,10 @@ class UserRepository:
 
     async def get_by_id_for_update(self, user_id: int) -> User | None:
         result = await self.db.execute(
-            select(User).where(User.id == user_id).with_for_update()
+            select(User)
+            .where(User.id == user_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
         )
         return result.scalar_one_or_none()
 

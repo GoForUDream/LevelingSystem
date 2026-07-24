@@ -106,31 +106,36 @@ class TaskService:
             {"status": TaskStatus.IN_PROGRESS, "started_at": utc_now()},
         )
 
-    def _get_next_occurrence(self, task: Task) -> datetime | None:
+    def _get_next_occurrence(
+        self,
+        task: Task,
+        *,
+        after: datetime | None = None,
+    ) -> datetime | None:
         """Calculate the next occurrence date based on recurrence settings."""
         current_due = task.due_date or utc_now()
+        threshold = max(current_due, after) if after is not None else current_due
 
         if task.recurrence_type == RecurrenceType.DAILY:
-            next_date = current_due + timedelta(days=1)
+            days = max(1, (threshold - current_due).days + 1)
+            next_date = current_due + timedelta(days=days)
 
         elif task.recurrence_type == RecurrenceType.WEEKLY:
             days = json.loads(task.recurrence_days) if task.recurrence_days else []
             if not days:
                 return None
-            current_weekday = current_due.weekday()
-            # Find next matching weekday after current
-            sorted_days = sorted(days)
-            next_day = None
-            for d in sorted_days:
-                if d > current_weekday:
-                    next_day = d
-                    break
-            if next_day is not None:
-                delta = next_day - current_weekday
-            else:
-                # Wrap to next week
-                delta = 7 - current_weekday + sorted_days[0]
-            next_date = current_due + timedelta(days=delta)
+            allowed_days = set(days)
+            candidate = threshold.replace(
+                hour=current_due.hour,
+                minute=current_due.minute,
+                second=current_due.second,
+                microsecond=current_due.microsecond,
+            )
+            if candidate <= threshold:
+                candidate += timedelta(days=1)
+            while candidate.weekday() not in allowed_days:
+                candidate += timedelta(days=1)
+            next_date = candidate
 
         elif task.recurrence_type == RecurrenceType.MONTHLY:
             parsed = json.loads(task.recurrence_days) if task.recurrence_days else []
@@ -139,37 +144,35 @@ class TaskService:
             if not parsed:
                 return None
 
-            current_day = current_due.day
-            current_max = calendar.monthrange(current_due.year, current_due.month)[1]
-
-            # Resolve -1 (last day) to actual day for the current month
             def resolve_day(d: int, max_day: int) -> int:
                 return max_day if d == -1 else min(d, max_day)
 
-            # Find next matching day in the current month
-            resolved_current = sorted(set(resolve_day(d, current_max) for d in parsed))
-            next_target = None
-            for d in resolved_current:
-                if d > current_day:
-                    next_target = d
-                    break
-
-            if next_target is not None:
-                next_date = current_due.replace(day=next_target)
-            else:
-                # Wrap to next month
-                year = current_due.year
-                month = current_due.month + 1
-                if month > 12:
-                    month = 1
-                    year += 1
-                next_max = calendar.monthrange(year, month)[1]
-                resolved_next = sorted(set(resolve_day(d, next_max) for d in parsed))
-                next_date = current_due.replace(year=year, month=month, day=resolved_next[0])
+            year, month = threshold.year, threshold.month
+            next_date = None
+            while next_date is None:
+                max_day = calendar.monthrange(year, month)[1]
+                for target_day in sorted(
+                    set(resolve_day(day, max_day) for day in parsed)
+                ):
+                    candidate = current_due.replace(
+                        year=year,
+                        month=month,
+                        day=target_day,
+                    )
+                    if candidate > threshold and candidate > current_due:
+                        next_date = candidate
+                        break
+                if next_date is None:
+                    month += 1
+                    if month > 12:
+                        month = 1
+                        year += 1
 
         elif task.recurrence_type == RecurrenceType.CUSTOM:
             interval = task.recurrence_interval or 1
-            next_date = current_due + timedelta(days=interval)
+            elapsed_days = max(0, (threshold - current_due).days)
+            steps = elapsed_days // interval + 1
+            next_date = current_due + timedelta(days=steps * interval)
 
         else:
             return None
@@ -180,13 +183,18 @@ class TaskService:
 
         return next_date
 
-    async def _create_next_recurring_task(self, task: Task) -> Task | None:
+    def build_next_recurring_task(
+        self,
+        task: Task,
+        *,
+        after: datetime | None = None,
+    ) -> Task | None:
         """Create the next occurrence of a recurring task."""
-        next_date = self._get_next_occurrence(task)
+        next_date = self._get_next_occurrence(task, after=after)
         if next_date is None:
             return None
 
-        new_task = Task(
+        return Task(
             user_id=task.user_id,
             title=task.title,
             description=task.description,
@@ -204,6 +212,11 @@ class TaskService:
             recurrence_interval=task.recurrence_interval,
             recurrence_end_date=task.recurrence_end_date,
         )
+
+    async def _create_next_recurring_task(self, task: Task) -> Task | None:
+        new_task = self.build_next_recurring_task(task)
+        if new_task is None:
+            return None
         return await self.repository.create(new_task)
 
     async def complete_task(self, task_id: int) -> Task | None:
@@ -240,6 +253,7 @@ class TaskService:
                 "status": TaskStatus.CANCELLED,
                 "exp_penalty": exp_penalty,
                 "is_exp_processed": True,
+                "cancelled_at": utc_now(),
             },
         )
 

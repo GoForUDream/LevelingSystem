@@ -47,9 +47,8 @@ export async function completeTaskRequest(
   token: string,
   taskId: number,
 ): Promise<{ new_badges?: string[] }> {
-  const now = new Date()
   const response = await apiFetch(
-    `${API_URL}/api/tasks/${taskId}/complete?local_hour=${now.getHours()}&local_date=${now.toISOString().split("T")[0]}`,
+    `${API_URL}/api/tasks/${taskId}/complete`,
     { method: "POST", headers: { Authorization: `Bearer ${token}` } },
   )
   if (!response.ok) {

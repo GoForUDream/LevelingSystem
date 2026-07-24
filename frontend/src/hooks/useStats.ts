@@ -1,72 +1,44 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { fetchStats } from '@/api/stats';
 import { useAuth } from '@/contexts/AuthContext';
 import type { StatsData, Period } from '@/types/stats';
-import { API_URL, apiFetch } from '@/lib/utils';
 
 interface UseStatsResult {
   stats: StatsData | null;
   loading: boolean;
+  refreshing: boolean;
   error: string | null;
-  refetch: () => void;
+  refetch: () => Promise<unknown>;
 }
 
 export function useStats(period: Period): UseStatsResult {
   const { token } = useAuth();
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const fetchStats = useCallback(async () => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    // Abort previous request if any
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    setLoading(true);
-    setError(null);
-
-    const timezoneOffset = -new Date().getTimezoneOffset();
-
-    try {
-      const res = await apiFetch(
-        `${API_URL}/api/stats?period=${period}&timezone_offset=${timezoneOffset}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        }
-      );
-
-      if (!res.ok) throw new Error('Failed to fetch stats');
-
-      const data: StatsData = await res.json();
-      setStats(data);
-      setLoading(false);
-    } catch (err) {
-      // Ignore abort errors
-      if (err instanceof Error && err.name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      setLoading(false);
-    }
-  }, [token, period]);
+  const queryClient = useQueryClient();
+  const timezoneOffset = -new Date().getTimezoneOffset();
+  const query = useQuery({
+    queryKey: ['stats', period, timezoneOffset],
+    queryFn: ({ signal }) => fetchStats(token!, period, timezoneOffset, signal),
+    enabled: Boolean(token),
+    placeholderData: keepPreviousData,
+  });
 
   useEffect(() => {
-    fetchStats();
+    if (!token || !query.data) return;
+    const periods: Period[] = period === '30d' ? ['7d', '90d'] : ['30d'];
+    periods.forEach((nextPeriod) => {
+      void queryClient.prefetchQuery({
+        queryKey: ['stats', nextPeriod, timezoneOffset],
+        queryFn: ({ signal }) => fetchStats(token, nextPeriod, timezoneOffset, signal),
+      });
+    });
+  }, [period, query.data, queryClient, timezoneOffset, token]);
 
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [fetchStats]);
-
-  return { stats, loading, error, refetch: fetchStats };
+  return {
+    stats: query.data ?? null,
+    loading: query.isPending,
+    refreshing: query.isFetching && !query.isPending,
+    error: query.error instanceof Error ? query.error.message : null,
+    refetch: query.refetch,
+  };
 }

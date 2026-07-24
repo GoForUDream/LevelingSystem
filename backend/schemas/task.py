@@ -80,6 +80,7 @@ class TaskResponse(BaseModel):
     started_at: datetime | None
     completed_at: datetime | None
     failed_at: datetime | None
+    cancelled_at: datetime | None
     is_recurring: bool
     recurrence_type: RecurrenceType | None
     recurrence_days: str | None

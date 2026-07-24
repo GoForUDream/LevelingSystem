@@ -1,20 +1,19 @@
 import { memo, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { chartColors, tooltipStyle } from './ChartTheme';
-import type { CompletionBreakdown } from '@/types/stats';
+import type { OutcomeBreakdown } from '@/types/stats';
 
 interface CompletionDonutChartProps {
-  data: CompletionBreakdown;
+  data: OutcomeBreakdown;
 }
 
 function CompletionDonutChart({ data }: CompletionDonutChartProps) {
   const { chartData, total } = useMemo(() => {
     const items = [
       { name: 'Completed', value: data.completed, color: chartColors.success },
+      { name: 'Failed', value: data.failed, color: chartColors.warning },
       { name: 'Overdue', value: data.overdue, color: chartColors.danger },
       { name: 'Cancelled', value: data.cancelled, color: chartColors.muted },
-      { name: 'In Progress', value: data.in_progress, color: chartColors.primary },
-      { name: 'To Do', value: data.todo, color: chartColors.secondary },
     ].filter((d) => d.value > 0);
 
     return {
@@ -59,6 +58,7 @@ function CompletionDonutChart({ data }: CompletionDonutChartProps) {
               paddingAngle={2}
               dataKey="value"
               stroke="none"
+              isAnimationActive={false}
             >
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />

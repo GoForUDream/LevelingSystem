@@ -1,11 +1,11 @@
-import { RefreshCw } from "lucide-react"
-import BadgeUnlockModal from "@/components/BadgeUnlockModal"
-import CancelRecurringModal from "@/components/CancelRecurringModal"
-import DayColumn from "@/components/calendar/DayColumn"
-import Header from "@/components/Header"
-import TaskModal from "@/components/CreateTaskModal"
-import { useCalendarController } from "@/hooks/useCalendarController"
-import { compareMonths, localDateKey } from "@/lib/calendarData"
+import { RefreshCw } from "lucide-react";
+import BadgeUnlockModal from "@/components/BadgeUnlockModal";
+import CancelRecurringModal from "@/components/CancelRecurringModal";
+import DayColumn from "@/components/calendar/DayColumn";
+import Header from "@/components/Header";
+import TaskModal from "@/components/CreateTaskModal";
+import { useCalendarController } from "@/hooks/useCalendarController";
+import { compareMonths, localDateKey } from "@/lib/calendarData";
 
 export default function CalendarPage() {
   const {
@@ -40,7 +40,7 @@ export default function CalendarPage() {
     virtualTotalSize,
     cancelTask,
     completeTask,
-  } = useCalendarController()
+  } = useCalendarController();
 
   return (
     <div className="h-screen w-screen bg-sl-black flex flex-col overflow-hidden">
@@ -73,8 +73,8 @@ export default function CalendarPage() {
         >
           <div className="relative h-full" style={{ width: virtualTotalSize }}>
             {virtualDays.map((virtualDay) => {
-              const day = allDays[virtualDay.index]
-              const key = localDateKey(day)
+              const day = allDays[virtualDay.index];
+              const key = localDateKey(day);
               return (
                 <div
                   key={key}
@@ -93,26 +93,26 @@ export default function CalendarPage() {
                     cancellingTaskId={cancellingTaskId}
                     onToggleExpanded={(dateKey) =>
                       setExpandedDays((previous) => {
-                        const next = new Set(previous)
-                        if (next.has(dateKey)) next.delete(dateKey)
-                        else next.add(dateKey)
-                        return next
+                        const next = new Set(previous);
+                        if (next.has(dateKey)) next.delete(dateKey);
+                        else next.add(dateKey);
+                        return next;
                       })
                     }
                     onAddTask={(date) => {
-                      setEditTask(null)
-                      setSelectedDate(date)
-                      setIsModalOpen(true)
+                      setEditTask(null);
+                      setSelectedDate(date);
+                      setIsModalOpen(true);
                     }}
                     onComplete={completeTask}
                     onCancel={handleCancelClick}
                     onEdit={(task) => {
-                      setEditTask(task)
-                      setIsModalOpen(true)
+                      setEditTask(task);
+                      setIsModalOpen(true);
                     }}
                   />
                 </div>
-              )
+              );
             })}
           </div>
         </div>
@@ -121,8 +121,8 @@ export default function CalendarPage() {
       <TaskModal
         isOpen={isModalOpen}
         onClose={() => {
-          setIsModalOpen(false)
-          setEditTask(null)
+          setIsModalOpen(false);
+          setEditTask(null);
         }}
         selectedDate={selectedDate}
         onTaskSaved={refreshTasks}
@@ -136,12 +136,18 @@ export default function CalendarPage() {
       <CancelRecurringModal
         isOpen={!!cancelModalTask}
         onClose={() => setCancelModalTask(null)}
-        onSkipOnce={() => cancelModalTask && void cancelTask(cancelModalTask.id, true)}
-        onCancelAll={() => cancelModalTask && void cancelTask(cancelModalTask.id, false)}
+        onSkipOnce={() =>
+          cancelModalTask && void cancelTask(cancelModalTask.id, true)
+        }
+        onCancelAll={() =>
+          cancelModalTask && void cancelTask(cancelModalTask.id, false)
+        }
         taskTitle={cancelModalTask?.title || ""}
-        expPenalty={cancelModalTask ? Math.floor(cancelModalTask.exp_value / 5) : 0}
+        expPenalty={
+          cancelModalTask ? Math.floor(cancelModalTask.exp_value / 5) : 0
+        }
         isLoading={cancellingTaskId === cancelModalTask?.id}
       />
     </div>
-  )
+  );
 }
