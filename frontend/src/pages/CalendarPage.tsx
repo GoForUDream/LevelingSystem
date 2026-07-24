@@ -21,6 +21,7 @@ export default function CalendarPage() {
     goToToday,
     handleCancelClick,
     handleScroll,
+    handleWheel,
     isModalOpen,
     navigateMonth,
     refreshTasks,
@@ -66,6 +67,7 @@ export default function CalendarPage() {
         <div
           ref={setScrollElement}
           onScroll={handleScroll}
+          onWheel={handleWheel}
           className="h-full overflow-x-auto overflow-y-hidden scrollbar-hide"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >

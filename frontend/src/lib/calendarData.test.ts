@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import type { Task } from "@/components/TaskCard"
 import {
   evictMonthCache,
+  getCenteredColumnScrollLeft,
   getMonthWindow,
   groupTasksByLocalDate,
   localDateKey,
@@ -58,6 +59,16 @@ describe("calendar month cache", () => {
     expect([...evictMonthCache(cache, window).keys()]).toEqual(
       window.map(monthKeyStr),
     )
+  })
+})
+
+describe("calendar navigation", () => {
+  it("centers a fixed-width day column in the viewport", () => {
+    expect(getCenteredColumnScrollLeft(10, 1280)).toBe(3392)
+  })
+
+  it("does not request a negative scroll position near the start", () => {
+    expect(getCenteredColumnScrollLeft(0, 1280)).toBe(0)
   })
 })
 

@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type WheelEvent,
 } from "react"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { useTranslation } from "react-i18next"
@@ -21,9 +22,11 @@ import {
   DAY_COLUMN_WIDTH,
   compareMonths,
   evictMonthCache,
+  getCenteredColumnScrollLeft,
   getMonthWindow,
   getWindowDays,
   groupTasksByLocalDate,
+  localDateKey,
 } from "@/lib/calendarData"
 import { addMonths, monthKeyStr, type MonthKey } from "@/lib/utils"
 
@@ -63,7 +66,7 @@ export function useCalendarController() {
   const fetchedMonthsRef = useRef<Set<string>>(new Set())
   const controllersRef = useRef<Map<string, AbortController>>(new Map())
   const pendingScrollAdjustmentRef = useRef(0)
-  const pendingTargetRef = useRef<MonthKey | null>(initialMonth)
+  const pendingTargetRef = useRef<Date | null>(today)
   const shiftingRef = useRef(false)
 
   const allDays = useMemo(() => getWindowDays(loadedMonths), [loadedMonths])
@@ -161,21 +164,18 @@ export function useCalendarController() {
     [],
   )
 
-  const scrollToMonth = useCallback(
-    (month: MonthKey, behavior: ScrollBehavior = "smooth") => {
-      const firstIndex = allDays.findIndex(
-        (day) => day.getFullYear() === month.year && day.getMonth() === month.month,
-      )
-      if (firstIndex < 0) return
-      const dayCount = allDays.filter(
-        (day) => day.getFullYear() === month.year && day.getMonth() === month.month,
-      ).length
-      dayVirtualizer.scrollToIndex(firstIndex + Math.floor(dayCount / 2), {
-        align: "center",
+  const scrollToDate = useCallback(
+    (date: Date, behavior: ScrollBehavior = "smooth") => {
+      if (!scrollElement) return
+      const targetKey = localDateKey(date)
+      const targetIndex = allDays.findIndex((day) => localDateKey(day) === targetKey)
+      if (targetIndex < 0) return
+      scrollElement.scrollTo({
+        left: getCenteredColumnScrollLeft(targetIndex, scrollElement.clientWidth),
         behavior,
       })
     },
-    [allDays, dayVirtualizer],
+    [allDays, scrollElement],
   )
 
   useLayoutEffect(() => {
@@ -188,10 +188,10 @@ export function useCalendarController() {
     if (pendingTargetRef.current) {
       const target = pendingTargetRef.current
       pendingTargetRef.current = null
-      requestAnimationFrame(() => scrollToMonth(target, "auto"))
+      requestAnimationFrame(() => scrollToDate(target, "auto"))
     }
     shiftingRef.current = false
-  }, [loadedMonths, scrollElement, scrollToMonth])
+  }, [loadedMonths, scrollElement, scrollToDate])
 
   const shiftWindow = useCallback(
     (direction: -1 | 1) => {
@@ -235,12 +235,30 @@ export function useCalendarController() {
     else if (container.scrollLeft < DAY_COLUMN_WIDTH * 2) shiftWindow(-1)
   }, [allDays, scrollElement, shiftWindow])
 
+  const handleWheel = useCallback(
+    (event: WheelEvent<HTMLDivElement>) => {
+      if (Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return
+      const verticalScroller = (event.target as HTMLElement).closest<HTMLElement>(
+        "[data-calendar-vertical-scroll]",
+      )
+      if (verticalScroller) {
+        const canScrollInDirection = event.deltaY < 0
+          ? verticalScroller.scrollTop > 0
+          : verticalScroller.scrollTop + verticalScroller.clientHeight
+            < verticalScroller.scrollHeight
+        if (canScrollInDirection) return
+      }
+      event.currentTarget.scrollLeft += event.deltaY
+    },
+    [],
+  )
+
   const navigateMonth = useCallback(
     (offset: -1 | 1) => {
       const target = addMonths(visibleMonth, offset)
       if (earliestMonth && compareMonths(target, earliestMonth) < 0) return
       setVisibleMonth(target)
-      pendingTargetRef.current = target
+      pendingTargetRef.current = new Date(target.year, target.month, 15)
       setLoadedMonths(getMonthWindow(target, earliestMonth))
     },
     [earliestMonth, visibleMonth],
@@ -248,9 +266,9 @@ export function useCalendarController() {
 
   const goToToday = useCallback(() => {
     setVisibleMonth(initialMonth)
-    pendingTargetRef.current = initialMonth
+    pendingTargetRef.current = today
     setLoadedMonths(getMonthWindow(initialMonth, earliestMonth))
-  }, [earliestMonth, initialMonth])
+  }, [earliestMonth, initialMonth, today])
 
   const refreshTasks = useCallback(async () => {
     fetchedMonthsRef.current.clear()
@@ -318,6 +336,7 @@ export function useCalendarController() {
     failedMonths,
     goToToday,
     handleScroll,
+    handleWheel,
     isModalOpen,
     navigateMonth,
     refreshTasks,

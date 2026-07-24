@@ -66,3 +66,13 @@ export function evictMonthCache(
 export function getWindowDays(window: MonthKey[]): Date[] {
   return window.flatMap(getDaysForMonth)
 }
+
+export function getCenteredColumnScrollLeft(
+  columnIndex: number,
+  viewportWidth: number,
+): number {
+  return Math.max(
+    0,
+    columnIndex * DAY_COLUMN_WIDTH - (viewportWidth - DAY_COLUMN_WIDTH) / 2,
+  )
+}

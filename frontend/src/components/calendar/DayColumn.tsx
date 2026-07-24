@@ -49,7 +49,11 @@ function VirtualTaskRows({
   })
 
   return (
-    <div ref={parentRef} className="h-full overflow-y-auto">
+    <div
+      ref={parentRef}
+      data-calendar-vertical-scroll
+      className="h-full overflow-y-auto"
+    >
       <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
         {virtualizer.getVirtualItems().map((item) => (
           <div
@@ -214,7 +218,7 @@ export default function DayColumn({
           {rows.length > 50 ? (
             <VirtualTaskRows rows={rows} renderRow={renderRow} />
           ) : (
-            <div className="h-full overflow-y-auto space-y-2">
+            <div data-calendar-vertical-scroll className="h-full overflow-y-auto space-y-2">
               {rows.map((row) => <div key={row.task.id}>{renderRow(row)}</div>)}
             </div>
           )}
